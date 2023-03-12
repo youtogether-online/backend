@@ -1,0 +1,31 @@
+is_debug: true
+token:
+  secret: "opanki"
+
+listen:
+  host: "127.0.0.1"
+  port: "3000"
+
+db:
+  postgres:
+
+    user_name: "postgres"
+    db_name: "you_together"
+    password: "Ubythfkbcbvec2"
+  redis:
+
+    user_name: "redis"
+    password: "Ubythfkbcbvec2"
+    db: 0
+
+
+regexp:
+  email: "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
+  link: "/^[a-z][a-z0-9_-]{2,30}/"
+
+email:
+  from: "you-together@gmail.com"
+  user: "matveisisov@gmail.com"
+  password: "edcifcftjxkxoalj"
+  host: "smtp.gmail.com"
+  port: 587

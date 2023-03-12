@@ -1,0 +1,29 @@
+version: '3.9'
+
+services:
+  app:
+    build: .
+    volumes:
+      - ./:/server/http
+    ports:
+      - "3000:3000"
+    command: ["go","run","cmd/main/app.go"]
+    depends_on:
+      - postgres
+      - redis
+    links:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Ubythfkbcbvec2
+      - POSTGRES_DB=you_together
+    ports:
+      - "5432:5432"
+  redis:
+    image: redis/redis-stack
+    ports:
+      - "6379:6379"
