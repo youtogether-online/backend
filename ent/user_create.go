@@ -231,7 +231,7 @@ func (uc *UserCreate) check() error {
 	}
 	if v, ok := uc.mutation.UserName(); ok {
 		if err := user.UserNameValidator(v); err != nil {
-			return &ValidationError{Name: "user_name", err: fmt.Errorf(`ent: validator failed for field "User.user_name": %w`, err)}
+			return &ValidationError{Name: "user_name", err: fmt.Errorf(`ent: validation failed for field "User.user_name": %w`, err)}
 		}
 	}
 	if _, ok := uc.mutation.Email(); !ok {
@@ -239,12 +239,12 @@ func (uc *UserCreate) check() error {
 	}
 	if v, ok := uc.mutation.Email(); ok {
 		if err := user.EmailValidator(v); err != nil {
-			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "User.email": %w`, err)}
+			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validation failed for field "User.email": %w`, err)}
 		}
 	}
 	if v, ok := uc.mutation.Biography(); ok {
 		if err := user.BiographyValidator(v); err != nil {
-			return &ValidationError{Name: "biography", err: fmt.Errorf(`ent: validator failed for field "User.biography": %w`, err)}
+			return &ValidationError{Name: "biography", err: fmt.Errorf(`ent: validation failed for field "User.biography": %w`, err)}
 		}
 	}
 	if _, ok := uc.mutation.Role(); !ok {
@@ -252,7 +252,7 @@ func (uc *UserCreate) check() error {
 	}
 	if v, ok := uc.mutation.Role(); ok {
 		if err := user.RoleValidator(v); err != nil {
-			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "User.role": %w`, err)}
+			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validation failed for field "User.role": %w`, err)}
 		}
 	}
 	if _, ok := uc.mutation.Language(); !ok {
@@ -260,7 +260,7 @@ func (uc *UserCreate) check() error {
 	}
 	if v, ok := uc.mutation.Language(); ok {
 		if err := user.LanguageValidator(v); err != nil {
-			return &ValidationError{Name: "language", err: fmt.Errorf(`ent: validator failed for field "User.language": %w`, err)}
+			return &ValidationError{Name: "language", err: fmt.Errorf(`ent: validation failed for field "User.language": %w`, err)}
 		}
 	}
 	if _, ok := uc.mutation.Theme(); !ok {
@@ -268,12 +268,12 @@ func (uc *UserCreate) check() error {
 	}
 	if v, ok := uc.mutation.Theme(); ok {
 		if err := user.ThemeValidator(v); err != nil {
-			return &ValidationError{Name: "theme", err: fmt.Errorf(`ent: validator failed for field "User.theme": %w`, err)}
+			return &ValidationError{Name: "theme", err: fmt.Errorf(`ent: validation failed for field "User.theme": %w`, err)}
 		}
 	}
 	if v, ok := uc.mutation.Name(); ok {
 		if err := user.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "User.name": %w`, err)}
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validation failed for field "User.name": %w`, err)}
 		}
 	}
 	return nil

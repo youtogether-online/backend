@@ -2,8 +2,6 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/wtkeqrf0/you_together/ent"
-	"github.com/wtkeqrf0/you_together/internal/controller/dto"
 	"github.com/wtkeqrf0/you_together/pkg/middlewares/exceptions"
 	"net/http"
 	"strconv"
@@ -19,30 +17,38 @@ func (h Handler) getMe(c *gin.Context) {
 
 	user, err := h.users.FindMe(userId.(int))
 	if err != nil {
-		c.Error(exceptions.ServerError.AddErr(err.Error()))
+		c.Error(exceptions.ServerError.AddErr(err))
 		return
 	}
-
-	dto.CutEmail(&user.Email)
 
 	c.JSON(http.StatusOK, user)
 }
 
 // getUserById return the user with main info
 func (h Handler) getUserById(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("ID"))
-	if err != nil {
-		c.Error(exceptions.ValidError.AddErr(err.Error()))
+	val := c.Param("ID")
+	if err := h.valid.Var(val, "required,numeric"); err != nil {
+		c.Error(exceptions.ValidError.AddErr(err))
+		return
+	}
+	id, _ := strconv.Atoi(val)
+
+	if err := h.valid.Var(id, "required,gte=0"); err != nil {
+		c.Error(exceptions.ValidError.AddErr(err))
 		return
 	}
 
-	user, err := h.users.FindUserById(id)
+	var user any
+	var err error
+
+	if userId, ok := c.Get("ID"); ok && userId.(int) == id {
+		user, err = h.users.FindMe(userId.(int))
+	} else {
+		user, err = h.users.FindUserById(id)
+	}
+
 	if err != nil {
-		if ent.IsNotFound(err) {
-			c.Error(exceptions.LoginUnknown.AddErr(err.Error()))
-		} else {
-			c.Error(exceptions.ServerError.AddErr(err.Error()))
-		}
+		c.Error(exceptions.LoginUnknown.AddErr(err))
 		return
 	}
 

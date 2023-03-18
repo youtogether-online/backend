@@ -65,7 +65,7 @@ func GetConfig() *Config {
 	once.Do(func() {
 		inst = &Config{}
 
-		if err := cleanenv.ReadConfig("configs\\config.yml", inst); err != nil {
+		if err := cleanenv.ReadConfig("configs/config.yml", inst); err != nil {
 			help, _ := cleanenv.GetDescription(inst, nil)
 			logrus.Info(help)
 			logrus.Fatalf("error occurred while reading config file: %v", err)

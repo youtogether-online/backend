@@ -30,18 +30,18 @@ func init() {
 	user.UpdateDefaultUpdateTime = userDescUpdateTime.UpdateDefault.(func() time.Time)
 	// userDescUserName is the schema descriptor for user_name field.
 	userDescUserName := userFields[0].Descriptor()
-	// user.UserNameValidator is a validator for the "user_name" field. It is called by the builders before save.
+	// user.UserNameValidator is a validation for the "user_name" field. It is called by the builders before save.
 	user.UserNameValidator = userDescUserName.Validators[0].(func(string) error)
 	// userDescEmail is the schema descriptor for email field.
 	userDescEmail := userFields[1].Descriptor()
-	// user.EmailValidator is a validator for the "email" field. It is called by the builders before save.
+	// user.EmailValidator is a validation for the "email" field. It is called by the builders before save.
 	user.EmailValidator = userDescEmail.Validators[0].(func(string) error)
 	// userDescBiography is the schema descriptor for biography field.
 	userDescBiography := userFields[3].Descriptor()
-	// user.BiographyValidator is a validator for the "biography" field. It is called by the builders before save.
+	// user.BiographyValidator is a validation for the "biography" field. It is called by the builders before save.
 	user.BiographyValidator = userDescBiography.Validators[0].(func(string) error)
 	// userDescName is the schema descriptor for name field.
 	userDescName := userFields[9].Descriptor()
-	// user.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	// user.NameValidator is a validation for the "name" field. It is called by the builders before save.
 	user.NameValidator = userDescName.Validators[0].(func(string) error)
 }

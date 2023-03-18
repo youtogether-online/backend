@@ -18,7 +18,12 @@ const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 func (h Handler) signIn(c *gin.Context) {
 	auth := &dto.SignInDTO{}
 	if err := c.ShouldBindJSON(auth); err != nil {
-		c.Error(exceptions.ValidError.AddErr(err.Error()))
+		c.Error(exceptions.DataError.AddErr(err))
+		return
+	}
+
+	if err := h.valid.Struct(auth); err != nil {
+		c.Error(exceptions.ValidError.AddErr(err))
 		return
 	}
 
@@ -28,21 +33,27 @@ func (h Handler) signIn(c *gin.Context) {
 		customer, err = h.auth.CreateUser(auth.Email, auth.Password)
 
 		if err != nil {
-			c.Error(exceptions.ServerError.AddErr(err.Error()))
+			c.Error(exceptions.ServerError.AddErr(err))
 			return
 		}
 	}
 
 	if err = bcrypt.CompareHashAndPassword(*customer.PasswordHash, []byte(auth.Password)); err != nil {
-		c.Error(exceptions.PasswordError.AddErr(err.Error()))
+		c.Error(exceptions.PasswordError.AddErr(err))
 		return
 	}
 
-	err = h.auth.GenerateJWT(customer.ID, c)
+	t, err := h.auth.GenerateJWT(float64(customer.ID))
 	if err != nil {
 		c.Error(exceptions.ServerError)
 		return
 	}
+
+	c.SetCookie(cfg.Token.AccessName, t.AT, cfg.Token.AccessDurationInSeconds,
+		"/api", cfg.Listen.Host, false, true)
+
+	c.SetCookie(cfg.Token.RefreshName, t.RT, cfg.Token.RefreshDurationInSeconds,
+		"/api", cfg.Listen.Host, false, true)
 
 }
 
@@ -50,18 +61,23 @@ func (h Handler) signIn(c *gin.Context) {
 func (h Handler) sendSecretCode(c *gin.Context) {
 	to := &dto.EmailDTO{}
 	if err := c.ShouldBindJSON(to); err != nil {
-		c.Error(exceptions.ValidError.AddErr(err.Error()))
+		c.Error(exceptions.DataError.AddErr(err))
 		return
 	}
 
-	password := generateSecretPassword()
-	if err := h.redis.SetVariable(to.Email, password); err != nil {
-		c.Error(exceptions.ServerError.AddErr(err.Error()))
+	if err := h.valid.Struct(to); err != nil {
+		c.Error(exceptions.ValidError.AddErr(err))
 		return
 	}
 
-	if err := sendEmail(to.Email, password); err != nil {
-		c.Error(exceptions.ServerError.AddErr(err.Error()))
+	code := generateSecretCode()
+	if err := h.redis.SetCodes(to.Email, code); err != nil {
+		c.Error(exceptions.ServerError.AddErr(err))
+		return
+	}
+
+	if err := sendEmail(to.Email, code); err != nil {
+		c.Error(exceptions.ServerError.AddErr(err))
 		return
 	}
 
@@ -72,11 +88,16 @@ func (h Handler) sendSecretCode(c *gin.Context) {
 func (h Handler) compareSecretCode(c *gin.Context) {
 	auth := &dto.EmailWithCodeDTO{}
 	if err := c.ShouldBindJSON(auth); err != nil {
-		c.Error(exceptions.ValidError.AddErr(err.Error()))
+		c.Error(exceptions.DataError.AddErr(err))
 		return
 	}
 
-	if !h.redis.ContainsVariable(auth.Email, auth.Code) {
+	if err := h.valid.Struct(auth); err != nil {
+		c.Error(exceptions.ValidError.AddErr(err))
+		return
+	}
+
+	if !h.redis.ContainsPopCode(auth.Email, auth.Code) {
 		c.Error(exceptions.CodeError)
 		return
 	}
@@ -87,21 +108,49 @@ func (h Handler) compareSecretCode(c *gin.Context) {
 		customer, err = h.auth.CreateUser(auth.Email, "")
 
 		if err != nil {
-			c.Error(exceptions.ServerError.AddErr(err.Error()))
+			c.Error(exceptions.ServerError.AddErr(err))
 			return
 		}
 	}
 
-	err = h.auth.GenerateJWT(customer.ID, c)
+	t, err := h.auth.GenerateJWT(float64(customer.ID))
 	if err != nil {
-		c.Error(exceptions.ServerError.AddErr(err.Error()))
+		c.Error(exceptions.ServerError.AddErr(err))
 		return
 	}
+	c.SetCookie(cfg.Token.AccessName, t.AT, cfg.Token.AccessDurationInSeconds,
+		"/api", cfg.Listen.Host, false, true)
+
+	c.SetCookie(cfg.Token.RefreshName, t.RT, cfg.Token.RefreshDurationInSeconds,
+		"/api", cfg.Listen.Host, false, true)
+}
+
+func (h Handler) logout(c *gin.Context) {
+	at, _ := c.Cookie(cfg.Token.AccessName)
+	atClaims, err := h.auth.ValidateJWT(at)
+	if err == nil {
+		if err = h.redis.SetVariable(at, atClaims["sub"].(float64), time.Now().
+			Sub(time.UnixMilli(int64(atClaims["exp"].(float64))))); err != nil {
+			c.Error(exceptions.ServerError.AddErr(err))
+			return
+		}
+	}
+
+	rt, _ := c.Cookie(cfg.Token.RefreshName)
+	rtClaims, err := h.auth.ValidateJWT(rt)
+	if err == nil {
+		if err = h.redis.SetVariable(at, rtClaims["sub"].(float64), time.Now().
+			Sub(time.UnixMilli(int64(rtClaims["exp"].(float64))))); err != nil {
+			c.Error(exceptions.ServerError.AddErr(err))
+			return
+		}
+	}
+
+	c.Status(http.StatusOK)
 }
 
 // generateSecretPassword for email auth
-func generateSecretPassword() string {
-	rand.Seed(time.Now().UnixNano())
+func generateSecretCode() string {
 	all := []rune(chars)
 	var b strings.Builder
 	for i := 0; i < 5; i++ {

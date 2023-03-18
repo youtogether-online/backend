@@ -4,12 +4,12 @@ package exceptions
 type MyError struct {
 	Code int    `json:"code,omitempty"`
 	Msg  string `json:"message,omitempty"`
-	Err  string `json:"err,omitempty"`
+	Err  error  `json:"err,omitempty"`
 }
 
 // Error implements the Error type
 func (e MyError) Error() string {
-	return e.Msg
+	return e.Err.Error()
 }
 
 // newError creates a new MyError and returns it
@@ -21,7 +21,7 @@ func newError(code int, msg string) MyError {
 }
 
 // AddErr saves an error into MyError and returns it
-func (e MyError) AddErr(err string) MyError {
+func (e MyError) AddErr(err error) MyError {
 	e.Err = err
 	return e
 }

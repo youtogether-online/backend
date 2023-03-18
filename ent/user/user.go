@@ -74,13 +74,13 @@ var (
 	DefaultUpdateTime func() time.Time
 	// UpdateDefaultUpdateTime holds the default value on update for the "update_time" field.
 	UpdateDefaultUpdateTime func() time.Time
-	// UserNameValidator is a validator for the "user_name" field. It is called by the builders before save.
+	// UserNameValidator is a validation for the "user_name" field. It is called by the builders before save.
 	UserNameValidator func(string) error
-	// EmailValidator is a validator for the "email" field. It is called by the builders before save.
+	// EmailValidator is a validation for the "email" field. It is called by the builders before save.
 	EmailValidator func(string) error
-	// BiographyValidator is a validator for the "biography" field. It is called by the builders before save.
+	// BiographyValidator is a validation for the "biography" field. It is called by the builders before save.
 	BiographyValidator func(string) error
-	// NameValidator is a validator for the "name" field. It is called by the builders before save.
+	// NameValidator is a validation for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
 )
 
@@ -100,7 +100,7 @@ func (r Role) String() string {
 	return string(r)
 }
 
-// RoleValidator is a validator for the "role" field enum values. It is called by the builders before save.
+// RoleValidator is a validation for the "role" field enum values. It is called by the builders before save.
 func RoleValidator(r Role) error {
 	switch r {
 	case RoleUSER, RoleADMIN:
@@ -126,7 +126,7 @@ func (l Language) String() string {
 	return string(l)
 }
 
-// LanguageValidator is a validator for the "language" field enum values. It is called by the builders before save.
+// LanguageValidator is a validation for the "language" field enum values. It is called by the builders before save.
 func LanguageValidator(l Language) error {
 	switch l {
 	case LanguageEN, LanguageRU:
@@ -153,7 +153,7 @@ func (t Theme) String() string {
 	return string(t)
 }
 
-// ThemeValidator is a validator for the "theme" field enum values. It is called by the builders before save.
+// ThemeValidator is a validation for the "theme" field enum values. It is called by the builders before save.
 func ThemeValidator(t Theme) error {
 	switch t {
 	case ThemeWHITE, ThemeDARK, ThemeSYSTEM:

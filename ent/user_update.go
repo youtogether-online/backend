@@ -232,32 +232,32 @@ func (uu *UserUpdate) defaults() {
 func (uu *UserUpdate) check() error {
 	if v, ok := uu.mutation.UserName(); ok {
 		if err := user.UserNameValidator(v); err != nil {
-			return &ValidationError{Name: "user_name", err: fmt.Errorf(`ent: validator failed for field "User.user_name": %w`, err)}
+			return &ValidationError{Name: "user_name", err: fmt.Errorf(`ent: validation failed for field "User.user_name": %w`, err)}
 		}
 	}
 	if v, ok := uu.mutation.Biography(); ok {
 		if err := user.BiographyValidator(v); err != nil {
-			return &ValidationError{Name: "biography", err: fmt.Errorf(`ent: validator failed for field "User.biography": %w`, err)}
+			return &ValidationError{Name: "biography", err: fmt.Errorf(`ent: validation failed for field "User.biography": %w`, err)}
 		}
 	}
 	if v, ok := uu.mutation.Role(); ok {
 		if err := user.RoleValidator(v); err != nil {
-			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "User.role": %w`, err)}
+			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validation failed for field "User.role": %w`, err)}
 		}
 	}
 	if v, ok := uu.mutation.Language(); ok {
 		if err := user.LanguageValidator(v); err != nil {
-			return &ValidationError{Name: "language", err: fmt.Errorf(`ent: validator failed for field "User.language": %w`, err)}
+			return &ValidationError{Name: "language", err: fmt.Errorf(`ent: validation failed for field "User.language": %w`, err)}
 		}
 	}
 	if v, ok := uu.mutation.Theme(); ok {
 		if err := user.ThemeValidator(v); err != nil {
-			return &ValidationError{Name: "theme", err: fmt.Errorf(`ent: validator failed for field "User.theme": %w`, err)}
+			return &ValidationError{Name: "theme", err: fmt.Errorf(`ent: validation failed for field "User.theme": %w`, err)}
 		}
 	}
 	if v, ok := uu.mutation.Name(); ok {
 		if err := user.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "User.name": %w`, err)}
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validation failed for field "User.name": %w`, err)}
 		}
 	}
 	return nil
@@ -567,32 +567,32 @@ func (uuo *UserUpdateOne) defaults() {
 func (uuo *UserUpdateOne) check() error {
 	if v, ok := uuo.mutation.UserName(); ok {
 		if err := user.UserNameValidator(v); err != nil {
-			return &ValidationError{Name: "user_name", err: fmt.Errorf(`ent: validator failed for field "User.user_name": %w`, err)}
+			return &ValidationError{Name: "user_name", err: fmt.Errorf(`ent: validation failed for field "User.user_name": %w`, err)}
 		}
 	}
 	if v, ok := uuo.mutation.Biography(); ok {
 		if err := user.BiographyValidator(v); err != nil {
-			return &ValidationError{Name: "biography", err: fmt.Errorf(`ent: validator failed for field "User.biography": %w`, err)}
+			return &ValidationError{Name: "biography", err: fmt.Errorf(`ent: validation failed for field "User.biography": %w`, err)}
 		}
 	}
 	if v, ok := uuo.mutation.Role(); ok {
 		if err := user.RoleValidator(v); err != nil {
-			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "User.role": %w`, err)}
+			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validation failed for field "User.role": %w`, err)}
 		}
 	}
 	if v, ok := uuo.mutation.Language(); ok {
 		if err := user.LanguageValidator(v); err != nil {
-			return &ValidationError{Name: "language", err: fmt.Errorf(`ent: validator failed for field "User.language": %w`, err)}
+			return &ValidationError{Name: "language", err: fmt.Errorf(`ent: validation failed for field "User.language": %w`, err)}
 		}
 	}
 	if v, ok := uuo.mutation.Theme(); ok {
 		if err := user.ThemeValidator(v); err != nil {
-			return &ValidationError{Name: "theme", err: fmt.Errorf(`ent: validator failed for field "User.theme": %w`, err)}
+			return &ValidationError{Name: "theme", err: fmt.Errorf(`ent: validation failed for field "User.theme": %w`, err)}
 		}
 	}
 	if v, ok := uuo.mutation.Name(); ok {
 		if err := user.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "User.name": %w`, err)}
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validation failed for field "User.name": %w`, err)}
 		}
 	}
 	return nil

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"github.com/wtkeqrf0/you_together/ent"
@@ -20,19 +21,20 @@ import (
 	"time"
 )
 
-func main() {
-	{
-		logrus.SetFormatter(&logrus.JSONFormatter{
-			TimestampFormat: "2006-01-02 15:32:05",
-			FieldMap: logrus.FieldMap{
-				logrus.FieldKeyLevel: "status",
-				logrus.FieldKeyFunc:  "caller",
-				logrus.FieldKeyMsg:   "message",
-			},
-		})
-		logrus.SetReportCaller(true)
-	}
+func init() {
+	logrus.SetFormatter(&logrus.JSONFormatter{
+		TimestampFormat: "2006-01-02 15:32:05",
+		FieldMap: logrus.FieldMap{
+			logrus.FieldKeyLevel: "status",
+			logrus.FieldKeyFunc:  "caller",
+			logrus.FieldKeyMsg:   "message",
+		},
+	})
 
+	logrus.SetReportCaller(true)
+}
+
+func main() {
 	cfg := conf.GetConfig()
 
 	pClient := postgresql.Open(cfg.DB.Postgres.UserName, cfg.DB.Postgres.Password,
@@ -46,6 +48,7 @@ func main() {
 		service.NewUserService(pConn),
 		service.NewRClient(rClient),
 		authorization.NewAuth(pConn),
+		validator.New(),
 	)
 
 	r := gin.New()

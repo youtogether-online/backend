@@ -14,20 +14,27 @@ func NewRClient(client *redis.Client) *RClient {
 	return &RClient{client: client}
 }
 
-// SetVariable or add it in redis database
-func (u RClient) SetVariable(key string, value ...any) error {
+// SetCodes or add it to user email
+func (u RClient) SetCodes(key string, value ...any) error {
 	err := u.client.SAdd(context.Background(), key, value...).Err()
 
 	u.client.Expire(context.Background(), key, time.Hour)
 	return err
 }
 
-// GetVariables of redis with key
-func (u RClient) GetVariables(key string) ([]string, error) {
-	return u.client.SMembers(context.Background(), key).Result()
+// ContainsKeys of redis by key
+func (u RClient) ContainsKeys(keys ...string) (int64, error) {
+	return u.client.Exists(context.Background(), keys...).Result()
 }
 
-// ContainsVariable return true if value is involved in key
-func (u RClient) ContainsVariable(key string, code string) bool {
-	return u.client.SIsMember(context.Background(), key, code).Val()
+// SetVariable of redis by key, his value and exploration time
+func (u RClient) SetVariable(key string, value any, exp time.Duration) error {
+	return u.client.SetEx(context.Background(), key, value, exp).Err()
+}
+
+// ContainsPopCode return true if code is involved in email and deletes it
+func (u RClient) ContainsPopCode(email string, code string) bool {
+	b := u.client.SIsMember(context.Background(), email, code).Val()
+	u.client.Del(context.Background(), email)
+	return b
 }

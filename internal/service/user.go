@@ -27,7 +27,12 @@ func (u UserService) FindUserById(id int) (dto.UserDTO, error) {
 }
 
 func (u UserService) FindMe(id int) (dto.MyUserDTO, error) {
-	return u.storage.FindMe(context.Background(), id)
+	user, err := u.storage.FindMe(context.Background(), id)
+	if err != nil {
+		return dto.MyUserDTO{}, err
+	}
+	user.CutEmail()
+	return user, nil
 }
 
 func (u UserService) FindAllUsers(limit int) ([]dto.UserDTO, error) {

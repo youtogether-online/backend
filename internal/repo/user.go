@@ -12,16 +12,16 @@ type UserStorage struct {
 	userClient *ent.UserClient
 }
 
-// FindMe return detail information about user
+// FindMe return detail information about user with error
 func (r UserStorage) FindMe(ctx context.Context, id int) (dto.MyUserDTO, error) {
 	var userDTO []dto.MyUserDTO
 
 	err := r.userClient.Query().Where(user.ID(id)).Select("user_name", "email", "biography", "role", "avatar",
 		"friends_ids", "language", "theme", "name").Scan(ctx, &userDTO)
 	if err != nil || len(userDTO) != 1 {
-		return dto.MyUserDTO{}, fmt.Errorf("user not found: %v", err)
+		return dto.MyUserDTO{}, err
 	}
-	return userDTO[0], err
+	return userDTO[0], nil
 }
 
 // FindUserById return main information about user
