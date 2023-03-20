@@ -8,7 +8,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/wtkeqrf0/you_together/ent"
 	"github.com/wtkeqrf0/you_together/internal/controller"
-	"github.com/wtkeqrf0/you_together/internal/repo"
+	"github.com/wtkeqrf0/you_together/internal/repo/postgres"
+	redis2 "github.com/wtkeqrf0/you_together/internal/repo/redis"
 	"github.com/wtkeqrf0/you_together/internal/service"
 	"github.com/wtkeqrf0/you_together/pkg/client/postgresql"
 	redisDB "github.com/wtkeqrf0/you_together/pkg/client/redis"
@@ -37,17 +38,18 @@ func init() {
 func main() {
 	cfg := conf.GetConfig()
 
-	pClient := postgresql.Open(cfg.DB.Postgres.UserName, cfg.DB.Postgres.Password,
+	pClient := postgresql.Open(cfg.DB.Postgres.Username, cfg.DB.Postgres.Password,
 		cfg.DB.Postgres.Host, cfg.DB.Postgres.Port, cfg.DB.Postgres.DBName)
 
 	rClient := redisDB.Open(cfg.DB.Redis.Host, cfg.DB.Redis.Port, cfg.DB.Redis.DB)
 
-	pConn := repo.NewUserStorage(pClient.User)
+	pConn, rConn := postgres.NewUserStorage(pClient.User), redis2.NewRClient(rClient)
+	auth := service.NewAuthService(pConn, rConn)
 
 	h := controller.NewHandler(
-		service.NewUserService(pConn),
-		service.NewRClient(rClient),
-		authorization.NewAuth(pConn),
+		service.NewUserService(pConn, rConn),
+		authorization.NewAuth(auth),
+		auth,
 		validator.New(),
 	)
 

@@ -1,5 +1,5 @@
 is_debug: true
-token:
+session:
   secret: "opanki"
 
 listen:
@@ -8,20 +8,20 @@ listen:
 
 db:
   postgres:
-
-    user_name: "postgres"
+    #host: "docker"
+    username: "postgres"
     db_name: "you_together"
     password: "Ubythfkbcbvec2"
   redis:
-
-    user_name: "redis"
+    #host: "docker"
+    username: "redis"
     password: "Ubythfkbcbvec2"
     db: 0
 
 
 regexp:
   email: "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
-  link: "/^[a-z][a-z0-9_-]{2,30}/"
+  name: "/^[a-z][a-z0-9_-]/"
 
 email:
   from: "you-together@gmail.com"

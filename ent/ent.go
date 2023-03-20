@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/wtkeqrf0/you_together/ent/room"
 	"github.com/wtkeqrf0/you_together/ent/user"
 )
 
@@ -33,12 +34,39 @@ type (
 	MutateFunc    = ent.MutateFunc
 )
 
+type clientCtxKey struct{}
+
+// FromContext returns a Client stored inside a context, or nil if there isn't one.
+func FromContext(ctx context.Context) *Client {
+	c, _ := ctx.Value(clientCtxKey{}).(*Client)
+	return c
+}
+
+// NewContext returns a new context with the given Client attached.
+func NewContext(parent context.Context, c *Client) context.Context {
+	return context.WithValue(parent, clientCtxKey{}, c)
+}
+
+type txCtxKey struct{}
+
+// TxFromContext returns a Tx stored inside a context, or nil if there isn't one.
+func TxFromContext(ctx context.Context) *Tx {
+	tx, _ := ctx.Value(txCtxKey{}).(*Tx)
+	return tx
+}
+
+// NewTxContext returns a new context with the given Tx attached.
+func NewTxContext(parent context.Context, tx *Tx) context.Context {
+	return context.WithValue(parent, txCtxKey{}, tx)
+}
+
 // OrderFunc applies an ordering on the sql selector.
 type OrderFunc func(*sql.Selector)
 
 // columnChecker returns a function indicates if the column exists in the given column.
 func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
+		room.Table: room.ValidColumn,
 		user.Table: user.ValidColumn,
 	}
 	check, ok := checks[table]
@@ -161,7 +189,7 @@ func (e *ValidationError) Error() string {
 	return e.err.Error()
 }
 
-// Unwrap implements the exceptions.Wrapper interface.
+// Unwrap implements the errors.Wrapper interface.
 func (e *ValidationError) Unwrap() error {
 	return e.err
 }
@@ -253,7 +281,7 @@ func (e ConstraintError) Error() string {
 	return "ent: constraint failed: " + e.msg
 }
 
-// Unwrap implements the exceptions.Wrapper interface.
+// Unwrap implements the errors.Wrapper interface.
 func (e *ConstraintError) Unwrap() error {
 	return e.wrap
 }

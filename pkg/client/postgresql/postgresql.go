@@ -13,9 +13,9 @@ import (
 )
 
 // Open postgres connection, check it and create tables (if not exist). Returns the client of defined postgres database
-func Open(userName, password, host, port, DBName string) *ent.Client {
+func Open(username, password, host, port, DBName string) *ent.Client {
 	dbURL := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=disable",
-		userName, password, host, port, DBName)
+		username, password, host, port, DBName)
 
 	db, err := sql.Open("pgx", dbURL)
 	if err != nil {

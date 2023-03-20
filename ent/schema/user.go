@@ -5,6 +5,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/mixin"
 	"github.com/wtkeqrf0/you_together/pkg/conf"
+	"math/rand"
 	"regexp"
 )
 
@@ -13,27 +14,44 @@ type User struct {
 	ent.Schema
 }
 
-var cfg = conf.GetConfig().Regexp
+var (
+	cfg     = conf.GetConfig().Regexp
+	idRunes = []rune("abcdefghijklmnopqrstuvwxyz")
+)
 
 // Fields of the User.
 func (User) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("user_name").Optional().Match(regexp.MustCompile(cfg.UserName)).Unique(),
-		field.String("email").Unique().Immutable().Match(regexp.MustCompile(cfg.Email)),
-		field.Bytes("password_hash").Optional().Sensitive().Nillable(),
-		field.Text("biography").Optional().MaxLen(140),
+		field.String("id").StorageKey("username").Unique().Match(regexp.MustCompile(cfg.Username)).DefaultFunc(func() string {
+			b := make([]rune, 6)
+			for i := range b {
+				b[i] = idRunes[rand.Intn(len(idRunes))]
+			}
+			return string(b)
+		}).MinLen(5).MaxLen(20),
+		field.String("email").Unique().Match(regexp.MustCompile(cfg.Email)),
+		field.Bool("is_email_verified").Optional(),
+		field.Bytes("password_hash").Sensitive(),
+		field.Text("biography").Optional().MaxLen(512),
 		field.Enum("role").Values("USER", "ADMIN").Default("USER"),
-		field.String("avatar").Optional().Nillable(),
+		field.String("avatar").Optional().Match(regexp.MustCompile(cfg.FilePath)),
 		field.Ints("friends_ids").Optional(),
 		field.Enum("language").Values("EN", "RU").Default("EN"),
 		field.Enum("theme").Values("WHITE", "DARK", "SYSTEM").Default("SYSTEM"),
-		field.String("name").Optional().Match(regexp.MustCompile(cfg.Name)).Nillable(),
+		field.String("first_name").Optional().Match(regexp.MustCompile(cfg.Name)).MinLen(4).MaxLen(20),
+		field.String("last_name").Optional().Match(regexp.MustCompile(cfg.Name)).MinLen(4).MaxLen(20),
 	}
 }
 
 // Edges of the User.
 func (User) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		//TODO M2M with ROOMS
+	}
+}
+
+func (User) Indexes() []ent.Index {
+	return []ent.Index{}
 }
 
 func (User) Mixin() []ent.Mixin {

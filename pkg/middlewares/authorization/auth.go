@@ -1,32 +1,52 @@
 package authorization
 
 import (
-	"context"
-	"github.com/wtkeqrf0/you_together/ent"
+	"fmt"
+	"github.com/google/uuid"
+	"time"
 )
 
-type AuthRepo interface {
-	UserExists(ctx context.Context, id int) bool
-	CreateUser(ctx context.Context, mail, password string) (*ent.User, error)
-	AuthUserByEmail(ctx context.Context, mail string) (*ent.User, error)
+type AuthService interface {
+	SetSession(sessionId string, info map[string]string) error
+	GetSession(sessionId string) (map[string]string, error)
+	UserExists(username string) bool
+	GetTTL(sessionId string) time.Duration
 }
 
 type Auth struct {
-	auth AuthRepo
+	auth AuthService
 }
 
-func NewAuth(auth AuthRepo) *Auth {
+func NewAuth(auth AuthService) *Auth {
 	return &Auth{auth: auth}
 }
 
-func (a Auth) UserExists(id int) bool {
-	return a.auth.UserExists(context.Background(), id)
+// ValidateSession validates the session and identifies the user in DB. Returns an error in case of unsuccessful validation
+func (a Auth) ValidateSession(sessionId string) (map[string]string, error) {
+	if sessionId == "" {
+		return make(map[string]string), fmt.Errorf("session id is not found")
+	}
+
+	info, err := a.auth.GetSession(sessionId)
+	if err != nil {
+		return make(map[string]string), err
+	}
+
+	if !a.auth.UserExists(info["username"]) {
+		return make(map[string]string), fmt.Errorf("user does not exists")
+	}
+	return info, nil
 }
 
-func (a Auth) CreateUser(email, password string) (*ent.User, error) {
-	return a.auth.CreateUser(context.Background(), email, password)
-}
+// GenerateSession generates a new session, if not exists
+func (a Auth) GenerateSession(username, ip, device string) (string, map[string]string, error) {
+	// TODO session updating while user sign-in again (not creating new session)
+	sessionId := uuid.New().String()
+	info := map[string]string{
+		"username": username,
+		"ip":       ip,
+		"device":   device,
+	}
 
-func (a Auth) AuthUserByEmail(email string) (*ent.User, error) {
-	return a.auth.AuthUserByEmail(context.Background(), email)
+	return sessionId, info, a.auth.SetSession(sessionId, info)
 }

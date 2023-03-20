@@ -10,26 +10,26 @@ import (
 
 // Sign-in errors
 var (
-	LoginUnknown  = newError(http.StatusNotFound, "User does not exist")
-	CodeError     = newError(http.StatusBadRequest, "Code is not correct")
-	PasswordError = newError(http.StatusBadRequest, "Wrong password")
+	SignInUnknown = newError(http.StatusNotFound, "There is no such user", "But you can still find another existing user!")
+	CodeError     = newError(http.StatusBadRequest, "Code is not correct", "Try to request a new one")
+	PasswordError = newError(http.StatusBadRequest, "Wrong password", "You can still sign in by your email!")
 )
 
 // Auth errors
 var (
-	PermissionError = newError(http.StatusForbidden, "You don't have this permission")
-	UnAuthorized    = newError(http.StatusUnauthorized, "You are not logged in")
+	PermissionError = newError(http.StatusForbidden, "You don't have this permission", "Try to ask the owner about it")
+	UnAuthorized    = newError(http.StatusUnauthorized, "You are not logged in", "Click on the button below to sign in!")
 )
 
 // Input errors
 var (
-	ValidError = newError(http.StatusBadRequest, "Validation error")
-	DataError  = newError(http.StatusBadRequest, "Insufficient data")
+	ValidError = newError(http.StatusBadRequest, "Validation error", "Try to enter the correct data")
+	DataError  = newError(http.StatusBadRequest, "Insufficient data", "Try to enter the remaining data")
 )
 
 // ServerError err
 var (
-	ServerError = newError(http.StatusInternalServerError, "Server exception was occurred")
+	ServerError = newError(http.StatusInternalServerError, "Server exception was occurred", "Try to restart the page")
 )
 
 // ErrorHandler used for error handling. Handles only MyError type errors
@@ -46,32 +46,33 @@ func ErrorHandler(c *gin.Context) {
 		if my, ok := err.Err.(MyError); ok {
 
 			logrus.WithError(my.Err).WithField("index", i).Error(my.Msg)
-			res := gin.H{"Error": my.Msg}
+			res := gin.H{"error": my.Msg, "advice": my.Advice}
 
 			if vErrs, ok := my.Err.(validator.ValidationErrors); ok {
 				fields := make(gin.H)
 
 				for _, vErr := range vErrs {
+					field := vErr.Field()
 					switch vErr.Tag() {
 					case "email":
-						fields[vErr.Field()] = fmt.Sprintf("%s is incorrect", vErr.Field())
+						fields[field] = fmt.Sprintf("%s is not an email", field)
 					case "required":
-						fields[vErr.Field()] = fmt.Sprintf("%s should not be empty", vErr.Field())
+						fields[field] = fmt.Sprintf("%s should not be empty", field)
 					case "numeric":
-						fields[vErr.Field()] = fmt.Sprintf("%s must be a number", vErr.Field())
+						fields[field] = fmt.Sprintf("%s must be a number", field)
 					case "gte":
-						fields[vErr.Field()] = fmt.Sprintf("%s must be greater or equal %s", vErr.Field(), vErr.Param())
+						fields[field] = fmt.Sprintf("%s must be greater or equal %s", field, vErr.Param())
 					case "lte":
-						fields[vErr.Field()] = fmt.Sprintf("%s must be lesser or equal %s", vErr.Field(), vErr.Param())
+						fields[field] = fmt.Sprintf("%s must be lesser or equal %s", field, vErr.Param())
 					case "len":
-						fields[vErr.Field()] = fmt.Sprintf("%s must have a length of %s", vErr.Field(), vErr.Param())
+						fields[field] = fmt.Sprintf("%s must have a length of %s", field, vErr.Param())
 					case "gt":
-						fields[vErr.Field()] = fmt.Sprintf("%s must be greater than %s", vErr.Field(), vErr.Param())
+						fields[field] = fmt.Sprintf("%s must be greater than %s", field, vErr.Param())
 					case "lt":
-						fields[vErr.Field()] = fmt.Sprintf("%s must be lesser than %s", vErr.Field(), vErr.Param())
+						fields[field] = fmt.Sprintf("%s must be lesser than %s", field, vErr.Param())
 					}
 				}
-				res["Fields"] = fields
+				res["fields"] = fields
 			}
 
 			if i == 0 {

@@ -16,31 +16,33 @@ import (
 type User struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
+	ID string `json:"id,omitempty"`
 	// CreateTime holds the value of the "create_time" field.
 	CreateTime time.Time `json:"create_time,omitempty"`
 	// UpdateTime holds the value of the "update_time" field.
 	UpdateTime time.Time `json:"update_time,omitempty"`
-	// UserName holds the value of the "user_name" field.
-	UserName string `json:"user_name,omitempty"`
 	// Email holds the value of the "email" field.
 	Email string `json:"email,omitempty"`
+	// IsEmailVerified holds the value of the "is_email_verified" field.
+	IsEmailVerified bool `json:"is_email_verified,omitempty"`
 	// PasswordHash holds the value of the "password_hash" field.
-	PasswordHash *[]byte `json:"-"`
+	PasswordHash []byte `json:"-"`
 	// Biography holds the value of the "biography" field.
 	Biography string `json:"biography,omitempty"`
 	// Role holds the value of the "role" field.
 	Role user.Role `json:"role,omitempty"`
 	// Avatar holds the value of the "avatar" field.
-	Avatar *string `json:"avatar,omitempty"`
+	Avatar string `json:"avatar,omitempty"`
 	// FriendsIds holds the value of the "friends_ids" field.
 	FriendsIds []int `json:"friends_ids,omitempty"`
 	// Language holds the value of the "language" field.
 	Language user.Language `json:"language,omitempty"`
 	// Theme holds the value of the "theme" field.
 	Theme user.Theme `json:"theme,omitempty"`
-	// Name holds the value of the "name" field.
-	Name *string `json:"name,omitempty"`
+	// FirstName holds the value of the "first_name" field.
+	FirstName string `json:"first_name,omitempty"`
+	// LastName holds the value of the "last_name" field.
+	LastName string `json:"last_name,omitempty"`
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -50,9 +52,9 @@ func (*User) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case user.FieldPasswordHash, user.FieldFriendsIds:
 			values[i] = new([]byte)
-		case user.FieldID:
-			values[i] = new(sql.NullInt64)
-		case user.FieldUserName, user.FieldEmail, user.FieldBiography, user.FieldRole, user.FieldAvatar, user.FieldLanguage, user.FieldTheme, user.FieldName:
+		case user.FieldIsEmailVerified:
+			values[i] = new(sql.NullBool)
+		case user.FieldID, user.FieldEmail, user.FieldBiography, user.FieldRole, user.FieldAvatar, user.FieldLanguage, user.FieldTheme, user.FieldFirstName, user.FieldLastName:
 			values[i] = new(sql.NullString)
 		case user.FieldCreateTime, user.FieldUpdateTime:
 			values[i] = new(sql.NullTime)
@@ -72,11 +74,11 @@ func (u *User) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case user.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field id", values[i])
+			} else if value.Valid {
+				u.ID = value.String
 			}
-			u.ID = int(value.Int64)
 		case user.FieldCreateTime:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field create_time", values[i])
@@ -89,23 +91,23 @@ func (u *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				u.UpdateTime = value.Time
 			}
-		case user.FieldUserName:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field user_name", values[i])
-			} else if value.Valid {
-				u.UserName = value.String
-			}
 		case user.FieldEmail:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field email", values[i])
 			} else if value.Valid {
 				u.Email = value.String
 			}
+		case user.FieldIsEmailVerified:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_email_verified", values[i])
+			} else if value.Valid {
+				u.IsEmailVerified = value.Bool
+			}
 		case user.FieldPasswordHash:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field password_hash", values[i])
 			} else if value != nil {
-				u.PasswordHash = value
+				u.PasswordHash = *value
 			}
 		case user.FieldBiography:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -123,8 +125,7 @@ func (u *User) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field avatar", values[i])
 			} else if value.Valid {
-				u.Avatar = new(string)
-				*u.Avatar = value.String
+				u.Avatar = value.String
 			}
 		case user.FieldFriendsIds:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -146,12 +147,17 @@ func (u *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				u.Theme = user.Theme(value.String)
 			}
-		case user.FieldName:
+		case user.FieldFirstName:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field name", values[i])
+				return fmt.Errorf("unexpected type %T for field first_name", values[i])
 			} else if value.Valid {
-				u.Name = new(string)
-				*u.Name = value.String
+				u.FirstName = value.String
+			}
+		case user.FieldLastName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field last_name", values[i])
+			} else if value.Valid {
+				u.LastName = value.String
 			}
 		}
 	}
@@ -187,11 +193,11 @@ func (u *User) String() string {
 	builder.WriteString("update_time=")
 	builder.WriteString(u.UpdateTime.Format(time.ANSIC))
 	builder.WriteString(", ")
-	builder.WriteString("user_name=")
-	builder.WriteString(u.UserName)
-	builder.WriteString(", ")
 	builder.WriteString("email=")
 	builder.WriteString(u.Email)
+	builder.WriteString(", ")
+	builder.WriteString("is_email_verified=")
+	builder.WriteString(fmt.Sprintf("%v", u.IsEmailVerified))
 	builder.WriteString(", ")
 	builder.WriteString("password_hash=<sensitive>")
 	builder.WriteString(", ")
@@ -201,10 +207,8 @@ func (u *User) String() string {
 	builder.WriteString("role=")
 	builder.WriteString(fmt.Sprintf("%v", u.Role))
 	builder.WriteString(", ")
-	if v := u.Avatar; v != nil {
-		builder.WriteString("avatar=")
-		builder.WriteString(*v)
-	}
+	builder.WriteString("avatar=")
+	builder.WriteString(u.Avatar)
 	builder.WriteString(", ")
 	builder.WriteString("friends_ids=")
 	builder.WriteString(fmt.Sprintf("%v", u.FriendsIds))
@@ -215,19 +219,14 @@ func (u *User) String() string {
 	builder.WriteString("theme=")
 	builder.WriteString(fmt.Sprintf("%v", u.Theme))
 	builder.WriteString(", ")
-	if v := u.Name; v != nil {
-		builder.WriteString("name=")
-		builder.WriteString(*v)
-	}
+	builder.WriteString("first_name=")
+	builder.WriteString(u.FirstName)
+	builder.WriteString(", ")
+	builder.WriteString("last_name=")
+	builder.WriteString(u.LastName)
 	builder.WriteByte(')')
 	return builder.String()
 }
 
 // Users is a parsable slice of User.
 type Users []*User
-
-func (u Users) config(cfg config) {
-	for _i := range u {
-		u[_i].config = cfg
-	}
-}

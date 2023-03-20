@@ -35,35 +35,29 @@ func (uu *UserUpdate) SetUpdateTime(t time.Time) *UserUpdate {
 	return uu
 }
 
-// SetUserName sets the "user_name" field.
-func (uu *UserUpdate) SetUserName(s string) *UserUpdate {
-	uu.mutation.SetUserName(s)
+// SetIsEmailVerified sets the "is_email_verified" field.
+func (uu *UserUpdate) SetIsEmailVerified(b bool) *UserUpdate {
+	uu.mutation.SetIsEmailVerified(b)
 	return uu
 }
 
-// SetNillableUserName sets the "user_name" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableUserName(s *string) *UserUpdate {
-	if s != nil {
-		uu.SetUserName(*s)
+// SetNillableIsEmailVerified sets the "is_email_verified" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableIsEmailVerified(b *bool) *UserUpdate {
+	if b != nil {
+		uu.SetIsEmailVerified(*b)
 	}
 	return uu
 }
 
-// ClearUserName clears the value of the "user_name" field.
-func (uu *UserUpdate) ClearUserName() *UserUpdate {
-	uu.mutation.ClearUserName()
+// ClearIsEmailVerified clears the value of the "is_email_verified" field.
+func (uu *UserUpdate) ClearIsEmailVerified() *UserUpdate {
+	uu.mutation.ClearIsEmailVerified()
 	return uu
 }
 
 // SetPasswordHash sets the "password_hash" field.
 func (uu *UserUpdate) SetPasswordHash(b []byte) *UserUpdate {
 	uu.mutation.SetPasswordHash(b)
-	return uu
-}
-
-// ClearPasswordHash clears the value of the "password_hash" field.
-func (uu *UserUpdate) ClearPasswordHash() *UserUpdate {
-	uu.mutation.ClearPasswordHash()
 	return uu
 }
 
@@ -167,23 +161,43 @@ func (uu *UserUpdate) SetNillableTheme(u *user.Theme) *UserUpdate {
 	return uu
 }
 
-// SetName sets the "name" field.
-func (uu *UserUpdate) SetName(s string) *UserUpdate {
-	uu.mutation.SetName(s)
+// SetFirstName sets the "first_name" field.
+func (uu *UserUpdate) SetFirstName(s string) *UserUpdate {
+	uu.mutation.SetFirstName(s)
 	return uu
 }
 
-// SetNillableName sets the "name" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableName(s *string) *UserUpdate {
+// SetNillableFirstName sets the "first_name" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableFirstName(s *string) *UserUpdate {
 	if s != nil {
-		uu.SetName(*s)
+		uu.SetFirstName(*s)
 	}
 	return uu
 }
 
-// ClearName clears the value of the "name" field.
-func (uu *UserUpdate) ClearName() *UserUpdate {
-	uu.mutation.ClearName()
+// ClearFirstName clears the value of the "first_name" field.
+func (uu *UserUpdate) ClearFirstName() *UserUpdate {
+	uu.mutation.ClearFirstName()
+	return uu
+}
+
+// SetLastName sets the "last_name" field.
+func (uu *UserUpdate) SetLastName(s string) *UserUpdate {
+	uu.mutation.SetLastName(s)
+	return uu
+}
+
+// SetNillableLastName sets the "last_name" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableLastName(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetLastName(*s)
+	}
+	return uu
+}
+
+// ClearLastName clears the value of the "last_name" field.
+func (uu *UserUpdate) ClearLastName() *UserUpdate {
+	uu.mutation.ClearLastName()
 	return uu
 }
 
@@ -230,34 +244,34 @@ func (uu *UserUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (uu *UserUpdate) check() error {
-	if v, ok := uu.mutation.UserName(); ok {
-		if err := user.UserNameValidator(v); err != nil {
-			return &ValidationError{Name: "user_name", err: fmt.Errorf(`ent: validation failed for field "User.user_name": %w`, err)}
-		}
-	}
 	if v, ok := uu.mutation.Biography(); ok {
 		if err := user.BiographyValidator(v); err != nil {
-			return &ValidationError{Name: "biography", err: fmt.Errorf(`ent: validation failed for field "User.biography": %w`, err)}
+			return &ValidationError{Name: "biography", err: fmt.Errorf(`ent: validator failed for field "User.biography": %w`, err)}
 		}
 	}
 	if v, ok := uu.mutation.Role(); ok {
 		if err := user.RoleValidator(v); err != nil {
-			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validation failed for field "User.role": %w`, err)}
+			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "User.role": %w`, err)}
 		}
 	}
 	if v, ok := uu.mutation.Language(); ok {
 		if err := user.LanguageValidator(v); err != nil {
-			return &ValidationError{Name: "language", err: fmt.Errorf(`ent: validation failed for field "User.language": %w`, err)}
+			return &ValidationError{Name: "language", err: fmt.Errorf(`ent: validator failed for field "User.language": %w`, err)}
 		}
 	}
 	if v, ok := uu.mutation.Theme(); ok {
 		if err := user.ThemeValidator(v); err != nil {
-			return &ValidationError{Name: "theme", err: fmt.Errorf(`ent: validation failed for field "User.theme": %w`, err)}
+			return &ValidationError{Name: "theme", err: fmt.Errorf(`ent: validator failed for field "User.theme": %w`, err)}
 		}
 	}
-	if v, ok := uu.mutation.Name(); ok {
-		if err := user.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validation failed for field "User.name": %w`, err)}
+	if v, ok := uu.mutation.FirstName(); ok {
+		if err := user.FirstNameValidator(v); err != nil {
+			return &ValidationError{Name: "first_name", err: fmt.Errorf(`ent: validator failed for field "User.first_name": %w`, err)}
+		}
+	}
+	if v, ok := uu.mutation.LastName(); ok {
+		if err := user.LastNameValidator(v); err != nil {
+			return &ValidationError{Name: "last_name", err: fmt.Errorf(`ent: validator failed for field "User.last_name": %w`, err)}
 		}
 	}
 	return nil
@@ -267,16 +281,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := uu.check(); err != nil {
 		return n, err
 	}
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   user.Table,
-			Columns: user.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
-				Column: user.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeString))
 	if ps := uu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -287,17 +292,14 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := uu.mutation.UpdateTime(); ok {
 		_spec.SetField(user.FieldUpdateTime, field.TypeTime, value)
 	}
-	if value, ok := uu.mutation.UserName(); ok {
-		_spec.SetField(user.FieldUserName, field.TypeString, value)
+	if value, ok := uu.mutation.IsEmailVerified(); ok {
+		_spec.SetField(user.FieldIsEmailVerified, field.TypeBool, value)
 	}
-	if uu.mutation.UserNameCleared() {
-		_spec.ClearField(user.FieldUserName, field.TypeString)
+	if uu.mutation.IsEmailVerifiedCleared() {
+		_spec.ClearField(user.FieldIsEmailVerified, field.TypeBool)
 	}
 	if value, ok := uu.mutation.PasswordHash(); ok {
 		_spec.SetField(user.FieldPasswordHash, field.TypeBytes, value)
-	}
-	if uu.mutation.PasswordHashCleared() {
-		_spec.ClearField(user.FieldPasswordHash, field.TypeBytes)
 	}
 	if value, ok := uu.mutation.Biography(); ok {
 		_spec.SetField(user.FieldBiography, field.TypeString, value)
@@ -331,11 +333,17 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := uu.mutation.Theme(); ok {
 		_spec.SetField(user.FieldTheme, field.TypeEnum, value)
 	}
-	if value, ok := uu.mutation.Name(); ok {
-		_spec.SetField(user.FieldName, field.TypeString, value)
+	if value, ok := uu.mutation.FirstName(); ok {
+		_spec.SetField(user.FieldFirstName, field.TypeString, value)
 	}
-	if uu.mutation.NameCleared() {
-		_spec.ClearField(user.FieldName, field.TypeString)
+	if uu.mutation.FirstNameCleared() {
+		_spec.ClearField(user.FieldFirstName, field.TypeString)
+	}
+	if value, ok := uu.mutation.LastName(); ok {
+		_spec.SetField(user.FieldLastName, field.TypeString, value)
+	}
+	if uu.mutation.LastNameCleared() {
+		_spec.ClearField(user.FieldLastName, field.TypeString)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -363,35 +371,29 @@ func (uuo *UserUpdateOne) SetUpdateTime(t time.Time) *UserUpdateOne {
 	return uuo
 }
 
-// SetUserName sets the "user_name" field.
-func (uuo *UserUpdateOne) SetUserName(s string) *UserUpdateOne {
-	uuo.mutation.SetUserName(s)
+// SetIsEmailVerified sets the "is_email_verified" field.
+func (uuo *UserUpdateOne) SetIsEmailVerified(b bool) *UserUpdateOne {
+	uuo.mutation.SetIsEmailVerified(b)
 	return uuo
 }
 
-// SetNillableUserName sets the "user_name" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableUserName(s *string) *UserUpdateOne {
-	if s != nil {
-		uuo.SetUserName(*s)
+// SetNillableIsEmailVerified sets the "is_email_verified" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableIsEmailVerified(b *bool) *UserUpdateOne {
+	if b != nil {
+		uuo.SetIsEmailVerified(*b)
 	}
 	return uuo
 }
 
-// ClearUserName clears the value of the "user_name" field.
-func (uuo *UserUpdateOne) ClearUserName() *UserUpdateOne {
-	uuo.mutation.ClearUserName()
+// ClearIsEmailVerified clears the value of the "is_email_verified" field.
+func (uuo *UserUpdateOne) ClearIsEmailVerified() *UserUpdateOne {
+	uuo.mutation.ClearIsEmailVerified()
 	return uuo
 }
 
 // SetPasswordHash sets the "password_hash" field.
 func (uuo *UserUpdateOne) SetPasswordHash(b []byte) *UserUpdateOne {
 	uuo.mutation.SetPasswordHash(b)
-	return uuo
-}
-
-// ClearPasswordHash clears the value of the "password_hash" field.
-func (uuo *UserUpdateOne) ClearPasswordHash() *UserUpdateOne {
-	uuo.mutation.ClearPasswordHash()
 	return uuo
 }
 
@@ -495,29 +497,55 @@ func (uuo *UserUpdateOne) SetNillableTheme(u *user.Theme) *UserUpdateOne {
 	return uuo
 }
 
-// SetName sets the "name" field.
-func (uuo *UserUpdateOne) SetName(s string) *UserUpdateOne {
-	uuo.mutation.SetName(s)
+// SetFirstName sets the "first_name" field.
+func (uuo *UserUpdateOne) SetFirstName(s string) *UserUpdateOne {
+	uuo.mutation.SetFirstName(s)
 	return uuo
 }
 
-// SetNillableName sets the "name" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableName(s *string) *UserUpdateOne {
+// SetNillableFirstName sets the "first_name" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableFirstName(s *string) *UserUpdateOne {
 	if s != nil {
-		uuo.SetName(*s)
+		uuo.SetFirstName(*s)
 	}
 	return uuo
 }
 
-// ClearName clears the value of the "name" field.
-func (uuo *UserUpdateOne) ClearName() *UserUpdateOne {
-	uuo.mutation.ClearName()
+// ClearFirstName clears the value of the "first_name" field.
+func (uuo *UserUpdateOne) ClearFirstName() *UserUpdateOne {
+	uuo.mutation.ClearFirstName()
+	return uuo
+}
+
+// SetLastName sets the "last_name" field.
+func (uuo *UserUpdateOne) SetLastName(s string) *UserUpdateOne {
+	uuo.mutation.SetLastName(s)
+	return uuo
+}
+
+// SetNillableLastName sets the "last_name" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableLastName(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetLastName(*s)
+	}
+	return uuo
+}
+
+// ClearLastName clears the value of the "last_name" field.
+func (uuo *UserUpdateOne) ClearLastName() *UserUpdateOne {
+	uuo.mutation.ClearLastName()
 	return uuo
 }
 
 // Mutation returns the UserMutation object of the builder.
 func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
+}
+
+// Where appends a list predicates to the UserUpdate builder.
+func (uuo *UserUpdateOne) Where(ps ...predicate.User) *UserUpdateOne {
+	uuo.mutation.Where(ps...)
+	return uuo
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -565,34 +593,34 @@ func (uuo *UserUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (uuo *UserUpdateOne) check() error {
-	if v, ok := uuo.mutation.UserName(); ok {
-		if err := user.UserNameValidator(v); err != nil {
-			return &ValidationError{Name: "user_name", err: fmt.Errorf(`ent: validation failed for field "User.user_name": %w`, err)}
-		}
-	}
 	if v, ok := uuo.mutation.Biography(); ok {
 		if err := user.BiographyValidator(v); err != nil {
-			return &ValidationError{Name: "biography", err: fmt.Errorf(`ent: validation failed for field "User.biography": %w`, err)}
+			return &ValidationError{Name: "biography", err: fmt.Errorf(`ent: validator failed for field "User.biography": %w`, err)}
 		}
 	}
 	if v, ok := uuo.mutation.Role(); ok {
 		if err := user.RoleValidator(v); err != nil {
-			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validation failed for field "User.role": %w`, err)}
+			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "User.role": %w`, err)}
 		}
 	}
 	if v, ok := uuo.mutation.Language(); ok {
 		if err := user.LanguageValidator(v); err != nil {
-			return &ValidationError{Name: "language", err: fmt.Errorf(`ent: validation failed for field "User.language": %w`, err)}
+			return &ValidationError{Name: "language", err: fmt.Errorf(`ent: validator failed for field "User.language": %w`, err)}
 		}
 	}
 	if v, ok := uuo.mutation.Theme(); ok {
 		if err := user.ThemeValidator(v); err != nil {
-			return &ValidationError{Name: "theme", err: fmt.Errorf(`ent: validation failed for field "User.theme": %w`, err)}
+			return &ValidationError{Name: "theme", err: fmt.Errorf(`ent: validator failed for field "User.theme": %w`, err)}
 		}
 	}
-	if v, ok := uuo.mutation.Name(); ok {
-		if err := user.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validation failed for field "User.name": %w`, err)}
+	if v, ok := uuo.mutation.FirstName(); ok {
+		if err := user.FirstNameValidator(v); err != nil {
+			return &ValidationError{Name: "first_name", err: fmt.Errorf(`ent: validator failed for field "User.first_name": %w`, err)}
+		}
+	}
+	if v, ok := uuo.mutation.LastName(); ok {
+		if err := user.LastNameValidator(v); err != nil {
+			return &ValidationError{Name: "last_name", err: fmt.Errorf(`ent: validator failed for field "User.last_name": %w`, err)}
 		}
 	}
 	return nil
@@ -602,16 +630,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if err := uuo.check(); err != nil {
 		return _node, err
 	}
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   user.Table,
-			Columns: user.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
-				Column: user.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeString))
 	id, ok := uuo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "User.id" for update`)}
@@ -639,17 +658,14 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if value, ok := uuo.mutation.UpdateTime(); ok {
 		_spec.SetField(user.FieldUpdateTime, field.TypeTime, value)
 	}
-	if value, ok := uuo.mutation.UserName(); ok {
-		_spec.SetField(user.FieldUserName, field.TypeString, value)
+	if value, ok := uuo.mutation.IsEmailVerified(); ok {
+		_spec.SetField(user.FieldIsEmailVerified, field.TypeBool, value)
 	}
-	if uuo.mutation.UserNameCleared() {
-		_spec.ClearField(user.FieldUserName, field.TypeString)
+	if uuo.mutation.IsEmailVerifiedCleared() {
+		_spec.ClearField(user.FieldIsEmailVerified, field.TypeBool)
 	}
 	if value, ok := uuo.mutation.PasswordHash(); ok {
 		_spec.SetField(user.FieldPasswordHash, field.TypeBytes, value)
-	}
-	if uuo.mutation.PasswordHashCleared() {
-		_spec.ClearField(user.FieldPasswordHash, field.TypeBytes)
 	}
 	if value, ok := uuo.mutation.Biography(); ok {
 		_spec.SetField(user.FieldBiography, field.TypeString, value)
@@ -683,11 +699,17 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if value, ok := uuo.mutation.Theme(); ok {
 		_spec.SetField(user.FieldTheme, field.TypeEnum, value)
 	}
-	if value, ok := uuo.mutation.Name(); ok {
-		_spec.SetField(user.FieldName, field.TypeString, value)
+	if value, ok := uuo.mutation.FirstName(); ok {
+		_spec.SetField(user.FieldFirstName, field.TypeString, value)
 	}
-	if uuo.mutation.NameCleared() {
-		_spec.ClearField(user.FieldName, field.TypeString)
+	if uuo.mutation.FirstNameCleared() {
+		_spec.ClearField(user.FieldFirstName, field.TypeString)
+	}
+	if value, ok := uuo.mutation.LastName(); ok {
+		_spec.SetField(user.FieldLastName, field.TypeString, value)
+	}
+	if uuo.mutation.LastNameCleared() {
+		_spec.ClearField(user.FieldLastName, field.TypeString)
 	}
 	_node = &User{config: uuo.config}
 	_spec.Assign = _node.assignValues

@@ -48,23 +48,23 @@ func (uc *UserCreate) SetNillableUpdateTime(t *time.Time) *UserCreate {
 	return uc
 }
 
-// SetUserName sets the "user_name" field.
-func (uc *UserCreate) SetUserName(s string) *UserCreate {
-	uc.mutation.SetUserName(s)
-	return uc
-}
-
-// SetNillableUserName sets the "user_name" field if the given value is not nil.
-func (uc *UserCreate) SetNillableUserName(s *string) *UserCreate {
-	if s != nil {
-		uc.SetUserName(*s)
-	}
-	return uc
-}
-
 // SetEmail sets the "email" field.
 func (uc *UserCreate) SetEmail(s string) *UserCreate {
 	uc.mutation.SetEmail(s)
+	return uc
+}
+
+// SetIsEmailVerified sets the "is_email_verified" field.
+func (uc *UserCreate) SetIsEmailVerified(b bool) *UserCreate {
+	uc.mutation.SetIsEmailVerified(b)
+	return uc
+}
+
+// SetNillableIsEmailVerified sets the "is_email_verified" field if the given value is not nil.
+func (uc *UserCreate) SetNillableIsEmailVerified(b *bool) *UserCreate {
+	if b != nil {
+		uc.SetIsEmailVerified(*b)
+	}
 	return uc
 }
 
@@ -150,16 +150,44 @@ func (uc *UserCreate) SetNillableTheme(u *user.Theme) *UserCreate {
 	return uc
 }
 
-// SetName sets the "name" field.
-func (uc *UserCreate) SetName(s string) *UserCreate {
-	uc.mutation.SetName(s)
+// SetFirstName sets the "first_name" field.
+func (uc *UserCreate) SetFirstName(s string) *UserCreate {
+	uc.mutation.SetFirstName(s)
 	return uc
 }
 
-// SetNillableName sets the "name" field if the given value is not nil.
-func (uc *UserCreate) SetNillableName(s *string) *UserCreate {
+// SetNillableFirstName sets the "first_name" field if the given value is not nil.
+func (uc *UserCreate) SetNillableFirstName(s *string) *UserCreate {
 	if s != nil {
-		uc.SetName(*s)
+		uc.SetFirstName(*s)
+	}
+	return uc
+}
+
+// SetLastName sets the "last_name" field.
+func (uc *UserCreate) SetLastName(s string) *UserCreate {
+	uc.mutation.SetLastName(s)
+	return uc
+}
+
+// SetNillableLastName sets the "last_name" field if the given value is not nil.
+func (uc *UserCreate) SetNillableLastName(s *string) *UserCreate {
+	if s != nil {
+		uc.SetLastName(*s)
+	}
+	return uc
+}
+
+// SetID sets the "id" field.
+func (uc *UserCreate) SetID(s string) *UserCreate {
+	uc.mutation.SetID(s)
+	return uc
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (uc *UserCreate) SetNillableID(s *string) *UserCreate {
+	if s != nil {
+		uc.SetID(*s)
 	}
 	return uc
 }
@@ -219,6 +247,10 @@ func (uc *UserCreate) defaults() {
 		v := user.DefaultTheme
 		uc.mutation.SetTheme(v)
 	}
+	if _, ok := uc.mutation.ID(); !ok {
+		v := user.DefaultID()
+		uc.mutation.SetID(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -229,22 +261,20 @@ func (uc *UserCreate) check() error {
 	if _, ok := uc.mutation.UpdateTime(); !ok {
 		return &ValidationError{Name: "update_time", err: errors.New(`ent: missing required field "User.update_time"`)}
 	}
-	if v, ok := uc.mutation.UserName(); ok {
-		if err := user.UserNameValidator(v); err != nil {
-			return &ValidationError{Name: "user_name", err: fmt.Errorf(`ent: validation failed for field "User.user_name": %w`, err)}
-		}
-	}
 	if _, ok := uc.mutation.Email(); !ok {
 		return &ValidationError{Name: "email", err: errors.New(`ent: missing required field "User.email"`)}
 	}
 	if v, ok := uc.mutation.Email(); ok {
 		if err := user.EmailValidator(v); err != nil {
-			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validation failed for field "User.email": %w`, err)}
+			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "User.email": %w`, err)}
 		}
+	}
+	if _, ok := uc.mutation.PasswordHash(); !ok {
+		return &ValidationError{Name: "password_hash", err: errors.New(`ent: missing required field "User.password_hash"`)}
 	}
 	if v, ok := uc.mutation.Biography(); ok {
 		if err := user.BiographyValidator(v); err != nil {
-			return &ValidationError{Name: "biography", err: fmt.Errorf(`ent: validation failed for field "User.biography": %w`, err)}
+			return &ValidationError{Name: "biography", err: fmt.Errorf(`ent: validator failed for field "User.biography": %w`, err)}
 		}
 	}
 	if _, ok := uc.mutation.Role(); !ok {
@@ -252,7 +282,7 @@ func (uc *UserCreate) check() error {
 	}
 	if v, ok := uc.mutation.Role(); ok {
 		if err := user.RoleValidator(v); err != nil {
-			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validation failed for field "User.role": %w`, err)}
+			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "User.role": %w`, err)}
 		}
 	}
 	if _, ok := uc.mutation.Language(); !ok {
@@ -260,7 +290,7 @@ func (uc *UserCreate) check() error {
 	}
 	if v, ok := uc.mutation.Language(); ok {
 		if err := user.LanguageValidator(v); err != nil {
-			return &ValidationError{Name: "language", err: fmt.Errorf(`ent: validation failed for field "User.language": %w`, err)}
+			return &ValidationError{Name: "language", err: fmt.Errorf(`ent: validator failed for field "User.language": %w`, err)}
 		}
 	}
 	if _, ok := uc.mutation.Theme(); !ok {
@@ -268,12 +298,22 @@ func (uc *UserCreate) check() error {
 	}
 	if v, ok := uc.mutation.Theme(); ok {
 		if err := user.ThemeValidator(v); err != nil {
-			return &ValidationError{Name: "theme", err: fmt.Errorf(`ent: validation failed for field "User.theme": %w`, err)}
+			return &ValidationError{Name: "theme", err: fmt.Errorf(`ent: validator failed for field "User.theme": %w`, err)}
 		}
 	}
-	if v, ok := uc.mutation.Name(); ok {
-		if err := user.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validation failed for field "User.name": %w`, err)}
+	if v, ok := uc.mutation.FirstName(); ok {
+		if err := user.FirstNameValidator(v); err != nil {
+			return &ValidationError{Name: "first_name", err: fmt.Errorf(`ent: validator failed for field "User.first_name": %w`, err)}
+		}
+	}
+	if v, ok := uc.mutation.LastName(); ok {
+		if err := user.LastNameValidator(v); err != nil {
+			return &ValidationError{Name: "last_name", err: fmt.Errorf(`ent: validator failed for field "User.last_name": %w`, err)}
+		}
+	}
+	if v, ok := uc.mutation.ID(); ok {
+		if err := user.IDValidator(v); err != nil {
+			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "User.id": %w`, err)}
 		}
 	}
 	return nil
@@ -290,8 +330,13 @@ func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(string); ok {
+			_node.ID = id
+		} else {
+			return nil, fmt.Errorf("unexpected User.ID type: %T", _spec.ID.Value)
+		}
+	}
 	uc.mutation.id = &_node.ID
 	uc.mutation.done = true
 	return _node, nil
@@ -300,14 +345,12 @@ func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
 func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	var (
 		_node = &User{config: uc.config}
-		_spec = &sqlgraph.CreateSpec{
-			Table: user.Table,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
-				Column: user.FieldID,
-			},
-		}
+		_spec = sqlgraph.NewCreateSpec(user.Table, sqlgraph.NewFieldSpec(user.FieldID, field.TypeString))
 	)
+	if id, ok := uc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = id
+	}
 	if value, ok := uc.mutation.CreateTime(); ok {
 		_spec.SetField(user.FieldCreateTime, field.TypeTime, value)
 		_node.CreateTime = value
@@ -316,17 +359,17 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldUpdateTime, field.TypeTime, value)
 		_node.UpdateTime = value
 	}
-	if value, ok := uc.mutation.UserName(); ok {
-		_spec.SetField(user.FieldUserName, field.TypeString, value)
-		_node.UserName = value
-	}
 	if value, ok := uc.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 		_node.Email = value
 	}
+	if value, ok := uc.mutation.IsEmailVerified(); ok {
+		_spec.SetField(user.FieldIsEmailVerified, field.TypeBool, value)
+		_node.IsEmailVerified = value
+	}
 	if value, ok := uc.mutation.PasswordHash(); ok {
 		_spec.SetField(user.FieldPasswordHash, field.TypeBytes, value)
-		_node.PasswordHash = &value
+		_node.PasswordHash = value
 	}
 	if value, ok := uc.mutation.Biography(); ok {
 		_spec.SetField(user.FieldBiography, field.TypeString, value)
@@ -338,7 +381,7 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	}
 	if value, ok := uc.mutation.Avatar(); ok {
 		_spec.SetField(user.FieldAvatar, field.TypeString, value)
-		_node.Avatar = &value
+		_node.Avatar = value
 	}
 	if value, ok := uc.mutation.FriendsIds(); ok {
 		_spec.SetField(user.FieldFriendsIds, field.TypeJSON, value)
@@ -352,9 +395,13 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldTheme, field.TypeEnum, value)
 		_node.Theme = value
 	}
-	if value, ok := uc.mutation.Name(); ok {
-		_spec.SetField(user.FieldName, field.TypeString, value)
-		_node.Name = &value
+	if value, ok := uc.mutation.FirstName(); ok {
+		_spec.SetField(user.FieldFirstName, field.TypeString, value)
+		_node.FirstName = value
+	}
+	if value, ok := uc.mutation.LastName(); ok {
+		_spec.SetField(user.FieldLastName, field.TypeString, value)
+		_node.LastName = value
 	}
 	return _node, _spec
 }
@@ -400,10 +447,6 @@ func (ucb *UserCreateBulk) Save(ctx context.Context) ([]*User, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				mutation.done = true
 				return nodes[i], nil
 			})

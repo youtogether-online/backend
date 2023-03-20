@@ -4,18 +4,18 @@ import (
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/sirupsen/logrus"
 	"sync"
+	"time"
 )
 
 type Config struct {
 	IsDebug *bool `yaml:"is_debug" env-required:"true"`
 
-	Token struct {
-		Secret                   string `yaml:"secret" env-required:"true"`
-		RefreshName              string `yaml:"refresh_name" env-default:"refresh_token"`
-		AccessName               string `yaml:"access_name" env-default:"access_token"`
-		RefreshDurationInSeconds int    `yaml:"refresh_duration_in_seconds" env-default:"604800"`
-		AccessDurationInSeconds  int    `yaml:"access_duration_in_seconds" env-default:"7200"`
-	} `yaml:"token"`
+	Session struct {
+		Secret            string        `yaml:"secret" env-required:"true"`
+		CookieName        string        `yaml:"cookie_name" env-default:"session_id"`
+		DurationInSeconds int           `yaml:"refresh_duration_in_seconds" env-default:"2592000"`
+		Duration          time.Duration `yaml:"duration" env-default:"720h"`
+	} `yaml:"session"`
 
 	Listen struct {
 		Host string `yaml:"host" env-default:"127.0.0.1"`
@@ -24,7 +24,7 @@ type Config struct {
 
 	DB struct {
 		Postgres struct {
-			UserName string `yaml:"user_name" env-required:"true"`
+			Username string `yaml:"username" env-required:"true"`
 			DBName   string `yaml:"db_name" env-required:"true"`
 			Password string `yaml:"password" env-required:"true"`
 			Host     string `yaml:"host" env-default:"127.0.0.1"`
@@ -32,7 +32,7 @@ type Config struct {
 		} `yaml:"postgres"`
 
 		Redis struct {
-			UserName string `yaml:"user_name" env-default:"redis"`
+			Username string `yaml:"username" env-default:"redis"`
 			Password string `yaml:"password" env-required:"true"`
 			DB       int    `yaml:"db" env-default:"0"`
 			Host     string `yaml:"host" env-default:"127.0.0.1"`
@@ -42,10 +42,11 @@ type Config struct {
 
 	Regexp struct {
 		Email        string `yaml:"email" env-default:"."`
-		UserName     string `yaml:"user_name" env-default:"."`
+		Username     string `yaml:"username" env-default:"."`
 		Name         string `yaml:"name" env-default:"."`
 		UserPassword string `yaml:"user_password" env-default:"."`
 		RoomPassword string `yaml:"room_password" env-default:"."`
+		FilePath     string `yaml:"filePath" env-default:"."`
 	} `yaml:"regexp"`
 
 	Email struct {
@@ -65,7 +66,7 @@ func GetConfig() *Config {
 	once.Do(func() {
 		inst = &Config{}
 
-		if err := cleanenv.ReadConfig("configs/config.yml", inst); err != nil {
+		if err := cleanenv.ReadConfig("C:\\Users\\matve\\GolandProjects\\you-together\\configs\\config.yml", inst); err != nil {
 			help, _ := cleanenv.GetDescription(inst, nil)
 			logrus.Info(help)
 			logrus.Fatalf("error occurred while reading config file: %v", err)
@@ -74,11 +75,11 @@ func GetConfig() *Config {
 		if inst.Regexp.Email == "." {
 			logrus.Warn("email regexp is not set. Using \".\" as a default value")
 		}
-		if inst.Regexp.UserName == "." {
-			logrus.Warn("user name regexp is not set. Using \".\" as a default value")
+		if inst.Regexp.Username == "." {
+			logrus.Warn("username regexp is not set. Using \".\" as a default value")
 		}
 		if inst.Regexp.Name == "." {
-			logrus.Warn("name regexp is not set. Using \".\" as a default value")
+			logrus.Warn("names regexp is not set. Using \".\" as a default value")
 		}
 		if inst.Regexp.UserPassword == "." {
 			logrus.Warn("user password regexp is not set. Using \".\" as a default value")

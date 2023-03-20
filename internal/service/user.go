@@ -4,30 +4,32 @@ import (
 	"context"
 	"github.com/wtkeqrf0/you_together/ent"
 	"github.com/wtkeqrf0/you_together/internal/controller/dto"
+	"time"
 )
 
-type UserStorage interface {
-	FindMe(ctx context.Context, id int) (dto.MyUserDTO, error)
-	FindUserById(ctx context.Context, id int) (dto.UserDTO, error)
+type UserPostgres interface {
+	FindMe(ctx context.Context, username string) (dto.MyUserDTO, error)
+	FindUserByUsername(ctx context.Context, username string) (dto.UserDTO, error)
 	FindAllUsers(ctx context.Context, limit int) ([]*ent.User, error)
 	UpdateUser(ctx context.Context, user *ent.User) error
 	DeleteUser(ctx context.Context, id int) error
 }
 
 type UserService struct {
-	storage UserStorage
+	postgres UserPostgres
+	redis    UserRedis
 }
 
-func NewUserService(storage UserStorage) *UserService {
-	return &UserService{storage: storage}
+func NewUserService(postgres UserPostgres, redis UserRedis) *UserService {
+	return &UserService{postgres: postgres, redis: redis}
 }
 
-func (u UserService) FindUserById(id int) (dto.UserDTO, error) {
-	return u.storage.FindUserById(context.Background(), id)
+func (u UserService) FindUserByUsername(username string) (dto.UserDTO, error) {
+	return u.postgres.FindUserByUsername(context.Background(), username)
 }
 
-func (u UserService) FindMe(id int) (dto.MyUserDTO, error) {
-	user, err := u.storage.FindMe(context.Background(), id)
+func (u UserService) FindMe(username string) (dto.MyUserDTO, error) {
+	user, err := u.postgres.FindMe(context.Background(), username)
 	if err != nil {
 		return dto.MyUserDTO{}, err
 	}
@@ -45,4 +47,19 @@ func (u UserService) UpdateUser(user ent.User) error {
 
 func (u UserService) DeleteUser(id int) error {
 	return nil
+}
+
+type UserRedis interface {
+	ContainsKeys(ctx context.Context, keys ...string) (int64, error)
+	SetVariable(ctx context.Context, key string, value any, exp time.Duration) error
+}
+
+// ContainsKeys of redis by key
+func (u UserService) ContainsKeys(keys ...string) (int64, error) {
+	return u.redis.ContainsKeys(context.Background(), keys...)
+}
+
+// SetVariable of redis by key, his value and exploration time
+func (u UserService) SetVariable(key string, value any, exp time.Duration) error {
+	return u.redis.SetVariable(context.Background(), key, value, exp)
 }

@@ -8,21 +8,40 @@ import (
 )
 
 var (
-	// UsersColumns holds the columns for the "users" table.
-	UsersColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+	// RoomsColumns holds the columns for the "rooms" table.
+	RoomsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString},
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
-		{Name: "user_name", Type: field.TypeString, Unique: true, Nullable: true},
+		{Name: "name", Type: field.TypeString, Unique: true},
+		{Name: "privacy", Type: field.TypeEnum, Enums: []string{"PRIVATE", "FRIENDS", "PUBLIC"}, Default: "PUBLIC"},
+		{Name: "password_hash", Type: field.TypeString, Nullable: true},
+		{Name: "has_chat", Type: field.TypeBool, Default: true},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 140},
+		{Name: "avatar", Type: field.TypeString, Nullable: true},
+	}
+	// RoomsTable holds the schema information for the "rooms" table.
+	RoomsTable = &schema.Table{
+		Name:       "rooms",
+		Columns:    RoomsColumns,
+		PrimaryKey: []*schema.Column{RoomsColumns[0]},
+	}
+	// UsersColumns holds the columns for the "users" table.
+	UsersColumns = []*schema.Column{
+		{Name: "username", Type: field.TypeString, Unique: true},
+		{Name: "create_time", Type: field.TypeTime},
+		{Name: "update_time", Type: field.TypeTime},
 		{Name: "email", Type: field.TypeString, Unique: true},
-		{Name: "password_hash", Type: field.TypeBytes, Nullable: true},
+		{Name: "is_email_verified", Type: field.TypeBool, Nullable: true},
+		{Name: "password_hash", Type: field.TypeBytes},
 		{Name: "biography", Type: field.TypeString, Nullable: true, Size: 140},
 		{Name: "role", Type: field.TypeEnum, Enums: []string{"USER", "ADMIN"}, Default: "USER"},
 		{Name: "avatar", Type: field.TypeString, Nullable: true},
 		{Name: "friends_ids", Type: field.TypeJSON, Nullable: true},
 		{Name: "language", Type: field.TypeEnum, Enums: []string{"EN", "RU"}, Default: "EN"},
 		{Name: "theme", Type: field.TypeEnum, Enums: []string{"WHITE", "DARK", "SYSTEM"}, Default: "SYSTEM"},
-		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "first_name", Type: field.TypeString, Nullable: true},
+		{Name: "last_name", Type: field.TypeString, Nullable: true},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{
@@ -32,6 +51,7 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		RoomsTable,
 		UsersTable,
 	}
 )

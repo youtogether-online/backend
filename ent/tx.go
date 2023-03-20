@@ -12,6 +12,8 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
+	// Room is the client for interacting with the Room builders.
+	Room *RoomClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 
@@ -34,7 +36,7 @@ type (
 	// signature, CommitFunc(f) is a Committer that calls f.
 	CommitFunc func(context.Context, *Tx) error
 
-	// CommitHook defines the "commit middlewares". A function that gets a Committer
+	// CommitHook defines the "commit middleware". A function that gets a Committer
 	// and returns a Committer. For example:
 	//
 	//	hook := func(next ent.Committer) ent.Committer {
@@ -90,7 +92,7 @@ type (
 	// signature, RollbackFunc(f) is a Rollbacker that calls f.
 	RollbackFunc func(context.Context, *Tx) error
 
-	// RollbackHook defines the "rollback middlewares". A function that gets a Rollbacker
+	// RollbackHook defines the "rollback middleware". A function that gets a Rollbacker
 	// and returns a Rollbacker. For example:
 	//
 	//	hook := func(next ent.Rollbacker) ent.Rollbacker {
@@ -145,6 +147,7 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
+	tx.Room = NewRoomClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }
 
@@ -155,7 +158,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: User.QueryXXX(), the query will be executed
+// applies a query, for example: Room.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

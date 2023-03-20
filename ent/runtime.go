@@ -5,6 +5,7 @@ package ent
 import (
 	"time"
 
+	"github.com/wtkeqrf0/you_together/ent/room"
 	"github.com/wtkeqrf0/you_together/ent/schema"
 	"github.com/wtkeqrf0/you_together/ent/user"
 )
@@ -13,6 +14,33 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	roomMixin := schema.Room{}.Mixin()
+	roomMixinFields0 := roomMixin[0].Fields()
+	_ = roomMixinFields0
+	roomFields := schema.Room{}.Fields()
+	_ = roomFields
+	// roomDescCreateTime is the schema descriptor for create_time field.
+	roomDescCreateTime := roomMixinFields0[0].Descriptor()
+	// room.DefaultCreateTime holds the default value on creation for the create_time field.
+	room.DefaultCreateTime = roomDescCreateTime.Default.(func() time.Time)
+	// roomDescUpdateTime is the schema descriptor for update_time field.
+	roomDescUpdateTime := roomMixinFields0[1].Descriptor()
+	// room.DefaultUpdateTime holds the default value on creation for the update_time field.
+	room.DefaultUpdateTime = roomDescUpdateTime.Default.(func() time.Time)
+	// room.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
+	room.UpdateDefaultUpdateTime = roomDescUpdateTime.UpdateDefault.(func() time.Time)
+	// roomDescName is the schema descriptor for name field.
+	roomDescName := roomFields[0].Descriptor()
+	// room.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	room.NameValidator = roomDescName.Validators[0].(func(string) error)
+	// roomDescHasChat is the schema descriptor for has_chat field.
+	roomDescHasChat := roomFields[3].Descriptor()
+	// room.DefaultHasChat holds the default value on creation for the has_chat field.
+	room.DefaultHasChat = roomDescHasChat.Default.(bool)
+	// roomDescDescription is the schema descriptor for description field.
+	roomDescDescription := roomFields[4].Descriptor()
+	// room.DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
+	room.DescriptionValidator = roomDescDescription.Validators[0].(func(string) error)
 	userMixin := schema.User{}.Mixin()
 	userMixinFields0 := userMixin[0].Fields()
 	_ = userMixinFields0
@@ -28,20 +56,26 @@ func init() {
 	user.DefaultUpdateTime = userDescUpdateTime.Default.(func() time.Time)
 	// user.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
 	user.UpdateDefaultUpdateTime = userDescUpdateTime.UpdateDefault.(func() time.Time)
-	// userDescUserName is the schema descriptor for user_name field.
-	userDescUserName := userFields[0].Descriptor()
-	// user.UserNameValidator is a validation for the "user_name" field. It is called by the builders before save.
-	user.UserNameValidator = userDescUserName.Validators[0].(func(string) error)
 	// userDescEmail is the schema descriptor for email field.
 	userDescEmail := userFields[1].Descriptor()
-	// user.EmailValidator is a validation for the "email" field. It is called by the builders before save.
+	// user.EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	user.EmailValidator = userDescEmail.Validators[0].(func(string) error)
 	// userDescBiography is the schema descriptor for biography field.
-	userDescBiography := userFields[3].Descriptor()
-	// user.BiographyValidator is a validation for the "biography" field. It is called by the builders before save.
+	userDescBiography := userFields[4].Descriptor()
+	// user.BiographyValidator is a validator for the "biography" field. It is called by the builders before save.
 	user.BiographyValidator = userDescBiography.Validators[0].(func(string) error)
-	// userDescName is the schema descriptor for name field.
-	userDescName := userFields[9].Descriptor()
-	// user.NameValidator is a validation for the "name" field. It is called by the builders before save.
-	user.NameValidator = userDescName.Validators[0].(func(string) error)
+	// userDescFirstName is the schema descriptor for first_name field.
+	userDescFirstName := userFields[10].Descriptor()
+	// user.FirstNameValidator is a validator for the "first_name" field. It is called by the builders before save.
+	user.FirstNameValidator = userDescFirstName.Validators[0].(func(string) error)
+	// userDescLastName is the schema descriptor for last_name field.
+	userDescLastName := userFields[11].Descriptor()
+	// user.LastNameValidator is a validator for the "last_name" field. It is called by the builders before save.
+	user.LastNameValidator = userDescLastName.Validators[0].(func(string) error)
+	// userDescID is the schema descriptor for id field.
+	userDescID := userFields[0].Descriptor()
+	// user.DefaultID holds the default value on creation for the id field.
+	user.DefaultID = userDescID.Default.(func() string)
+	// user.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	user.IDValidator = userDescID.Validators[0].(func(string) error)
 }

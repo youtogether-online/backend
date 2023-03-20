@@ -11,15 +11,15 @@ const (
 	// Label holds the string label denoting the user type in the database.
 	Label = "user"
 	// FieldID holds the string denoting the id field in the database.
-	FieldID = "id"
+	FieldID = "username"
 	// FieldCreateTime holds the string denoting the create_time field in the database.
 	FieldCreateTime = "create_time"
 	// FieldUpdateTime holds the string denoting the update_time field in the database.
 	FieldUpdateTime = "update_time"
-	// FieldUserName holds the string denoting the user_name field in the database.
-	FieldUserName = "user_name"
 	// FieldEmail holds the string denoting the email field in the database.
 	FieldEmail = "email"
+	// FieldIsEmailVerified holds the string denoting the is_email_verified field in the database.
+	FieldIsEmailVerified = "is_email_verified"
 	// FieldPasswordHash holds the string denoting the password_hash field in the database.
 	FieldPasswordHash = "password_hash"
 	// FieldBiography holds the string denoting the biography field in the database.
@@ -34,8 +34,10 @@ const (
 	FieldLanguage = "language"
 	// FieldTheme holds the string denoting the theme field in the database.
 	FieldTheme = "theme"
-	// FieldName holds the string denoting the name field in the database.
-	FieldName = "name"
+	// FieldFirstName holds the string denoting the first_name field in the database.
+	FieldFirstName = "first_name"
+	// FieldLastName holds the string denoting the last_name field in the database.
+	FieldLastName = "last_name"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 )
@@ -45,8 +47,8 @@ var Columns = []string{
 	FieldID,
 	FieldCreateTime,
 	FieldUpdateTime,
-	FieldUserName,
 	FieldEmail,
+	FieldIsEmailVerified,
 	FieldPasswordHash,
 	FieldBiography,
 	FieldRole,
@@ -54,7 +56,8 @@ var Columns = []string{
 	FieldFriendsIds,
 	FieldLanguage,
 	FieldTheme,
-	FieldName,
+	FieldFirstName,
+	FieldLastName,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -74,14 +77,18 @@ var (
 	DefaultUpdateTime func() time.Time
 	// UpdateDefaultUpdateTime holds the default value on update for the "update_time" field.
 	UpdateDefaultUpdateTime func() time.Time
-	// UserNameValidator is a validation for the "user_name" field. It is called by the builders before save.
-	UserNameValidator func(string) error
-	// EmailValidator is a validation for the "email" field. It is called by the builders before save.
+	// EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	EmailValidator func(string) error
-	// BiographyValidator is a validation for the "biography" field. It is called by the builders before save.
+	// BiographyValidator is a validator for the "biography" field. It is called by the builders before save.
 	BiographyValidator func(string) error
-	// NameValidator is a validation for the "name" field. It is called by the builders before save.
-	NameValidator func(string) error
+	// FirstNameValidator is a validator for the "first_name" field. It is called by the builders before save.
+	FirstNameValidator func(string) error
+	// LastNameValidator is a validator for the "last_name" field. It is called by the builders before save.
+	LastNameValidator func(string) error
+	// DefaultID holds the default value on creation for the "id" field.
+	DefaultID func() string
+	// IDValidator is a validator for the "id" field. It is called by the builders before save.
+	IDValidator func(string) error
 )
 
 // Role defines the type for the "role" enum field.
@@ -100,7 +107,7 @@ func (r Role) String() string {
 	return string(r)
 }
 
-// RoleValidator is a validation for the "role" field enum values. It is called by the builders before save.
+// RoleValidator is a validator for the "role" field enum values. It is called by the builders before save.
 func RoleValidator(r Role) error {
 	switch r {
 	case RoleUSER, RoleADMIN:
@@ -126,7 +133,7 @@ func (l Language) String() string {
 	return string(l)
 }
 
-// LanguageValidator is a validation for the "language" field enum values. It is called by the builders before save.
+// LanguageValidator is a validator for the "language" field enum values. It is called by the builders before save.
 func LanguageValidator(l Language) error {
 	switch l {
 	case LanguageEN, LanguageRU:
@@ -153,7 +160,7 @@ func (t Theme) String() string {
 	return string(t)
 }
 
-// ThemeValidator is a validation for the "theme" field enum values. It is called by the builders before save.
+// ThemeValidator is a validator for the "theme" field enum values. It is called by the builders before save.
 func ThemeValidator(t Theme) error {
 	switch t {
 	case ThemeWHITE, ThemeDARK, ThemeSYSTEM:

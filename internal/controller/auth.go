@@ -8,11 +8,9 @@ import (
 	"gopkg.in/mail.v2"
 	"math/rand"
 	"net/http"
-	"strings"
-	"time"
 )
 
-const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+var chars = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
 // sign-in authentication by email and password. Returns a pair of tokens in cookies
 func (h Handler) signIn(c *gin.Context) {
@@ -27,10 +25,10 @@ func (h Handler) signIn(c *gin.Context) {
 		return
 	}
 
-	customer, err := h.auth.AuthUserByEmail(auth.Email)
+	passwordHash, username, err := h.auth.AuthUserByEmail(auth.Email)
 
 	if err != nil {
-		customer, err = h.auth.CreateUser(auth.Email, auth.Password)
+		passwordHash, username, err = h.auth.CreateUserWithPassword(auth.Email, auth.Password)
 
 		if err != nil {
 			c.Error(exceptions.ServerError.AddErr(err))
@@ -38,27 +36,25 @@ func (h Handler) signIn(c *gin.Context) {
 		}
 	}
 
-	if err = bcrypt.CompareHashAndPassword(*customer.PasswordHash, []byte(auth.Password)); err != nil {
+	if err = bcrypt.CompareHashAndPassword(passwordHash, []byte(auth.Password)); err != nil {
 		c.Error(exceptions.PasswordError.AddErr(err))
 		return
 	}
 
-	t, err := h.auth.GenerateJWT(float64(customer.ID))
+	id, _, err := h.sessions.GenerateSession(username, c.ClientIP(), auth.Device)
 	if err != nil {
-		c.Error(exceptions.ServerError)
+		c.Error(exceptions.ServerError.AddErr(err))
 		return
 	}
 
-	c.SetCookie(cfg.Token.AccessName, t.AT, cfg.Token.AccessDurationInSeconds,
+	c.SetCookie(cfg.Session.CookieName, id, cfg.Session.DurationInSeconds,
 		"/api", cfg.Listen.Host, false, true)
 
-	c.SetCookie(cfg.Token.RefreshName, t.RT, cfg.Token.RefreshDurationInSeconds,
-		"/api", cfg.Listen.Host, false, true)
-
+	c.Status(http.StatusOK)
 }
 
-// sendSecretCode to users email and save it
-func (h Handler) sendSecretCode(c *gin.Context) {
+// saveMail to users email and save it
+func (h Handler) saveMail(c *gin.Context) {
 	to := &dto.EmailDTO{}
 	if err := c.ShouldBindJSON(to); err != nil {
 		c.Error(exceptions.DataError.AddErr(err))
@@ -71,7 +67,7 @@ func (h Handler) sendSecretCode(c *gin.Context) {
 	}
 
 	code := generateSecretCode()
-	if err := h.redis.SetCodes(to.Email, code); err != nil {
+	if err := h.auth.SetCodes(to.Email, code); err != nil {
 		c.Error(exceptions.ServerError.AddErr(err))
 		return
 	}
@@ -84,8 +80,8 @@ func (h Handler) sendSecretCode(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-// compareSecretCode with saved code by email. Returns a pair of tokens in cookies
-func (h Handler) compareSecretCode(c *gin.Context) {
+// checkMail with saved code by email. Returns a pair of tokens in cookies
+func (h Handler) checkMail(c *gin.Context) {
 	auth := &dto.EmailWithCodeDTO{}
 	if err := c.ShouldBindJSON(auth); err != nil {
 		c.Error(exceptions.DataError.AddErr(err))
@@ -97,15 +93,23 @@ func (h Handler) compareSecretCode(c *gin.Context) {
 		return
 	}
 
-	if !h.redis.ContainsPopCode(auth.Email, auth.Code) {
+	if !h.auth.EqualsPopCode(auth.Email, auth.Code) {
 		c.Error(exceptions.CodeError)
 		return
 	}
 
-	customer, err := h.auth.AuthUserByEmail(auth.Email)
+	ok, username, err := h.auth.AuthUserWithInfo(auth.Email)
 
 	if err != nil {
-		customer, err = h.auth.CreateUser(auth.Email, "")
+		username, err = h.auth.CreateUserByEmail(auth.Email)
+
+		if err != nil {
+			c.Error(exceptions.ServerError.AddErr(err))
+			return
+		}
+
+	} else if !ok {
+		err = h.auth.SetEmailVerified(auth.Email)
 
 		if err != nil {
 			c.Error(exceptions.ServerError.AddErr(err))
@@ -113,50 +117,41 @@ func (h Handler) compareSecretCode(c *gin.Context) {
 		}
 	}
 
-	t, err := h.auth.GenerateJWT(float64(customer.ID))
+	id, _, err := h.sessions.GenerateSession(username, c.ClientIP(), auth.Device)
 	if err != nil {
 		c.Error(exceptions.ServerError.AddErr(err))
 		return
 	}
-	c.SetCookie(cfg.Token.AccessName, t.AT, cfg.Token.AccessDurationInSeconds,
+
+	c.SetCookie(cfg.Session.CookieName, id, cfg.Session.DurationInSeconds,
 		"/api", cfg.Listen.Host, false, true)
 
-	c.SetCookie(cfg.Token.RefreshName, t.RT, cfg.Token.RefreshDurationInSeconds,
-		"/api", cfg.Listen.Host, false, true)
+	c.Status(http.StatusOK)
 }
 
-func (h Handler) logout(c *gin.Context) {
-	at, _ := c.Cookie(cfg.Token.AccessName)
-	atClaims, err := h.auth.ValidateJWT(at)
-	if err == nil {
-		if err = h.redis.SetVariable(at, atClaims["sub"].(float64), time.Now().
-			Sub(time.UnixMilli(int64(atClaims["exp"].(float64))))); err != nil {
-			c.Error(exceptions.ServerError.AddErr(err))
-			return
-		}
+// signOut deletes the session ID from the database, which makes it invalid
+func (h Handler) signOut(c *gin.Context) {
+	id, err := c.Cookie(cfg.Session.CookieName)
+	if err != nil {
+		c.Status(http.StatusOK)
+		return
 	}
 
-	rt, _ := c.Cookie(cfg.Token.RefreshName)
-	rtClaims, err := h.auth.ValidateJWT(rt)
-	if err == nil {
-		if err = h.redis.SetVariable(at, rtClaims["sub"].(float64), time.Now().
-			Sub(time.UnixMilli(int64(rtClaims["exp"].(float64))))); err != nil {
-			c.Error(exceptions.ServerError.AddErr(err))
-			return
-		}
+	if err = h.auth.DelSession(id); err != nil {
+		c.Error(exceptions.ServerError.AddErr(err))
+		return
 	}
 
 	c.Status(http.StatusOK)
 }
 
-// generateSecretPassword for email auth
+// generateSecretCode for email auth
 func generateSecretCode() string {
-	all := []rune(chars)
-	var b strings.Builder
-	for i := 0; i < 5; i++ {
-		b.WriteRune(all[rand.Intn(len(all))])
+	b := make([]rune, 5)
+	for i := range b {
+		b[i] = chars[rand.Intn(len(chars))]
 	}
-	return b.String()
+	return string(b)
 }
 
 // sendEmail to user with a secret code
