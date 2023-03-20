@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -12,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/wtkeqrf0/you_together/ent/predicate"
 	"github.com/wtkeqrf0/you_together/ent/room"
+	"github.com/wtkeqrf0/you_together/ent/user"
 )
 
 // RoomQuery is the builder for querying Room entities.
@@ -21,6 +23,7 @@ type RoomQuery struct {
 	order      []OrderFunc
 	inters     []Interceptor
 	predicates []predicate.Room
+	withUsers  *UserQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -55,6 +58,28 @@ func (rq *RoomQuery) Unique(unique bool) *RoomQuery {
 func (rq *RoomQuery) Order(o ...OrderFunc) *RoomQuery {
 	rq.order = append(rq.order, o...)
 	return rq
+}
+
+// QueryUsers chains the current query on the "users" edge.
+func (rq *RoomQuery) QueryUsers() *UserQuery {
+	query := (&UserClient{config: rq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := rq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := rq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(room.Table, room.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, room.UsersTable, room.UsersPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Room entity from the query.
@@ -249,10 +274,22 @@ func (rq *RoomQuery) Clone() *RoomQuery {
 		order:      append([]OrderFunc{}, rq.order...),
 		inters:     append([]Interceptor{}, rq.inters...),
 		predicates: append([]predicate.Room{}, rq.predicates...),
+		withUsers:  rq.withUsers.Clone(),
 		// clone intermediate query.
 		sql:  rq.sql.Clone(),
 		path: rq.path,
 	}
+}
+
+// WithUsers tells the query-builder to eager-load the nodes that are connected to
+// the "users" edge. The optional arguments are used to configure the query builder of the edge.
+func (rq *RoomQuery) WithUsers(opts ...func(*UserQuery)) *RoomQuery {
+	query := (&UserClient{config: rq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	rq.withUsers = query
+	return rq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -331,8 +368,11 @@ func (rq *RoomQuery) prepareQuery(ctx context.Context) error {
 
 func (rq *RoomQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Room, error) {
 	var (
-		nodes = []*Room{}
-		_spec = rq.querySpec()
+		nodes       = []*Room{}
+		_spec       = rq.querySpec()
+		loadedTypes = [1]bool{
+			rq.withUsers != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Room).scanValues(nil, columns)
@@ -340,6 +380,7 @@ func (rq *RoomQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Room, e
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &Room{config: rq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -351,7 +392,76 @@ func (rq *RoomQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Room, e
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := rq.withUsers; query != nil {
+		if err := rq.loadUsers(ctx, query, nodes,
+			func(n *Room) { n.Edges.Users = []*User{} },
+			func(n *Room, e *User) { n.Edges.Users = append(n.Edges.Users, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (rq *RoomQuery) loadUsers(ctx context.Context, query *UserQuery, nodes []*Room, init func(*Room), assign func(*Room, *User)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[string]*Room)
+	nids := make(map[string]map[*Room]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(room.UsersTable)
+		s.Join(joinT).On(s.C(user.FieldID), joinT.C(room.UsersPrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(room.UsersPrimaryKey[1]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(room.UsersPrimaryKey[1]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullString)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := values[0].(*sql.NullString).String
+				inValue := values[1].(*sql.NullString).String
+				if nids[inValue] == nil {
+					nids[inValue] = map[*Room]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*User](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "users" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
 }
 
 func (rq *RoomQuery) sqlCount(ctx context.Context) (int, error) {

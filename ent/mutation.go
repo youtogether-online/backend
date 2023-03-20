@@ -37,13 +37,16 @@ type RoomMutation struct {
 	id            *string
 	create_time   *time.Time
 	update_time   *time.Time
-	name          *string
+	custom_name   *string
+	owner         *string
 	privacy       *room.Privacy
 	password_hash *string
 	has_chat      *bool
 	description   *string
-	avatar        *string
 	clearedFields map[string]struct{}
+	users         map[string]struct{}
+	removedusers  map[string]struct{}
+	clearedusers  bool
 	done          bool
 	oldValue      func(context.Context) (*Room, error)
 	predicates    []predicate.Room
@@ -117,6 +120,12 @@ func (m RoomMutation) Tx() (*Tx, error) {
 	tx := &Tx{config: m.config}
 	tx.init()
 	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Room entities.
+func (m *RoomMutation) SetID(id string) {
+	m.id = &id
 }
 
 // ID returns the ID value in the mutation. Note that the ID is only available
@@ -219,40 +228,89 @@ func (m *RoomMutation) ResetUpdateTime() {
 	m.update_time = nil
 }
 
-// SetName sets the "name" field.
-func (m *RoomMutation) SetName(s string) {
-	m.name = &s
+// SetCustomName sets the "custom_name" field.
+func (m *RoomMutation) SetCustomName(s string) {
+	m.custom_name = &s
 }
 
-// Name returns the value of the "name" field in the mutation.
-func (m *RoomMutation) Name() (r string, exists bool) {
-	v := m.name
+// CustomName returns the value of the "custom_name" field in the mutation.
+func (m *RoomMutation) CustomName() (r string, exists bool) {
+	v := m.custom_name
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldName returns the old "name" field's value of the Room entity.
+// OldCustomName returns the old "custom_name" field's value of the Room entity.
 // If the Room object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *RoomMutation) OldName(ctx context.Context) (v string, err error) {
+func (m *RoomMutation) OldCustomName(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldName is only allowed on UpdateOne operations")
+		return v, errors.New("OldCustomName is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldName requires an ID field in the mutation")
+		return v, errors.New("OldCustomName requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldName: %w", err)
+		return v, fmt.Errorf("querying old value for OldCustomName: %w", err)
 	}
-	return oldValue.Name, nil
+	return oldValue.CustomName, nil
 }
 
-// ResetName resets all changes to the "name" field.
-func (m *RoomMutation) ResetName() {
-	m.name = nil
+// ClearCustomName clears the value of the "custom_name" field.
+func (m *RoomMutation) ClearCustomName() {
+	m.custom_name = nil
+	m.clearedFields[room.FieldCustomName] = struct{}{}
+}
+
+// CustomNameCleared returns if the "custom_name" field was cleared in this mutation.
+func (m *RoomMutation) CustomNameCleared() bool {
+	_, ok := m.clearedFields[room.FieldCustomName]
+	return ok
+}
+
+// ResetCustomName resets all changes to the "custom_name" field.
+func (m *RoomMutation) ResetCustomName() {
+	m.custom_name = nil
+	delete(m.clearedFields, room.FieldCustomName)
+}
+
+// SetOwner sets the "owner" field.
+func (m *RoomMutation) SetOwner(s string) {
+	m.owner = &s
+}
+
+// Owner returns the value of the "owner" field in the mutation.
+func (m *RoomMutation) Owner() (r string, exists bool) {
+	v := m.owner
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOwner returns the old "owner" field's value of the Room entity.
+// If the Room object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RoomMutation) OldOwner(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOwner is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOwner requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOwner: %w", err)
+	}
+	return oldValue.Owner, nil
+}
+
+// ResetOwner resets all changes to the "owner" field.
+func (m *RoomMutation) ResetOwner() {
+	m.owner = nil
 }
 
 // SetPrivacy sets the "privacy" field.
@@ -425,53 +483,58 @@ func (m *RoomMutation) ResetDescription() {
 	delete(m.clearedFields, room.FieldDescription)
 }
 
-// SetAvatar sets the "avatar" field.
-func (m *RoomMutation) SetAvatar(s string) {
-	m.avatar = &s
-}
-
-// Avatar returns the value of the "avatar" field in the mutation.
-func (m *RoomMutation) Avatar() (r string, exists bool) {
-	v := m.avatar
-	if v == nil {
-		return
+// AddUserIDs adds the "users" edge to the User entity by ids.
+func (m *RoomMutation) AddUserIDs(ids ...string) {
+	if m.users == nil {
+		m.users = make(map[string]struct{})
 	}
-	return *v, true
-}
-
-// OldAvatar returns the old "avatar" field's value of the Room entity.
-// If the Room object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *RoomMutation) OldAvatar(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldAvatar is only allowed on UpdateOne operations")
+	for i := range ids {
+		m.users[ids[i]] = struct{}{}
 	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldAvatar requires an ID field in the mutation")
+}
+
+// ClearUsers clears the "users" edge to the User entity.
+func (m *RoomMutation) ClearUsers() {
+	m.clearedusers = true
+}
+
+// UsersCleared reports if the "users" edge to the User entity was cleared.
+func (m *RoomMutation) UsersCleared() bool {
+	return m.clearedusers
+}
+
+// RemoveUserIDs removes the "users" edge to the User entity by IDs.
+func (m *RoomMutation) RemoveUserIDs(ids ...string) {
+	if m.removedusers == nil {
+		m.removedusers = make(map[string]struct{})
 	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldAvatar: %w", err)
+	for i := range ids {
+		delete(m.users, ids[i])
+		m.removedusers[ids[i]] = struct{}{}
 	}
-	return oldValue.Avatar, nil
 }
 
-// ClearAvatar clears the value of the "avatar" field.
-func (m *RoomMutation) ClearAvatar() {
-	m.avatar = nil
-	m.clearedFields[room.FieldAvatar] = struct{}{}
+// RemovedUsers returns the removed IDs of the "users" edge to the User entity.
+func (m *RoomMutation) RemovedUsersIDs() (ids []string) {
+	for id := range m.removedusers {
+		ids = append(ids, id)
+	}
+	return
 }
 
-// AvatarCleared returns if the "avatar" field was cleared in this mutation.
-func (m *RoomMutation) AvatarCleared() bool {
-	_, ok := m.clearedFields[room.FieldAvatar]
-	return ok
+// UsersIDs returns the "users" edge IDs in the mutation.
+func (m *RoomMutation) UsersIDs() (ids []string) {
+	for id := range m.users {
+		ids = append(ids, id)
+	}
+	return
 }
 
-// ResetAvatar resets all changes to the "avatar" field.
-func (m *RoomMutation) ResetAvatar() {
-	m.avatar = nil
-	delete(m.clearedFields, room.FieldAvatar)
+// ResetUsers resets all changes to the "users" edge.
+func (m *RoomMutation) ResetUsers() {
+	m.users = nil
+	m.clearedusers = false
+	m.removedusers = nil
 }
 
 // Where appends a list predicates to the RoomMutation builder.
@@ -515,8 +578,11 @@ func (m *RoomMutation) Fields() []string {
 	if m.update_time != nil {
 		fields = append(fields, room.FieldUpdateTime)
 	}
-	if m.name != nil {
-		fields = append(fields, room.FieldName)
+	if m.custom_name != nil {
+		fields = append(fields, room.FieldCustomName)
+	}
+	if m.owner != nil {
+		fields = append(fields, room.FieldOwner)
 	}
 	if m.privacy != nil {
 		fields = append(fields, room.FieldPrivacy)
@@ -530,9 +596,6 @@ func (m *RoomMutation) Fields() []string {
 	if m.description != nil {
 		fields = append(fields, room.FieldDescription)
 	}
-	if m.avatar != nil {
-		fields = append(fields, room.FieldAvatar)
-	}
 	return fields
 }
 
@@ -545,8 +608,10 @@ func (m *RoomMutation) Field(name string) (ent.Value, bool) {
 		return m.CreateTime()
 	case room.FieldUpdateTime:
 		return m.UpdateTime()
-	case room.FieldName:
-		return m.Name()
+	case room.FieldCustomName:
+		return m.CustomName()
+	case room.FieldOwner:
+		return m.Owner()
 	case room.FieldPrivacy:
 		return m.Privacy()
 	case room.FieldPasswordHash:
@@ -555,8 +620,6 @@ func (m *RoomMutation) Field(name string) (ent.Value, bool) {
 		return m.HasChat()
 	case room.FieldDescription:
 		return m.Description()
-	case room.FieldAvatar:
-		return m.Avatar()
 	}
 	return nil, false
 }
@@ -570,8 +633,10 @@ func (m *RoomMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldCreateTime(ctx)
 	case room.FieldUpdateTime:
 		return m.OldUpdateTime(ctx)
-	case room.FieldName:
-		return m.OldName(ctx)
+	case room.FieldCustomName:
+		return m.OldCustomName(ctx)
+	case room.FieldOwner:
+		return m.OldOwner(ctx)
 	case room.FieldPrivacy:
 		return m.OldPrivacy(ctx)
 	case room.FieldPasswordHash:
@@ -580,8 +645,6 @@ func (m *RoomMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldHasChat(ctx)
 	case room.FieldDescription:
 		return m.OldDescription(ctx)
-	case room.FieldAvatar:
-		return m.OldAvatar(ctx)
 	}
 	return nil, fmt.Errorf("unknown Room field %s", name)
 }
@@ -605,12 +668,19 @@ func (m *RoomMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUpdateTime(v)
 		return nil
-	case room.FieldName:
+	case room.FieldCustomName:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetName(v)
+		m.SetCustomName(v)
+		return nil
+	case room.FieldOwner:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOwner(v)
 		return nil
 	case room.FieldPrivacy:
 		v, ok := value.(room.Privacy)
@@ -639,13 +709,6 @@ func (m *RoomMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDescription(v)
-		return nil
-	case room.FieldAvatar:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetAvatar(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Room field %s", name)
@@ -677,14 +740,14 @@ func (m *RoomMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *RoomMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(room.FieldCustomName) {
+		fields = append(fields, room.FieldCustomName)
+	}
 	if m.FieldCleared(room.FieldPasswordHash) {
 		fields = append(fields, room.FieldPasswordHash)
 	}
 	if m.FieldCleared(room.FieldDescription) {
 		fields = append(fields, room.FieldDescription)
-	}
-	if m.FieldCleared(room.FieldAvatar) {
-		fields = append(fields, room.FieldAvatar)
 	}
 	return fields
 }
@@ -700,14 +763,14 @@ func (m *RoomMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *RoomMutation) ClearField(name string) error {
 	switch name {
+	case room.FieldCustomName:
+		m.ClearCustomName()
+		return nil
 	case room.FieldPasswordHash:
 		m.ClearPasswordHash()
 		return nil
 	case room.FieldDescription:
 		m.ClearDescription()
-		return nil
-	case room.FieldAvatar:
-		m.ClearAvatar()
 		return nil
 	}
 	return fmt.Errorf("unknown Room nullable field %s", name)
@@ -723,8 +786,11 @@ func (m *RoomMutation) ResetField(name string) error {
 	case room.FieldUpdateTime:
 		m.ResetUpdateTime()
 		return nil
-	case room.FieldName:
-		m.ResetName()
+	case room.FieldCustomName:
+		m.ResetCustomName()
+		return nil
+	case room.FieldOwner:
+		m.ResetOwner()
 		return nil
 	case room.FieldPrivacy:
 		m.ResetPrivacy()
@@ -738,58 +804,91 @@ func (m *RoomMutation) ResetField(name string) error {
 	case room.FieldDescription:
 		m.ResetDescription()
 		return nil
-	case room.FieldAvatar:
-		m.ResetAvatar()
-		return nil
 	}
 	return fmt.Errorf("unknown Room field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *RoomMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.users != nil {
+		edges = append(edges, room.EdgeUsers)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *RoomMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case room.EdgeUsers:
+		ids := make([]ent.Value, 0, len(m.users))
+		for id := range m.users {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *RoomMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.removedusers != nil {
+		edges = append(edges, room.EdgeUsers)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *RoomMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case room.EdgeUsers:
+		ids := make([]ent.Value, 0, len(m.removedusers))
+		for id := range m.removedusers {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *RoomMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.clearedusers {
+		edges = append(edges, room.EdgeUsers)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *RoomMutation) EdgeCleared(name string) bool {
+	switch name {
+	case room.EdgeUsers:
+		return m.clearedusers
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *RoomMutation) ClearEdge(name string) error {
+	switch name {
+	}
 	return fmt.Errorf("unknown Room unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *RoomMutation) ResetEdge(name string) error {
+	switch name {
+	case room.EdgeUsers:
+		m.ResetUsers()
+		return nil
+	}
 	return fmt.Errorf("unknown Room edge %s", name)
 }
 
@@ -806,14 +905,16 @@ type UserMutation struct {
 	password_hash     *[]byte
 	biography         *string
 	role              *user.Role
-	avatar            *string
-	friends_ids       *[]int
-	appendfriends_ids []int
+	friends_ids       *[]string
+	appendfriends_ids []string
 	language          *user.Language
 	theme             *user.Theme
 	first_name        *string
 	last_name         *string
 	clearedFields     map[string]struct{}
+	rooms             map[string]struct{}
+	removedrooms      map[string]struct{}
+	clearedrooms      bool
 	done              bool
 	oldValue          func(context.Context) (*User, error)
 	predicates        []predicate.User
@@ -1201,63 +1302,14 @@ func (m *UserMutation) ResetRole() {
 	m.role = nil
 }
 
-// SetAvatar sets the "avatar" field.
-func (m *UserMutation) SetAvatar(s string) {
-	m.avatar = &s
-}
-
-// Avatar returns the value of the "avatar" field in the mutation.
-func (m *UserMutation) Avatar() (r string, exists bool) {
-	v := m.avatar
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldAvatar returns the old "avatar" field's value of the User entity.
-// If the User object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserMutation) OldAvatar(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldAvatar is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldAvatar requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldAvatar: %w", err)
-	}
-	return oldValue.Avatar, nil
-}
-
-// ClearAvatar clears the value of the "avatar" field.
-func (m *UserMutation) ClearAvatar() {
-	m.avatar = nil
-	m.clearedFields[user.FieldAvatar] = struct{}{}
-}
-
-// AvatarCleared returns if the "avatar" field was cleared in this mutation.
-func (m *UserMutation) AvatarCleared() bool {
-	_, ok := m.clearedFields[user.FieldAvatar]
-	return ok
-}
-
-// ResetAvatar resets all changes to the "avatar" field.
-func (m *UserMutation) ResetAvatar() {
-	m.avatar = nil
-	delete(m.clearedFields, user.FieldAvatar)
-}
-
 // SetFriendsIds sets the "friends_ids" field.
-func (m *UserMutation) SetFriendsIds(i []int) {
-	m.friends_ids = &i
+func (m *UserMutation) SetFriendsIds(s []string) {
+	m.friends_ids = &s
 	m.appendfriends_ids = nil
 }
 
 // FriendsIds returns the value of the "friends_ids" field in the mutation.
-func (m *UserMutation) FriendsIds() (r []int, exists bool) {
+func (m *UserMutation) FriendsIds() (r []string, exists bool) {
 	v := m.friends_ids
 	if v == nil {
 		return
@@ -1268,7 +1320,7 @@ func (m *UserMutation) FriendsIds() (r []int, exists bool) {
 // OldFriendsIds returns the old "friends_ids" field's value of the User entity.
 // If the User object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserMutation) OldFriendsIds(ctx context.Context) (v []int, err error) {
+func (m *UserMutation) OldFriendsIds(ctx context.Context) (v []string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldFriendsIds is only allowed on UpdateOne operations")
 	}
@@ -1282,13 +1334,13 @@ func (m *UserMutation) OldFriendsIds(ctx context.Context) (v []int, err error) {
 	return oldValue.FriendsIds, nil
 }
 
-// AppendFriendsIds adds i to the "friends_ids" field.
-func (m *UserMutation) AppendFriendsIds(i []int) {
-	m.appendfriends_ids = append(m.appendfriends_ids, i...)
+// AppendFriendsIds adds s to the "friends_ids" field.
+func (m *UserMutation) AppendFriendsIds(s []string) {
+	m.appendfriends_ids = append(m.appendfriends_ids, s...)
 }
 
 // AppendedFriendsIds returns the list of values that were appended to the "friends_ids" field in this mutation.
-func (m *UserMutation) AppendedFriendsIds() ([]int, bool) {
+func (m *UserMutation) AppendedFriendsIds() ([]string, bool) {
 	if len(m.appendfriends_ids) == 0 {
 		return nil, false
 	}
@@ -1485,6 +1537,60 @@ func (m *UserMutation) ResetLastName() {
 	delete(m.clearedFields, user.FieldLastName)
 }
 
+// AddRoomIDs adds the "rooms" edge to the Room entity by ids.
+func (m *UserMutation) AddRoomIDs(ids ...string) {
+	if m.rooms == nil {
+		m.rooms = make(map[string]struct{})
+	}
+	for i := range ids {
+		m.rooms[ids[i]] = struct{}{}
+	}
+}
+
+// ClearRooms clears the "rooms" edge to the Room entity.
+func (m *UserMutation) ClearRooms() {
+	m.clearedrooms = true
+}
+
+// RoomsCleared reports if the "rooms" edge to the Room entity was cleared.
+func (m *UserMutation) RoomsCleared() bool {
+	return m.clearedrooms
+}
+
+// RemoveRoomIDs removes the "rooms" edge to the Room entity by IDs.
+func (m *UserMutation) RemoveRoomIDs(ids ...string) {
+	if m.removedrooms == nil {
+		m.removedrooms = make(map[string]struct{})
+	}
+	for i := range ids {
+		delete(m.rooms, ids[i])
+		m.removedrooms[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedRooms returns the removed IDs of the "rooms" edge to the Room entity.
+func (m *UserMutation) RemovedRoomsIDs() (ids []string) {
+	for id := range m.removedrooms {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// RoomsIDs returns the "rooms" edge IDs in the mutation.
+func (m *UserMutation) RoomsIDs() (ids []string) {
+	for id := range m.rooms {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetRooms resets all changes to the "rooms" edge.
+func (m *UserMutation) ResetRooms() {
+	m.rooms = nil
+	m.clearedrooms = false
+	m.removedrooms = nil
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -1519,7 +1625,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 13)
+	fields := make([]string, 0, 12)
 	if m.create_time != nil {
 		fields = append(fields, user.FieldCreateTime)
 	}
@@ -1540,9 +1646,6 @@ func (m *UserMutation) Fields() []string {
 	}
 	if m.role != nil {
 		fields = append(fields, user.FieldRole)
-	}
-	if m.avatar != nil {
-		fields = append(fields, user.FieldAvatar)
 	}
 	if m.friends_ids != nil {
 		fields = append(fields, user.FieldFriendsIds)
@@ -1581,8 +1684,6 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.Biography()
 	case user.FieldRole:
 		return m.Role()
-	case user.FieldAvatar:
-		return m.Avatar()
 	case user.FieldFriendsIds:
 		return m.FriendsIds()
 	case user.FieldLanguage:
@@ -1616,8 +1717,6 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldBiography(ctx)
 	case user.FieldRole:
 		return m.OldRole(ctx)
-	case user.FieldAvatar:
-		return m.OldAvatar(ctx)
 	case user.FieldFriendsIds:
 		return m.OldFriendsIds(ctx)
 	case user.FieldLanguage:
@@ -1686,15 +1785,8 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetRole(v)
 		return nil
-	case user.FieldAvatar:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetAvatar(v)
-		return nil
 	case user.FieldFriendsIds:
-		v, ok := value.([]int)
+		v, ok := value.([]string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -1764,9 +1856,6 @@ func (m *UserMutation) ClearedFields() []string {
 	if m.FieldCleared(user.FieldBiography) {
 		fields = append(fields, user.FieldBiography)
 	}
-	if m.FieldCleared(user.FieldAvatar) {
-		fields = append(fields, user.FieldAvatar)
-	}
 	if m.FieldCleared(user.FieldFriendsIds) {
 		fields = append(fields, user.FieldFriendsIds)
 	}
@@ -1795,9 +1884,6 @@ func (m *UserMutation) ClearField(name string) error {
 		return nil
 	case user.FieldBiography:
 		m.ClearBiography()
-		return nil
-	case user.FieldAvatar:
-		m.ClearAvatar()
 		return nil
 	case user.FieldFriendsIds:
 		m.ClearFriendsIds()
@@ -1837,9 +1923,6 @@ func (m *UserMutation) ResetField(name string) error {
 	case user.FieldRole:
 		m.ResetRole()
 		return nil
-	case user.FieldAvatar:
-		m.ResetAvatar()
-		return nil
 	case user.FieldFriendsIds:
 		m.ResetFriendsIds()
 		return nil
@@ -1861,48 +1944,84 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.rooms != nil {
+		edges = append(edges, user.EdgeRooms)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *UserMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case user.EdgeRooms:
+		ids := make([]ent.Value, 0, len(m.rooms))
+		for id := range m.rooms {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.removedrooms != nil {
+		edges = append(edges, user.EdgeRooms)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *UserMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case user.EdgeRooms:
+		ids := make([]ent.Value, 0, len(m.removedrooms))
+		for id := range m.removedrooms {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.clearedrooms {
+		edges = append(edges, user.EdgeRooms)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *UserMutation) EdgeCleared(name string) bool {
+	switch name {
+	case user.EdgeRooms:
+		return m.clearedrooms
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *UserMutation) ClearEdge(name string) error {
+	switch name {
+	}
 	return fmt.Errorf("unknown User unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *UserMutation) ResetEdge(name string) error {
+	switch name {
+	case user.EdgeRooms:
+		m.ResetRooms()
+		return nil
+	}
 	return fmt.Errorf("unknown User edge %s", name)
 }

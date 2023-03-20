@@ -70,6 +70,8 @@ func ErrorHandler(c *gin.Context) {
 						fields[field] = fmt.Sprintf("%s must be greater than %s", field, vErr.Param())
 					case "lt":
 						fields[field] = fmt.Sprintf("%s must be lesser than %s", field, vErr.Param())
+					case "printascii":
+						fields[field] = fmt.Sprintf("%s can contain only /:@-._~!?$&'()*+,;= and any english letters", field)
 					}
 				}
 				res["fields"] = fields

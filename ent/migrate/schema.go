@@ -10,15 +10,15 @@ import (
 var (
 	// RoomsColumns holds the columns for the "rooms" table.
 	RoomsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeString},
+		{Name: "name", Type: field.TypeString, Unique: true, Size: 20},
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
-		{Name: "name", Type: field.TypeString, Unique: true},
+		{Name: "custom_name", Type: field.TypeString, Nullable: true, Size: 20},
+		{Name: "owner", Type: field.TypeString, Unique: true},
 		{Name: "privacy", Type: field.TypeEnum, Enums: []string{"PRIVATE", "FRIENDS", "PUBLIC"}, Default: "PUBLIC"},
 		{Name: "password_hash", Type: field.TypeString, Nullable: true},
 		{Name: "has_chat", Type: field.TypeBool, Default: true},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 140},
-		{Name: "avatar", Type: field.TypeString, Nullable: true},
 	}
 	// RoomsTable holds the schema information for the "rooms" table.
 	RoomsTable = &schema.Table{
@@ -28,20 +28,19 @@ var (
 	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
-		{Name: "username", Type: field.TypeString, Unique: true},
+		{Name: "username", Type: field.TypeString, Unique: true, Size: 20},
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
 		{Name: "email", Type: field.TypeString, Unique: true},
 		{Name: "is_email_verified", Type: field.TypeBool, Nullable: true},
 		{Name: "password_hash", Type: field.TypeBytes},
-		{Name: "biography", Type: field.TypeString, Nullable: true, Size: 140},
+		{Name: "biography", Type: field.TypeString, Nullable: true, Size: 512},
 		{Name: "role", Type: field.TypeEnum, Enums: []string{"USER", "ADMIN"}, Default: "USER"},
-		{Name: "avatar", Type: field.TypeString, Nullable: true},
 		{Name: "friends_ids", Type: field.TypeJSON, Nullable: true},
 		{Name: "language", Type: field.TypeEnum, Enums: []string{"EN", "RU"}, Default: "EN"},
 		{Name: "theme", Type: field.TypeEnum, Enums: []string{"WHITE", "DARK", "SYSTEM"}, Default: "SYSTEM"},
-		{Name: "first_name", Type: field.TypeString, Nullable: true},
-		{Name: "last_name", Type: field.TypeString, Nullable: true},
+		{Name: "first_name", Type: field.TypeString, Nullable: true, Size: 20},
+		{Name: "last_name", Type: field.TypeString, Nullable: true, Size: 20},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{
@@ -49,12 +48,40 @@ var (
 		Columns:    UsersColumns,
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
 	}
+	// UserRoomsColumns holds the columns for the "user_rooms" table.
+	UserRoomsColumns = []*schema.Column{
+		{Name: "user_id", Type: field.TypeString, Size: 20},
+		{Name: "room_id", Type: field.TypeString, Size: 20},
+	}
+	// UserRoomsTable holds the schema information for the "user_rooms" table.
+	UserRoomsTable = &schema.Table{
+		Name:       "user_rooms",
+		Columns:    UserRoomsColumns,
+		PrimaryKey: []*schema.Column{UserRoomsColumns[0], UserRoomsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "user_rooms_user_id",
+				Columns:    []*schema.Column{UserRoomsColumns[0]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "user_rooms_room_id",
+				Columns:    []*schema.Column{UserRoomsColumns[1]},
+				RefColumns: []*schema.Column{RoomsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		RoomsTable,
 		UsersTable,
+		UserRoomsTable,
 	}
 )
 
 func init() {
+	UserRoomsTable.ForeignKeys[0].RefTable = UsersTable
+	UserRoomsTable.ForeignKeys[1].RefTable = RoomsTable
 }

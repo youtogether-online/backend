@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/wtkeqrf0/you_together/ent/predicate"
 )
 
@@ -64,9 +65,14 @@ func UpdateTime(v time.Time) predicate.Room {
 	return predicate.Room(sql.FieldEQ(FieldUpdateTime, v))
 }
 
-// Name applies equality check predicate on the "name" field. It's identical to NameEQ.
-func Name(v string) predicate.Room {
-	return predicate.Room(sql.FieldEQ(FieldName, v))
+// CustomName applies equality check predicate on the "custom_name" field. It's identical to CustomNameEQ.
+func CustomName(v string) predicate.Room {
+	return predicate.Room(sql.FieldEQ(FieldCustomName, v))
+}
+
+// Owner applies equality check predicate on the "owner" field. It's identical to OwnerEQ.
+func Owner(v string) predicate.Room {
+	return predicate.Room(sql.FieldEQ(FieldOwner, v))
 }
 
 // PasswordHash applies equality check predicate on the "password_hash" field. It's identical to PasswordHashEQ.
@@ -82,11 +88,6 @@ func HasChat(v bool) predicate.Room {
 // Description applies equality check predicate on the "description" field. It's identical to DescriptionEQ.
 func Description(v string) predicate.Room {
 	return predicate.Room(sql.FieldEQ(FieldDescription, v))
-}
-
-// Avatar applies equality check predicate on the "avatar" field. It's identical to AvatarEQ.
-func Avatar(v string) predicate.Room {
-	return predicate.Room(sql.FieldEQ(FieldAvatar, v))
 }
 
 // CreateTimeEQ applies the EQ predicate on the "create_time" field.
@@ -169,69 +170,144 @@ func UpdateTimeLTE(v time.Time) predicate.Room {
 	return predicate.Room(sql.FieldLTE(FieldUpdateTime, v))
 }
 
-// NameEQ applies the EQ predicate on the "name" field.
-func NameEQ(v string) predicate.Room {
-	return predicate.Room(sql.FieldEQ(FieldName, v))
+// CustomNameEQ applies the EQ predicate on the "custom_name" field.
+func CustomNameEQ(v string) predicate.Room {
+	return predicate.Room(sql.FieldEQ(FieldCustomName, v))
 }
 
-// NameNEQ applies the NEQ predicate on the "name" field.
-func NameNEQ(v string) predicate.Room {
-	return predicate.Room(sql.FieldNEQ(FieldName, v))
+// CustomNameNEQ applies the NEQ predicate on the "custom_name" field.
+func CustomNameNEQ(v string) predicate.Room {
+	return predicate.Room(sql.FieldNEQ(FieldCustomName, v))
 }
 
-// NameIn applies the In predicate on the "name" field.
-func NameIn(vs ...string) predicate.Room {
-	return predicate.Room(sql.FieldIn(FieldName, vs...))
+// CustomNameIn applies the In predicate on the "custom_name" field.
+func CustomNameIn(vs ...string) predicate.Room {
+	return predicate.Room(sql.FieldIn(FieldCustomName, vs...))
 }
 
-// NameNotIn applies the NotIn predicate on the "name" field.
-func NameNotIn(vs ...string) predicate.Room {
-	return predicate.Room(sql.FieldNotIn(FieldName, vs...))
+// CustomNameNotIn applies the NotIn predicate on the "custom_name" field.
+func CustomNameNotIn(vs ...string) predicate.Room {
+	return predicate.Room(sql.FieldNotIn(FieldCustomName, vs...))
 }
 
-// NameGT applies the GT predicate on the "name" field.
-func NameGT(v string) predicate.Room {
-	return predicate.Room(sql.FieldGT(FieldName, v))
+// CustomNameGT applies the GT predicate on the "custom_name" field.
+func CustomNameGT(v string) predicate.Room {
+	return predicate.Room(sql.FieldGT(FieldCustomName, v))
 }
 
-// NameGTE applies the GTE predicate on the "name" field.
-func NameGTE(v string) predicate.Room {
-	return predicate.Room(sql.FieldGTE(FieldName, v))
+// CustomNameGTE applies the GTE predicate on the "custom_name" field.
+func CustomNameGTE(v string) predicate.Room {
+	return predicate.Room(sql.FieldGTE(FieldCustomName, v))
 }
 
-// NameLT applies the LT predicate on the "name" field.
-func NameLT(v string) predicate.Room {
-	return predicate.Room(sql.FieldLT(FieldName, v))
+// CustomNameLT applies the LT predicate on the "custom_name" field.
+func CustomNameLT(v string) predicate.Room {
+	return predicate.Room(sql.FieldLT(FieldCustomName, v))
 }
 
-// NameLTE applies the LTE predicate on the "name" field.
-func NameLTE(v string) predicate.Room {
-	return predicate.Room(sql.FieldLTE(FieldName, v))
+// CustomNameLTE applies the LTE predicate on the "custom_name" field.
+func CustomNameLTE(v string) predicate.Room {
+	return predicate.Room(sql.FieldLTE(FieldCustomName, v))
 }
 
-// NameContains applies the Contains predicate on the "name" field.
-func NameContains(v string) predicate.Room {
-	return predicate.Room(sql.FieldContains(FieldName, v))
+// CustomNameContains applies the Contains predicate on the "custom_name" field.
+func CustomNameContains(v string) predicate.Room {
+	return predicate.Room(sql.FieldContains(FieldCustomName, v))
 }
 
-// NameHasPrefix applies the HasPrefix predicate on the "name" field.
-func NameHasPrefix(v string) predicate.Room {
-	return predicate.Room(sql.FieldHasPrefix(FieldName, v))
+// CustomNameHasPrefix applies the HasPrefix predicate on the "custom_name" field.
+func CustomNameHasPrefix(v string) predicate.Room {
+	return predicate.Room(sql.FieldHasPrefix(FieldCustomName, v))
 }
 
-// NameHasSuffix applies the HasSuffix predicate on the "name" field.
-func NameHasSuffix(v string) predicate.Room {
-	return predicate.Room(sql.FieldHasSuffix(FieldName, v))
+// CustomNameHasSuffix applies the HasSuffix predicate on the "custom_name" field.
+func CustomNameHasSuffix(v string) predicate.Room {
+	return predicate.Room(sql.FieldHasSuffix(FieldCustomName, v))
 }
 
-// NameEqualFold applies the EqualFold predicate on the "name" field.
-func NameEqualFold(v string) predicate.Room {
-	return predicate.Room(sql.FieldEqualFold(FieldName, v))
+// CustomNameIsNil applies the IsNil predicate on the "custom_name" field.
+func CustomNameIsNil() predicate.Room {
+	return predicate.Room(sql.FieldIsNull(FieldCustomName))
 }
 
-// NameContainsFold applies the ContainsFold predicate on the "name" field.
-func NameContainsFold(v string) predicate.Room {
-	return predicate.Room(sql.FieldContainsFold(FieldName, v))
+// CustomNameNotNil applies the NotNil predicate on the "custom_name" field.
+func CustomNameNotNil() predicate.Room {
+	return predicate.Room(sql.FieldNotNull(FieldCustomName))
+}
+
+// CustomNameEqualFold applies the EqualFold predicate on the "custom_name" field.
+func CustomNameEqualFold(v string) predicate.Room {
+	return predicate.Room(sql.FieldEqualFold(FieldCustomName, v))
+}
+
+// CustomNameContainsFold applies the ContainsFold predicate on the "custom_name" field.
+func CustomNameContainsFold(v string) predicate.Room {
+	return predicate.Room(sql.FieldContainsFold(FieldCustomName, v))
+}
+
+// OwnerEQ applies the EQ predicate on the "owner" field.
+func OwnerEQ(v string) predicate.Room {
+	return predicate.Room(sql.FieldEQ(FieldOwner, v))
+}
+
+// OwnerNEQ applies the NEQ predicate on the "owner" field.
+func OwnerNEQ(v string) predicate.Room {
+	return predicate.Room(sql.FieldNEQ(FieldOwner, v))
+}
+
+// OwnerIn applies the In predicate on the "owner" field.
+func OwnerIn(vs ...string) predicate.Room {
+	return predicate.Room(sql.FieldIn(FieldOwner, vs...))
+}
+
+// OwnerNotIn applies the NotIn predicate on the "owner" field.
+func OwnerNotIn(vs ...string) predicate.Room {
+	return predicate.Room(sql.FieldNotIn(FieldOwner, vs...))
+}
+
+// OwnerGT applies the GT predicate on the "owner" field.
+func OwnerGT(v string) predicate.Room {
+	return predicate.Room(sql.FieldGT(FieldOwner, v))
+}
+
+// OwnerGTE applies the GTE predicate on the "owner" field.
+func OwnerGTE(v string) predicate.Room {
+	return predicate.Room(sql.FieldGTE(FieldOwner, v))
+}
+
+// OwnerLT applies the LT predicate on the "owner" field.
+func OwnerLT(v string) predicate.Room {
+	return predicate.Room(sql.FieldLT(FieldOwner, v))
+}
+
+// OwnerLTE applies the LTE predicate on the "owner" field.
+func OwnerLTE(v string) predicate.Room {
+	return predicate.Room(sql.FieldLTE(FieldOwner, v))
+}
+
+// OwnerContains applies the Contains predicate on the "owner" field.
+func OwnerContains(v string) predicate.Room {
+	return predicate.Room(sql.FieldContains(FieldOwner, v))
+}
+
+// OwnerHasPrefix applies the HasPrefix predicate on the "owner" field.
+func OwnerHasPrefix(v string) predicate.Room {
+	return predicate.Room(sql.FieldHasPrefix(FieldOwner, v))
+}
+
+// OwnerHasSuffix applies the HasSuffix predicate on the "owner" field.
+func OwnerHasSuffix(v string) predicate.Room {
+	return predicate.Room(sql.FieldHasSuffix(FieldOwner, v))
+}
+
+// OwnerEqualFold applies the EqualFold predicate on the "owner" field.
+func OwnerEqualFold(v string) predicate.Room {
+	return predicate.Room(sql.FieldEqualFold(FieldOwner, v))
+}
+
+// OwnerContainsFold applies the ContainsFold predicate on the "owner" field.
+func OwnerContainsFold(v string) predicate.Room {
+	return predicate.Room(sql.FieldContainsFold(FieldOwner, v))
 }
 
 // PrivacyEQ applies the EQ predicate on the "privacy" field.
@@ -414,79 +490,31 @@ func DescriptionContainsFold(v string) predicate.Room {
 	return predicate.Room(sql.FieldContainsFold(FieldDescription, v))
 }
 
-// AvatarEQ applies the EQ predicate on the "avatar" field.
-func AvatarEQ(v string) predicate.Room {
-	return predicate.Room(sql.FieldEQ(FieldAvatar, v))
+// HasUsers applies the HasEdge predicate on the "users" edge.
+func HasUsers() predicate.Room {
+	return predicate.Room(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, UsersTable, UsersPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
 }
 
-// AvatarNEQ applies the NEQ predicate on the "avatar" field.
-func AvatarNEQ(v string) predicate.Room {
-	return predicate.Room(sql.FieldNEQ(FieldAvatar, v))
-}
-
-// AvatarIn applies the In predicate on the "avatar" field.
-func AvatarIn(vs ...string) predicate.Room {
-	return predicate.Room(sql.FieldIn(FieldAvatar, vs...))
-}
-
-// AvatarNotIn applies the NotIn predicate on the "avatar" field.
-func AvatarNotIn(vs ...string) predicate.Room {
-	return predicate.Room(sql.FieldNotIn(FieldAvatar, vs...))
-}
-
-// AvatarGT applies the GT predicate on the "avatar" field.
-func AvatarGT(v string) predicate.Room {
-	return predicate.Room(sql.FieldGT(FieldAvatar, v))
-}
-
-// AvatarGTE applies the GTE predicate on the "avatar" field.
-func AvatarGTE(v string) predicate.Room {
-	return predicate.Room(sql.FieldGTE(FieldAvatar, v))
-}
-
-// AvatarLT applies the LT predicate on the "avatar" field.
-func AvatarLT(v string) predicate.Room {
-	return predicate.Room(sql.FieldLT(FieldAvatar, v))
-}
-
-// AvatarLTE applies the LTE predicate on the "avatar" field.
-func AvatarLTE(v string) predicate.Room {
-	return predicate.Room(sql.FieldLTE(FieldAvatar, v))
-}
-
-// AvatarContains applies the Contains predicate on the "avatar" field.
-func AvatarContains(v string) predicate.Room {
-	return predicate.Room(sql.FieldContains(FieldAvatar, v))
-}
-
-// AvatarHasPrefix applies the HasPrefix predicate on the "avatar" field.
-func AvatarHasPrefix(v string) predicate.Room {
-	return predicate.Room(sql.FieldHasPrefix(FieldAvatar, v))
-}
-
-// AvatarHasSuffix applies the HasSuffix predicate on the "avatar" field.
-func AvatarHasSuffix(v string) predicate.Room {
-	return predicate.Room(sql.FieldHasSuffix(FieldAvatar, v))
-}
-
-// AvatarIsNil applies the IsNil predicate on the "avatar" field.
-func AvatarIsNil() predicate.Room {
-	return predicate.Room(sql.FieldIsNull(FieldAvatar))
-}
-
-// AvatarNotNil applies the NotNil predicate on the "avatar" field.
-func AvatarNotNil() predicate.Room {
-	return predicate.Room(sql.FieldNotNull(FieldAvatar))
-}
-
-// AvatarEqualFold applies the EqualFold predicate on the "avatar" field.
-func AvatarEqualFold(v string) predicate.Room {
-	return predicate.Room(sql.FieldEqualFold(FieldAvatar, v))
-}
-
-// AvatarContainsFold applies the ContainsFold predicate on the "avatar" field.
-func AvatarContainsFold(v string) predicate.Room {
-	return predicate.Room(sql.FieldContainsFold(FieldAvatar, v))
+// HasUsersWith applies the HasEdge predicate on the "users" edge with a given conditions (other predicates).
+func HasUsersWith(preds ...predicate.User) predicate.Room {
+	return predicate.Room(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(UsersInverseTable, UserFieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, UsersTable, UsersPrimaryKey...),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.

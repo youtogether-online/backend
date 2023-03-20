@@ -26,8 +26,6 @@ const (
 	FieldBiography = "biography"
 	// FieldRole holds the string denoting the role field in the database.
 	FieldRole = "role"
-	// FieldAvatar holds the string denoting the avatar field in the database.
-	FieldAvatar = "avatar"
 	// FieldFriendsIds holds the string denoting the friends_ids field in the database.
 	FieldFriendsIds = "friends_ids"
 	// FieldLanguage holds the string denoting the language field in the database.
@@ -38,8 +36,17 @@ const (
 	FieldFirstName = "first_name"
 	// FieldLastName holds the string denoting the last_name field in the database.
 	FieldLastName = "last_name"
+	// EdgeRooms holds the string denoting the rooms edge name in mutations.
+	EdgeRooms = "rooms"
+	// RoomFieldID holds the string denoting the ID field of the Room.
+	RoomFieldID = "name"
 	// Table holds the table name of the user in the database.
 	Table = "users"
+	// RoomsTable is the table that holds the rooms relation/edge. The primary key declared below.
+	RoomsTable = "user_rooms"
+	// RoomsInverseTable is the table name for the Room entity.
+	// It exists in this package in order to avoid circular dependency with the "room" package.
+	RoomsInverseTable = "rooms"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -52,13 +59,18 @@ var Columns = []string{
 	FieldPasswordHash,
 	FieldBiography,
 	FieldRole,
-	FieldAvatar,
 	FieldFriendsIds,
 	FieldLanguage,
 	FieldTheme,
 	FieldFirstName,
 	FieldLastName,
 }
+
+var (
+	// RoomsPrimaryKey and RoomsColumn2 are the table columns denoting the
+	// primary key for the rooms relation (M2M).
+	RoomsPrimaryKey = []string{"user_id", "room_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {

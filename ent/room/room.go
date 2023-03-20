@@ -11,13 +11,15 @@ const (
 	// Label holds the string label denoting the room type in the database.
 	Label = "room"
 	// FieldID holds the string denoting the id field in the database.
-	FieldID = "id"
+	FieldID = "name"
 	// FieldCreateTime holds the string denoting the create_time field in the database.
 	FieldCreateTime = "create_time"
 	// FieldUpdateTime holds the string denoting the update_time field in the database.
 	FieldUpdateTime = "update_time"
-	// FieldName holds the string denoting the name field in the database.
-	FieldName = "name"
+	// FieldCustomName holds the string denoting the custom_name field in the database.
+	FieldCustomName = "custom_name"
+	// FieldOwner holds the string denoting the owner field in the database.
+	FieldOwner = "owner"
 	// FieldPrivacy holds the string denoting the privacy field in the database.
 	FieldPrivacy = "privacy"
 	// FieldPasswordHash holds the string denoting the password_hash field in the database.
@@ -26,10 +28,17 @@ const (
 	FieldHasChat = "has_chat"
 	// FieldDescription holds the string denoting the description field in the database.
 	FieldDescription = "description"
-	// FieldAvatar holds the string denoting the avatar field in the database.
-	FieldAvatar = "avatar"
+	// EdgeUsers holds the string denoting the users edge name in mutations.
+	EdgeUsers = "users"
+	// UserFieldID holds the string denoting the ID field of the User.
+	UserFieldID = "username"
 	// Table holds the table name of the room in the database.
 	Table = "rooms"
+	// UsersTable is the table that holds the users relation/edge. The primary key declared below.
+	UsersTable = "user_rooms"
+	// UsersInverseTable is the table name for the User entity.
+	// It exists in this package in order to avoid circular dependency with the "user" package.
+	UsersInverseTable = "users"
 )
 
 // Columns holds all SQL columns for room fields.
@@ -37,13 +46,19 @@ var Columns = []string{
 	FieldID,
 	FieldCreateTime,
 	FieldUpdateTime,
-	FieldName,
+	FieldCustomName,
+	FieldOwner,
 	FieldPrivacy,
 	FieldPasswordHash,
 	FieldHasChat,
 	FieldDescription,
-	FieldAvatar,
 }
+
+var (
+	// UsersPrimaryKey and UsersColumn2 are the table columns denoting the
+	// primary key for the users relation (M2M).
+	UsersPrimaryKey = []string{"user_id", "room_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -62,12 +77,18 @@ var (
 	DefaultUpdateTime func() time.Time
 	// UpdateDefaultUpdateTime holds the default value on update for the "update_time" field.
 	UpdateDefaultUpdateTime func() time.Time
-	// NameValidator is a validator for the "name" field. It is called by the builders before save.
-	NameValidator func(string) error
+	// CustomNameValidator is a validator for the "custom_name" field. It is called by the builders before save.
+	CustomNameValidator func(string) error
+	// OwnerValidator is a validator for the "owner" field. It is called by the builders before save.
+	OwnerValidator func(string) error
 	// DefaultHasChat holds the default value on creation for the "has_chat" field.
 	DefaultHasChat bool
 	// DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
 	DescriptionValidator func(string) error
+	// DefaultID holds the default value on creation for the "id" field.
+	DefaultID func() string
+	// IDValidator is a validator for the "id" field. It is called by the builders before save.
+	IDValidator func(string) error
 )
 
 // Privacy defines the type for the "privacy" enum field.

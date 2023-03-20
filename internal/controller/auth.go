@@ -3,7 +3,7 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/wtkeqrf0/you_together/internal/controller/dto"
-	"github.com/wtkeqrf0/you_together/pkg/middlewares/exceptions"
+	"github.com/wtkeqrf0/you_together/internal/middlewares/exceptions"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/mail.v2"
 	"math/rand"
@@ -12,8 +12,9 @@ import (
 
 var chars = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
-// sign-in authentication by email and password. Returns a pair of tokens in cookies
+// signIn authentication by email and password. Returns a new session id in cookie, and deletes old, if exists
 func (h Handler) signIn(c *gin.Context) {
+
 	auth := &dto.SignInDTO{}
 	if err := c.ShouldBindJSON(auth); err != nil {
 		c.Error(exceptions.DataError.AddErr(err))
@@ -26,7 +27,6 @@ func (h Handler) signIn(c *gin.Context) {
 	}
 
 	passwordHash, username, err := h.auth.AuthUserByEmail(auth.Email)
-
 	if err != nil {
 		passwordHash, username, err = h.auth.CreateUserWithPassword(auth.Email, auth.Password)
 
@@ -41,7 +41,11 @@ func (h Handler) signIn(c *gin.Context) {
 		return
 	}
 
-	id, _, err := h.sessions.GenerateSession(username, c.ClientIP(), auth.Device)
+	id, _ := c.Cookie(cfg.Session.CookieName)
+	if err = h.valid.Var(id, "uuid4"); err == nil {
+		h.auth.DelSession(id)
+	}
+	id, _, err = h.sessions.GenerateSession(username, c.ClientIP(), auth.Device)
 	if err != nil {
 		c.Error(exceptions.ServerError.AddErr(err))
 		return
@@ -53,7 +57,7 @@ func (h Handler) signIn(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-// saveMail to users email and save it
+// saveMail to users email and saves it
 func (h Handler) saveMail(c *gin.Context) {
 	to := &dto.EmailDTO{}
 	if err := c.ShouldBindJSON(to); err != nil {
@@ -80,7 +84,7 @@ func (h Handler) saveMail(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-// checkMail with saved code by email. Returns a pair of tokens in cookies
+// checkMail with saved code by email. Returns a new session id in cookie, and deletes old, if exists
 func (h Handler) checkMail(c *gin.Context) {
 	auth := &dto.EmailWithCodeDTO{}
 	if err := c.ShouldBindJSON(auth); err != nil {
@@ -93,8 +97,8 @@ func (h Handler) checkMail(c *gin.Context) {
 		return
 	}
 
-	if !h.auth.EqualsPopCode(auth.Email, auth.Code) {
-		c.Error(exceptions.CodeError)
+	if ok, err := h.auth.EqualsPopCode(auth.Email, auth.Code); !ok || err != nil {
+		c.Error(exceptions.CodeError.AddErr(err))
 		return
 	}
 
@@ -117,7 +121,11 @@ func (h Handler) checkMail(c *gin.Context) {
 		}
 	}
 
-	id, _, err := h.sessions.GenerateSession(username, c.ClientIP(), auth.Device)
+	id, _ := c.Cookie(cfg.Session.CookieName)
+	if err = h.valid.Var(id, "uuid4"); err == nil {
+		h.auth.DelSession(id)
+	}
+	id, _, err = h.sessions.GenerateSession(username, c.ClientIP(), auth.Device)
 	if err != nil {
 		c.Error(exceptions.ServerError.AddErr(err))
 		return
@@ -129,17 +137,11 @@ func (h Handler) checkMail(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-// signOut deletes the session ID from the database, which makes it invalid
+// signOut deletes the session id from the database, which makes it invalid
 func (h Handler) signOut(c *gin.Context) {
-	id, err := c.Cookie(cfg.Session.CookieName)
-	if err != nil {
-		c.Status(http.StatusOK)
-		return
-	}
-
-	if err = h.auth.DelSession(id); err != nil {
-		c.Error(exceptions.ServerError.AddErr(err))
-		return
+	id, _ := c.Cookie(cfg.Session.CookieName)
+	if err := h.valid.Var(id, "uuid4"); err == nil {
+		h.auth.DelSession(id)
 	}
 
 	c.Status(http.StatusOK)

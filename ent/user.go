@@ -31,10 +31,8 @@ type User struct {
 	Biography string `json:"biography,omitempty"`
 	// Role holds the value of the "role" field.
 	Role user.Role `json:"role,omitempty"`
-	// Avatar holds the value of the "avatar" field.
-	Avatar string `json:"avatar,omitempty"`
 	// FriendsIds holds the value of the "friends_ids" field.
-	FriendsIds []int `json:"friends_ids,omitempty"`
+	FriendsIds []string `json:"friends_ids,omitempty"`
 	// Language holds the value of the "language" field.
 	Language user.Language `json:"language,omitempty"`
 	// Theme holds the value of the "theme" field.
@@ -43,6 +41,27 @@ type User struct {
 	FirstName string `json:"first_name,omitempty"`
 	// LastName holds the value of the "last_name" field.
 	LastName string `json:"last_name,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the UserQuery when eager-loading is set.
+	Edges UserEdges `json:"edges"`
+}
+
+// UserEdges holds the relations/edges for other nodes in the graph.
+type UserEdges struct {
+	// Rooms holds the value of the rooms edge.
+	Rooms []*Room `json:"rooms,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// RoomsOrErr returns the Rooms value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) RoomsOrErr() ([]*Room, error) {
+	if e.loadedTypes[0] {
+		return e.Rooms, nil
+	}
+	return nil, &NotLoadedError{edge: "rooms"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -54,7 +73,7 @@ func (*User) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case user.FieldIsEmailVerified:
 			values[i] = new(sql.NullBool)
-		case user.FieldID, user.FieldEmail, user.FieldBiography, user.FieldRole, user.FieldAvatar, user.FieldLanguage, user.FieldTheme, user.FieldFirstName, user.FieldLastName:
+		case user.FieldID, user.FieldEmail, user.FieldBiography, user.FieldRole, user.FieldLanguage, user.FieldTheme, user.FieldFirstName, user.FieldLastName:
 			values[i] = new(sql.NullString)
 		case user.FieldCreateTime, user.FieldUpdateTime:
 			values[i] = new(sql.NullTime)
@@ -121,12 +140,6 @@ func (u *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				u.Role = user.Role(value.String)
 			}
-		case user.FieldAvatar:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field avatar", values[i])
-			} else if value.Valid {
-				u.Avatar = value.String
-			}
 		case user.FieldFriendsIds:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field friends_ids", values[i])
@@ -162,6 +175,11 @@ func (u *User) assignValues(columns []string, values []any) error {
 		}
 	}
 	return nil
+}
+
+// QueryRooms queries the "rooms" edge of the User entity.
+func (u *User) QueryRooms() *RoomQuery {
+	return NewUserClient(u.config).QueryRooms(u)
 }
 
 // Update returns a builder for updating this User.
@@ -206,9 +224,6 @@ func (u *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("role=")
 	builder.WriteString(fmt.Sprintf("%v", u.Role))
-	builder.WriteString(", ")
-	builder.WriteString("avatar=")
-	builder.WriteString(u.Avatar)
 	builder.WriteString(", ")
 	builder.WriteString("friends_ids=")
 	builder.WriteString(fmt.Sprintf("%v", u.FriendsIds))

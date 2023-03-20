@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	"github.com/wtkeqrf0/you_together/ent/predicate"
+	"github.com/wtkeqrf0/you_together/ent/room"
 	"github.com/wtkeqrf0/you_together/ent/user"
 )
 
@@ -32,6 +33,12 @@ func (uu *UserUpdate) Where(ps ...predicate.User) *UserUpdate {
 // SetUpdateTime sets the "update_time" field.
 func (uu *UserUpdate) SetUpdateTime(t time.Time) *UserUpdate {
 	uu.mutation.SetUpdateTime(t)
+	return uu
+}
+
+// SetEmail sets the "email" field.
+func (uu *UserUpdate) SetEmail(s string) *UserUpdate {
+	uu.mutation.SetEmail(s)
 	return uu
 }
 
@@ -95,35 +102,15 @@ func (uu *UserUpdate) SetNillableRole(u *user.Role) *UserUpdate {
 	return uu
 }
 
-// SetAvatar sets the "avatar" field.
-func (uu *UserUpdate) SetAvatar(s string) *UserUpdate {
-	uu.mutation.SetAvatar(s)
-	return uu
-}
-
-// SetNillableAvatar sets the "avatar" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableAvatar(s *string) *UserUpdate {
-	if s != nil {
-		uu.SetAvatar(*s)
-	}
-	return uu
-}
-
-// ClearAvatar clears the value of the "avatar" field.
-func (uu *UserUpdate) ClearAvatar() *UserUpdate {
-	uu.mutation.ClearAvatar()
-	return uu
-}
-
 // SetFriendsIds sets the "friends_ids" field.
-func (uu *UserUpdate) SetFriendsIds(i []int) *UserUpdate {
-	uu.mutation.SetFriendsIds(i)
+func (uu *UserUpdate) SetFriendsIds(s []string) *UserUpdate {
+	uu.mutation.SetFriendsIds(s)
 	return uu
 }
 
-// AppendFriendsIds appends i to the "friends_ids" field.
-func (uu *UserUpdate) AppendFriendsIds(i []int) *UserUpdate {
-	uu.mutation.AppendFriendsIds(i)
+// AppendFriendsIds appends s to the "friends_ids" field.
+func (uu *UserUpdate) AppendFriendsIds(s []string) *UserUpdate {
+	uu.mutation.AppendFriendsIds(s)
 	return uu
 }
 
@@ -201,9 +188,45 @@ func (uu *UserUpdate) ClearLastName() *UserUpdate {
 	return uu
 }
 
+// AddRoomIDs adds the "rooms" edge to the Room entity by IDs.
+func (uu *UserUpdate) AddRoomIDs(ids ...string) *UserUpdate {
+	uu.mutation.AddRoomIDs(ids...)
+	return uu
+}
+
+// AddRooms adds the "rooms" edges to the Room entity.
+func (uu *UserUpdate) AddRooms(r ...*Room) *UserUpdate {
+	ids := make([]string, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return uu.AddRoomIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
+}
+
+// ClearRooms clears all "rooms" edges to the Room entity.
+func (uu *UserUpdate) ClearRooms() *UserUpdate {
+	uu.mutation.ClearRooms()
+	return uu
+}
+
+// RemoveRoomIDs removes the "rooms" edge to Room entities by IDs.
+func (uu *UserUpdate) RemoveRoomIDs(ids ...string) *UserUpdate {
+	uu.mutation.RemoveRoomIDs(ids...)
+	return uu
+}
+
+// RemoveRooms removes "rooms" edges to Room entities.
+func (uu *UserUpdate) RemoveRooms(r ...*Room) *UserUpdate {
+	ids := make([]string, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return uu.RemoveRoomIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -244,6 +267,11 @@ func (uu *UserUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (uu *UserUpdate) check() error {
+	if v, ok := uu.mutation.Email(); ok {
+		if err := user.EmailValidator(v); err != nil {
+			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "User.email": %w`, err)}
+		}
+	}
 	if v, ok := uu.mutation.Biography(); ok {
 		if err := user.BiographyValidator(v); err != nil {
 			return &ValidationError{Name: "biography", err: fmt.Errorf(`ent: validator failed for field "User.biography": %w`, err)}
@@ -292,6 +320,9 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := uu.mutation.UpdateTime(); ok {
 		_spec.SetField(user.FieldUpdateTime, field.TypeTime, value)
 	}
+	if value, ok := uu.mutation.Email(); ok {
+		_spec.SetField(user.FieldEmail, field.TypeString, value)
+	}
 	if value, ok := uu.mutation.IsEmailVerified(); ok {
 		_spec.SetField(user.FieldIsEmailVerified, field.TypeBool, value)
 	}
@@ -309,12 +340,6 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := uu.mutation.Role(); ok {
 		_spec.SetField(user.FieldRole, field.TypeEnum, value)
-	}
-	if value, ok := uu.mutation.Avatar(); ok {
-		_spec.SetField(user.FieldAvatar, field.TypeString, value)
-	}
-	if uu.mutation.AvatarCleared() {
-		_spec.ClearField(user.FieldAvatar, field.TypeString)
 	}
 	if value, ok := uu.mutation.FriendsIds(); ok {
 		_spec.SetField(user.FieldFriendsIds, field.TypeJSON, value)
@@ -345,6 +370,60 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if uu.mutation.LastNameCleared() {
 		_spec.ClearField(user.FieldLastName, field.TypeString)
 	}
+	if uu.mutation.RoomsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.RoomsTable,
+			Columns: user.RoomsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: room.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedRoomsIDs(); len(nodes) > 0 && !uu.mutation.RoomsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.RoomsTable,
+			Columns: user.RoomsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: room.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RoomsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.RoomsTable,
+			Columns: user.RoomsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: room.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -368,6 +447,12 @@ type UserUpdateOne struct {
 // SetUpdateTime sets the "update_time" field.
 func (uuo *UserUpdateOne) SetUpdateTime(t time.Time) *UserUpdateOne {
 	uuo.mutation.SetUpdateTime(t)
+	return uuo
+}
+
+// SetEmail sets the "email" field.
+func (uuo *UserUpdateOne) SetEmail(s string) *UserUpdateOne {
+	uuo.mutation.SetEmail(s)
 	return uuo
 }
 
@@ -431,35 +516,15 @@ func (uuo *UserUpdateOne) SetNillableRole(u *user.Role) *UserUpdateOne {
 	return uuo
 }
 
-// SetAvatar sets the "avatar" field.
-func (uuo *UserUpdateOne) SetAvatar(s string) *UserUpdateOne {
-	uuo.mutation.SetAvatar(s)
-	return uuo
-}
-
-// SetNillableAvatar sets the "avatar" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableAvatar(s *string) *UserUpdateOne {
-	if s != nil {
-		uuo.SetAvatar(*s)
-	}
-	return uuo
-}
-
-// ClearAvatar clears the value of the "avatar" field.
-func (uuo *UserUpdateOne) ClearAvatar() *UserUpdateOne {
-	uuo.mutation.ClearAvatar()
-	return uuo
-}
-
 // SetFriendsIds sets the "friends_ids" field.
-func (uuo *UserUpdateOne) SetFriendsIds(i []int) *UserUpdateOne {
-	uuo.mutation.SetFriendsIds(i)
+func (uuo *UserUpdateOne) SetFriendsIds(s []string) *UserUpdateOne {
+	uuo.mutation.SetFriendsIds(s)
 	return uuo
 }
 
-// AppendFriendsIds appends i to the "friends_ids" field.
-func (uuo *UserUpdateOne) AppendFriendsIds(i []int) *UserUpdateOne {
-	uuo.mutation.AppendFriendsIds(i)
+// AppendFriendsIds appends s to the "friends_ids" field.
+func (uuo *UserUpdateOne) AppendFriendsIds(s []string) *UserUpdateOne {
+	uuo.mutation.AppendFriendsIds(s)
 	return uuo
 }
 
@@ -537,9 +602,45 @@ func (uuo *UserUpdateOne) ClearLastName() *UserUpdateOne {
 	return uuo
 }
 
+// AddRoomIDs adds the "rooms" edge to the Room entity by IDs.
+func (uuo *UserUpdateOne) AddRoomIDs(ids ...string) *UserUpdateOne {
+	uuo.mutation.AddRoomIDs(ids...)
+	return uuo
+}
+
+// AddRooms adds the "rooms" edges to the Room entity.
+func (uuo *UserUpdateOne) AddRooms(r ...*Room) *UserUpdateOne {
+	ids := make([]string, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return uuo.AddRoomIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
+}
+
+// ClearRooms clears all "rooms" edges to the Room entity.
+func (uuo *UserUpdateOne) ClearRooms() *UserUpdateOne {
+	uuo.mutation.ClearRooms()
+	return uuo
+}
+
+// RemoveRoomIDs removes the "rooms" edge to Room entities by IDs.
+func (uuo *UserUpdateOne) RemoveRoomIDs(ids ...string) *UserUpdateOne {
+	uuo.mutation.RemoveRoomIDs(ids...)
+	return uuo
+}
+
+// RemoveRooms removes "rooms" edges to Room entities.
+func (uuo *UserUpdateOne) RemoveRooms(r ...*Room) *UserUpdateOne {
+	ids := make([]string, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return uuo.RemoveRoomIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -593,6 +694,11 @@ func (uuo *UserUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (uuo *UserUpdateOne) check() error {
+	if v, ok := uuo.mutation.Email(); ok {
+		if err := user.EmailValidator(v); err != nil {
+			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "User.email": %w`, err)}
+		}
+	}
 	if v, ok := uuo.mutation.Biography(); ok {
 		if err := user.BiographyValidator(v); err != nil {
 			return &ValidationError{Name: "biography", err: fmt.Errorf(`ent: validator failed for field "User.biography": %w`, err)}
@@ -658,6 +764,9 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if value, ok := uuo.mutation.UpdateTime(); ok {
 		_spec.SetField(user.FieldUpdateTime, field.TypeTime, value)
 	}
+	if value, ok := uuo.mutation.Email(); ok {
+		_spec.SetField(user.FieldEmail, field.TypeString, value)
+	}
 	if value, ok := uuo.mutation.IsEmailVerified(); ok {
 		_spec.SetField(user.FieldIsEmailVerified, field.TypeBool, value)
 	}
@@ -675,12 +784,6 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if value, ok := uuo.mutation.Role(); ok {
 		_spec.SetField(user.FieldRole, field.TypeEnum, value)
-	}
-	if value, ok := uuo.mutation.Avatar(); ok {
-		_spec.SetField(user.FieldAvatar, field.TypeString, value)
-	}
-	if uuo.mutation.AvatarCleared() {
-		_spec.ClearField(user.FieldAvatar, field.TypeString)
 	}
 	if value, ok := uuo.mutation.FriendsIds(); ok {
 		_spec.SetField(user.FieldFriendsIds, field.TypeJSON, value)
@@ -710,6 +813,60 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if uuo.mutation.LastNameCleared() {
 		_spec.ClearField(user.FieldLastName, field.TypeString)
+	}
+	if uuo.mutation.RoomsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.RoomsTable,
+			Columns: user.RoomsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: room.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedRoomsIDs(); len(nodes) > 0 && !uuo.mutation.RoomsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.RoomsTable,
+			Columns: user.RoomsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: room.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RoomsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.RoomsTable,
+			Columns: user.RoomsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: room.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &User{config: uuo.config}
 	_spec.Assign = _node.assignValues

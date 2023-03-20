@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/mixin"
 	"github.com/wtkeqrf0/you_together/pkg/conf"
@@ -34,8 +35,7 @@ func (User) Fields() []ent.Field {
 		field.Bytes("password_hash").Sensitive(),
 		field.Text("biography").Optional().MaxLen(512),
 		field.Enum("role").Values("USER", "ADMIN").Default("USER"),
-		field.String("avatar").Optional().Match(regexp.MustCompile(cfg.FilePath)),
-		field.Ints("friends_ids").Optional(),
+		field.Strings("friends_ids").Optional(),
 		field.Enum("language").Values("EN", "RU").Default("EN"),
 		field.Enum("theme").Values("WHITE", "DARK", "SYSTEM").Default("SYSTEM"),
 		field.String("first_name").Optional().Match(regexp.MustCompile(cfg.Name)).MinLen(4).MaxLen(20),
@@ -46,7 +46,7 @@ func (User) Fields() []ent.Field {
 // Edges of the User.
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
-		//TODO M2M with ROOMS
+		edge.To("rooms", Room.Type),
 	}
 }
 

@@ -8,13 +8,13 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/wtkeqrf0/you_together/ent"
 	"github.com/wtkeqrf0/you_together/internal/controller"
+	"github.com/wtkeqrf0/you_together/internal/middlewares/authorization"
 	"github.com/wtkeqrf0/you_together/internal/repo/postgres"
 	redis2 "github.com/wtkeqrf0/you_together/internal/repo/redis"
 	"github.com/wtkeqrf0/you_together/internal/service"
 	"github.com/wtkeqrf0/you_together/pkg/client/postgresql"
 	redisDB "github.com/wtkeqrf0/you_together/pkg/client/redis"
 	"github.com/wtkeqrf0/you_together/pkg/conf"
-	"github.com/wtkeqrf0/you_together/pkg/middlewares/authorization"
 	"net/http"
 	"os"
 	"os/signal"
@@ -52,7 +52,7 @@ func main() {
 		auth,
 		validator.New(),
 	)
-
+	//TODO Memorizing the set cookies
 	r := gin.New()
 	h.InitRoutes(r)
 

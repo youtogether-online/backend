@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/wtkeqrf0/you_together/ent/room"
+	"github.com/wtkeqrf0/you_together/ent/user"
 )
 
 // RoomCreate is the builder for creating a Room entity.
@@ -48,9 +49,23 @@ func (rc *RoomCreate) SetNillableUpdateTime(t *time.Time) *RoomCreate {
 	return rc
 }
 
-// SetName sets the "name" field.
-func (rc *RoomCreate) SetName(s string) *RoomCreate {
-	rc.mutation.SetName(s)
+// SetCustomName sets the "custom_name" field.
+func (rc *RoomCreate) SetCustomName(s string) *RoomCreate {
+	rc.mutation.SetCustomName(s)
+	return rc
+}
+
+// SetNillableCustomName sets the "custom_name" field if the given value is not nil.
+func (rc *RoomCreate) SetNillableCustomName(s *string) *RoomCreate {
+	if s != nil {
+		rc.SetCustomName(*s)
+	}
+	return rc
+}
+
+// SetOwner sets the "owner" field.
+func (rc *RoomCreate) SetOwner(s string) *RoomCreate {
+	rc.mutation.SetOwner(s)
 	return rc
 }
 
@@ -110,18 +125,33 @@ func (rc *RoomCreate) SetNillableDescription(s *string) *RoomCreate {
 	return rc
 }
 
-// SetAvatar sets the "avatar" field.
-func (rc *RoomCreate) SetAvatar(s string) *RoomCreate {
-	rc.mutation.SetAvatar(s)
+// SetID sets the "id" field.
+func (rc *RoomCreate) SetID(s string) *RoomCreate {
+	rc.mutation.SetID(s)
 	return rc
 }
 
-// SetNillableAvatar sets the "avatar" field if the given value is not nil.
-func (rc *RoomCreate) SetNillableAvatar(s *string) *RoomCreate {
+// SetNillableID sets the "id" field if the given value is not nil.
+func (rc *RoomCreate) SetNillableID(s *string) *RoomCreate {
 	if s != nil {
-		rc.SetAvatar(*s)
+		rc.SetID(*s)
 	}
 	return rc
+}
+
+// AddUserIDs adds the "users" edge to the User entity by IDs.
+func (rc *RoomCreate) AddUserIDs(ids ...string) *RoomCreate {
+	rc.mutation.AddUserIDs(ids...)
+	return rc
+}
+
+// AddUsers adds the "users" edges to the User entity.
+func (rc *RoomCreate) AddUsers(u ...*User) *RoomCreate {
+	ids := make([]string, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return rc.AddUserIDs(ids...)
 }
 
 // Mutation returns the RoomMutation object of the builder.
@@ -175,6 +205,10 @@ func (rc *RoomCreate) defaults() {
 		v := room.DefaultHasChat
 		rc.mutation.SetHasChat(v)
 	}
+	if _, ok := rc.mutation.ID(); !ok {
+		v := room.DefaultID()
+		rc.mutation.SetID(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -185,12 +219,17 @@ func (rc *RoomCreate) check() error {
 	if _, ok := rc.mutation.UpdateTime(); !ok {
 		return &ValidationError{Name: "update_time", err: errors.New(`ent: missing required field "Room.update_time"`)}
 	}
-	if _, ok := rc.mutation.Name(); !ok {
-		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Room.name"`)}
+	if v, ok := rc.mutation.CustomName(); ok {
+		if err := room.CustomNameValidator(v); err != nil {
+			return &ValidationError{Name: "custom_name", err: fmt.Errorf(`ent: validator failed for field "Room.custom_name": %w`, err)}
+		}
 	}
-	if v, ok := rc.mutation.Name(); ok {
-		if err := room.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Room.name": %w`, err)}
+	if _, ok := rc.mutation.Owner(); !ok {
+		return &ValidationError{Name: "owner", err: errors.New(`ent: missing required field "Room.owner"`)}
+	}
+	if v, ok := rc.mutation.Owner(); ok {
+		if err := room.OwnerValidator(v); err != nil {
+			return &ValidationError{Name: "owner", err: fmt.Errorf(`ent: validator failed for field "Room.owner": %w`, err)}
 		}
 	}
 	if _, ok := rc.mutation.Privacy(); !ok {
@@ -207,6 +246,11 @@ func (rc *RoomCreate) check() error {
 	if v, ok := rc.mutation.Description(); ok {
 		if err := room.DescriptionValidator(v); err != nil {
 			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "Room.description": %w`, err)}
+		}
+	}
+	if v, ok := rc.mutation.ID(); ok {
+		if err := room.IDValidator(v); err != nil {
+			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "Room.id": %w`, err)}
 		}
 	}
 	return nil
@@ -240,6 +284,10 @@ func (rc *RoomCreate) createSpec() (*Room, *sqlgraph.CreateSpec) {
 		_node = &Room{config: rc.config}
 		_spec = sqlgraph.NewCreateSpec(room.Table, sqlgraph.NewFieldSpec(room.FieldID, field.TypeString))
 	)
+	if id, ok := rc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = id
+	}
 	if value, ok := rc.mutation.CreateTime(); ok {
 		_spec.SetField(room.FieldCreateTime, field.TypeTime, value)
 		_node.CreateTime = value
@@ -248,9 +296,13 @@ func (rc *RoomCreate) createSpec() (*Room, *sqlgraph.CreateSpec) {
 		_spec.SetField(room.FieldUpdateTime, field.TypeTime, value)
 		_node.UpdateTime = value
 	}
-	if value, ok := rc.mutation.Name(); ok {
-		_spec.SetField(room.FieldName, field.TypeString, value)
-		_node.Name = value
+	if value, ok := rc.mutation.CustomName(); ok {
+		_spec.SetField(room.FieldCustomName, field.TypeString, value)
+		_node.CustomName = value
+	}
+	if value, ok := rc.mutation.Owner(); ok {
+		_spec.SetField(room.FieldOwner, field.TypeString, value)
+		_node.Owner = value
 	}
 	if value, ok := rc.mutation.Privacy(); ok {
 		_spec.SetField(room.FieldPrivacy, field.TypeEnum, value)
@@ -268,9 +320,24 @@ func (rc *RoomCreate) createSpec() (*Room, *sqlgraph.CreateSpec) {
 		_spec.SetField(room.FieldDescription, field.TypeString, value)
 		_node.Description = value
 	}
-	if value, ok := rc.mutation.Avatar(); ok {
-		_spec.SetField(room.FieldAvatar, field.TypeString, value)
-		_node.Avatar = value
+	if nodes := rc.mutation.UsersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   room.UsersTable,
+			Columns: room.UsersPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

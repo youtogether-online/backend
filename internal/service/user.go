@@ -24,10 +24,12 @@ func NewUserService(postgres UserPostgres, redis UserRedis) *UserService {
 	return &UserService{postgres: postgres, redis: redis}
 }
 
+// FindUserByUsername returns the main information about user
 func (u UserService) FindUserByUsername(username string) (dto.UserDTO, error) {
 	return u.postgres.FindUserByUsername(context.Background(), username)
 }
 
+// FindMe returns the detail information about user
 func (u UserService) FindMe(username string) (dto.MyUserDTO, error) {
 	user, err := u.postgres.FindMe(context.Background(), username)
 	if err != nil {

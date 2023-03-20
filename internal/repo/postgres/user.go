@@ -17,15 +17,15 @@ func NewUserStorage(userClient *ent.UserClient) *UserStorage {
 	return &UserStorage{userClient: userClient}
 }
 
-// FindMe return detail information about user with error
+// FindMe returns the detail information about user
 func (r *UserStorage) FindMe(ctx context.Context, username string) (dto.MyUserDTO, error) {
 	var userDTO []dto.MyUserDTO
 
 	err := r.userClient.Query().Where(user.ID(username)).
 		Select(user.FieldID, user.FieldEmail, user.FieldIsEmailVerified,
-			user.FieldBiography, user.FieldRole, user.FieldAvatar,
-			user.FieldFriendsIds, user.FieldLanguage, user.FieldTheme,
-			user.FieldFirstName, user.FieldLastName).Scan(ctx, &userDTO)
+			user.FieldBiography, user.FieldRole, user.FieldFriendsIds,
+			user.FieldLanguage, user.FieldTheme, user.FieldFirstName,
+			user.FieldLastName).Scan(ctx, &userDTO)
 
 	if err != nil || len(userDTO) != 1 {
 		return dto.MyUserDTO{}, fmt.Errorf("user not found: %v", err)
@@ -38,8 +38,8 @@ func (r *UserStorage) FindUserByUsername(ctx context.Context, username string) (
 	var userDTO []dto.UserDTO
 
 	err := r.userClient.Query().Where(user.ID(username)).
-		Select(user.FieldID, user.FieldBiography, user.FieldRole,
-			user.FieldAvatar, user.FieldFirstName, user.FieldLastName).
+		Select(user.FieldID, user.FieldBiography,
+			user.FieldRole, user.FieldFirstName, user.FieldLastName).
 		Scan(ctx, &userDTO)
 
 	if err != nil || len(userDTO) != 1 {

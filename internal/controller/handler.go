@@ -2,13 +2,11 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/locales/en"
-	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	"github.com/wtkeqrf0/you_together/ent"
 	"github.com/wtkeqrf0/you_together/internal/controller/dto"
+	"github.com/wtkeqrf0/you_together/internal/middlewares/exceptions"
 	"github.com/wtkeqrf0/you_together/pkg/conf"
-	"github.com/wtkeqrf0/you_together/pkg/middlewares/exceptions"
 	"time"
 )
 
@@ -28,10 +26,10 @@ type UserService interface {
 
 type AuthService interface {
 	SetCodes(key string, value ...any) error
-	EqualsPopCode(email string, code string) bool
+	EqualsPopCode(email string, code string) (bool, error)
 	GetSession(sessionId string) (map[string]string, error)
 	SetSession(sessionId string, info map[string]string) error
-	DelSession(sessionId string) error
+	DelSession(sessionId string)
 
 	CreateUserWithPassword(email, password string) ([]byte, string, error)
 	CreateUserByEmail(email string) (string, error)
@@ -59,8 +57,7 @@ func NewHandler(users UserService, sessions AuthMiddleware, auth AuthService, va
 }
 
 func (h Handler) InitRoutes(r *gin.Engine) {
-	eng := en.New()
-	ut.New(eng, eng)
+	//TODO disable gin errors print
 	r.Use(gin.Recovery(), gin.Logger(), exceptions.ErrorHandler)
 
 	api := r.Group("/api")

@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/wtkeqrf0/you_together/ent/room"
 	"github.com/wtkeqrf0/you_together/ent/user"
 )
 
@@ -102,23 +103,9 @@ func (uc *UserCreate) SetNillableRole(u *user.Role) *UserCreate {
 	return uc
 }
 
-// SetAvatar sets the "avatar" field.
-func (uc *UserCreate) SetAvatar(s string) *UserCreate {
-	uc.mutation.SetAvatar(s)
-	return uc
-}
-
-// SetNillableAvatar sets the "avatar" field if the given value is not nil.
-func (uc *UserCreate) SetNillableAvatar(s *string) *UserCreate {
-	if s != nil {
-		uc.SetAvatar(*s)
-	}
-	return uc
-}
-
 // SetFriendsIds sets the "friends_ids" field.
-func (uc *UserCreate) SetFriendsIds(i []int) *UserCreate {
-	uc.mutation.SetFriendsIds(i)
+func (uc *UserCreate) SetFriendsIds(s []string) *UserCreate {
+	uc.mutation.SetFriendsIds(s)
 	return uc
 }
 
@@ -190,6 +177,21 @@ func (uc *UserCreate) SetNillableID(s *string) *UserCreate {
 		uc.SetID(*s)
 	}
 	return uc
+}
+
+// AddRoomIDs adds the "rooms" edge to the Room entity by IDs.
+func (uc *UserCreate) AddRoomIDs(ids ...string) *UserCreate {
+	uc.mutation.AddRoomIDs(ids...)
+	return uc
+}
+
+// AddRooms adds the "rooms" edges to the Room entity.
+func (uc *UserCreate) AddRooms(r ...*Room) *UserCreate {
+	ids := make([]string, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return uc.AddRoomIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -379,10 +381,6 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldRole, field.TypeEnum, value)
 		_node.Role = value
 	}
-	if value, ok := uc.mutation.Avatar(); ok {
-		_spec.SetField(user.FieldAvatar, field.TypeString, value)
-		_node.Avatar = value
-	}
 	if value, ok := uc.mutation.FriendsIds(); ok {
 		_spec.SetField(user.FieldFriendsIds, field.TypeJSON, value)
 		_node.FriendsIds = value
@@ -402,6 +400,25 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := uc.mutation.LastName(); ok {
 		_spec.SetField(user.FieldLastName, field.TypeString, value)
 		_node.LastName = value
+	}
+	if nodes := uc.mutation.RoomsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.RoomsTable,
+			Columns: user.RoomsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: room.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

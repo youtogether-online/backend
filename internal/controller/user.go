@@ -2,7 +2,7 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/wtkeqrf0/you_together/pkg/middlewares/exceptions"
+	"github.com/wtkeqrf0/you_together/internal/middlewares/exceptions"
 	"net/http"
 )
 
@@ -27,7 +27,7 @@ func (h Handler) getMe(c *gin.Context) {
 // getUserByUsername returns the user with the main info or detail info (if session id username equals username)
 func (h Handler) getUserByUsername(c *gin.Context) {
 	username := c.Param("username")
-	if err := h.valid.Var(username, "required,gte=5"); err != nil {
+	if err := h.valid.Var(username, "required,gte=5,lte=20"); err != nil {
 		c.Error(exceptions.ValidError.AddErr(err))
 		return
 	}

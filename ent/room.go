@@ -20,8 +20,10 @@ type Room struct {
 	CreateTime time.Time `json:"create_time,omitempty"`
 	// UpdateTime holds the value of the "update_time" field.
 	UpdateTime time.Time `json:"update_time,omitempty"`
-	// Name holds the value of the "name" field.
-	Name string `json:"name,omitempty"`
+	// CustomName holds the value of the "custom_name" field.
+	CustomName string `json:"custom_name,omitempty"`
+	// Owner holds the value of the "owner" field.
+	Owner string `json:"owner,omitempty"`
 	// Privacy holds the value of the "privacy" field.
 	Privacy room.Privacy `json:"privacy,omitempty"`
 	// PasswordHash holds the value of the "password_hash" field.
@@ -30,8 +32,27 @@ type Room struct {
 	HasChat bool `json:"has_chat,omitempty"`
 	// Description holds the value of the "description" field.
 	Description string `json:"description,omitempty"`
-	// Avatar holds the value of the "avatar" field.
-	Avatar string `json:"avatar,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the RoomQuery when eager-loading is set.
+	Edges RoomEdges `json:"edges"`
+}
+
+// RoomEdges holds the relations/edges for other nodes in the graph.
+type RoomEdges struct {
+	// Users holds the value of the users edge.
+	Users []*User `json:"users,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// UsersOrErr returns the Users value or an error if the edge
+// was not loaded in eager-loading.
+func (e RoomEdges) UsersOrErr() ([]*User, error) {
+	if e.loadedTypes[0] {
+		return e.Users, nil
+	}
+	return nil, &NotLoadedError{edge: "users"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -41,7 +62,7 @@ func (*Room) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case room.FieldHasChat:
 			values[i] = new(sql.NullBool)
-		case room.FieldID, room.FieldName, room.FieldPrivacy, room.FieldPasswordHash, room.FieldDescription, room.FieldAvatar:
+		case room.FieldID, room.FieldCustomName, room.FieldOwner, room.FieldPrivacy, room.FieldPasswordHash, room.FieldDescription:
 			values[i] = new(sql.NullString)
 		case room.FieldCreateTime, room.FieldUpdateTime:
 			values[i] = new(sql.NullTime)
@@ -78,11 +99,17 @@ func (r *Room) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				r.UpdateTime = value.Time
 			}
-		case room.FieldName:
+		case room.FieldCustomName:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field name", values[i])
+				return fmt.Errorf("unexpected type %T for field custom_name", values[i])
 			} else if value.Valid {
-				r.Name = value.String
+				r.CustomName = value.String
+			}
+		case room.FieldOwner:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field owner", values[i])
+			} else if value.Valid {
+				r.Owner = value.String
 			}
 		case room.FieldPrivacy:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -108,15 +135,14 @@ func (r *Room) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				r.Description = value.String
 			}
-		case room.FieldAvatar:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field avatar", values[i])
-			} else if value.Valid {
-				r.Avatar = value.String
-			}
 		}
 	}
 	return nil
+}
+
+// QueryUsers queries the "users" edge of the Room entity.
+func (r *Room) QueryUsers() *UserQuery {
+	return NewRoomClient(r.config).QueryUsers(r)
 }
 
 // Update returns a builder for updating this Room.
@@ -148,8 +174,11 @@ func (r *Room) String() string {
 	builder.WriteString("update_time=")
 	builder.WriteString(r.UpdateTime.Format(time.ANSIC))
 	builder.WriteString(", ")
-	builder.WriteString("name=")
-	builder.WriteString(r.Name)
+	builder.WriteString("custom_name=")
+	builder.WriteString(r.CustomName)
+	builder.WriteString(", ")
+	builder.WriteString("owner=")
+	builder.WriteString(r.Owner)
 	builder.WriteString(", ")
 	builder.WriteString("privacy=")
 	builder.WriteString(fmt.Sprintf("%v", r.Privacy))
@@ -161,9 +190,6 @@ func (r *Room) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("description=")
 	builder.WriteString(r.Description)
-	builder.WriteString(", ")
-	builder.WriteString("avatar=")
-	builder.WriteString(r.Avatar)
 	builder.WriteByte(')')
 	return builder.String()
 }

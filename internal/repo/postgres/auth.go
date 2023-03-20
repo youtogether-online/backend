@@ -11,20 +11,21 @@ func (r *UserStorage) UserExists(ctx context.Context, username string) bool {
 	return r.userClient.Query().Where(user.ID(username)).ExistX(ctx)
 }
 
-// CreateUserWithPassword and return it (only auth)
+// CreateUserWithPassword without verified email and returns it (only on registration)
 func (r *UserStorage) CreateUserWithPassword(ctx context.Context, email string, hashedPassword []byte) (string, error) {
-	// TODO not fully returning user
+	//TODO not fully returning user
+
 	customer, err := r.userClient.Create().SetEmail(email).SetPasswordHash(hashedPassword).Save(ctx)
 	return customer.ID, err
 }
 
-// CreateUserByEmail without password and return it (only auth)
+// CreateUserByEmail without password and returns it (only on registration)
 func (r *UserStorage) CreateUserByEmail(ctx context.Context, email string) (string, error) {
 	customer, err := r.userClient.Create().SetEmail(email).SetIsEmailVerified(true).Save(ctx)
 	return customer.ID, err
 }
 
-// AuthUserByEmail returns the user's password hash and username with given email (only auth)
+// AuthUserByEmail returns the user's password hash and username with given email (only on authorization)
 func (r *UserStorage) AuthUserByEmail(ctx context.Context, email string) ([]byte, string, error) {
 	var res []struct {
 		PasswordHash []byte `sql:"password_hash"`
@@ -32,7 +33,7 @@ func (r *UserStorage) AuthUserByEmail(ctx context.Context, email string) ([]byte
 	}
 	err := r.userClient.Query().Where(
 		user.EmailEQ(email),
-	).Select(user.FieldPasswordHash).Scan(ctx, &res)
+	).Select(user.FieldPasswordHash, user.FieldID).Scan(ctx, &res)
 	if err != nil || len(res) != 1 {
 		return nil, "", fmt.Errorf("cannot get user by email: %v", err)
 	}
@@ -54,6 +55,7 @@ func (r *UserStorage) AuthUserWithInfo(ctx context.Context, email string) (bool,
 	return res[0].IsEmailVerified, res[0].Username, nil
 }
 
+// SetEmailVerified to true
 func (r *UserStorage) SetEmailVerified(ctx context.Context, email string) error {
 	return r.userClient.Update().SetIsEmailVerified(true).Where(user.Email(email)).Exec(ctx)
 }
