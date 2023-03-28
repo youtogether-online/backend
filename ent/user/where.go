@@ -250,16 +250,6 @@ func IsEmailVerifiedNEQ(v bool) predicate.User {
 	return predicate.User(sql.FieldNEQ(FieldIsEmailVerified, v))
 }
 
-// IsEmailVerifiedIsNil applies the IsNil predicate on the "is_email_verified" field.
-func IsEmailVerifiedIsNil() predicate.User {
-	return predicate.User(sql.FieldIsNull(FieldIsEmailVerified))
-}
-
-// IsEmailVerifiedNotNil applies the NotNil predicate on the "is_email_verified" field.
-func IsEmailVerifiedNotNil() predicate.User {
-	return predicate.User(sql.FieldNotNull(FieldIsEmailVerified))
-}
-
 // PasswordHashEQ applies the EQ predicate on the "password_hash" field.
 func PasswordHashEQ(v []byte) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldPasswordHash, v))
@@ -298,6 +288,16 @@ func PasswordHashLT(v []byte) predicate.User {
 // PasswordHashLTE applies the LTE predicate on the "password_hash" field.
 func PasswordHashLTE(v []byte) predicate.User {
 	return predicate.User(sql.FieldLTE(FieldPasswordHash, v))
+}
+
+// PasswordHashIsNil applies the IsNil predicate on the "password_hash" field.
+func PasswordHashIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldPasswordHash))
+}
+
+// PasswordHashNotNil applies the NotNil predicate on the "password_hash" field.
+func PasswordHashNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldPasswordHash))
 }
 
 // BiographyEQ applies the EQ predicate on the "biography" field.

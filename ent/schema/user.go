@@ -6,6 +6,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/mixin"
 	"github.com/wtkeqrf0/you_together/pkg/conf"
+	"github.com/zhexuany/wordGenerator"
 	"math/rand"
 	"regexp"
 )
@@ -24,15 +25,17 @@ var (
 func (User) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("id").StorageKey("username").Unique().Match(regexp.MustCompile(cfg.Username)).DefaultFunc(func() string {
-			b := make([]rune, 6)
+			/*b := make([]rune, 6)
 			for i := range b {
 				b[i] = idRunes[rand.Intn(len(idRunes))]
 			}
 			return string(b)
+			*/
+			return wordGenerator.GetWord(rand.Intn(5) + 5)
 		}).MinLen(5).MaxLen(20),
 		field.String("email").Unique().Match(regexp.MustCompile(cfg.Email)),
-		field.Bool("is_email_verified").Optional(),
-		field.Bytes("password_hash").Sensitive(),
+		field.Bool("is_email_verified").Default(false),
+		field.Bytes("password_hash").Optional().Sensitive(),
 		field.Text("biography").Optional().MaxLen(512),
 		field.Enum("role").Values("USER", "ADMIN").Default("USER"),
 		field.Strings("friends_ids").Optional(),

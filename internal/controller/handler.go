@@ -3,9 +3,11 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/wtkeqrf0/you_together/ent"
 	"github.com/wtkeqrf0/you_together/internal/controller/dto"
-	"github.com/wtkeqrf0/you_together/internal/middlewares/exceptions"
+	"github.com/wtkeqrf0/you_together/internal/middleware/exceptions"
 	"github.com/wtkeqrf0/you_together/pkg/conf"
 	"time"
 )
@@ -29,20 +31,22 @@ type AuthService interface {
 	EqualsPopCode(email string, code string) (bool, error)
 	GetSession(sessionId string) (map[string]string, error)
 	SetSession(sessionId string, info map[string]string) error
-	DelSession(sessionId string)
+	DelKeys(keys ...string)
 
 	CreateUserWithPassword(email, password string) ([]byte, string, error)
+	UserExistsByEmail(email string) bool
 	CreateUserByEmail(email string) (string, error)
 	AuthUserByEmail(email string) ([]byte, string, error)
 	AuthUserWithInfo(email string) (bool, string, error)
 	SetEmailVerified(email string) error
+	FindSessionsByUsername(userName string) []map[string]string
 }
 
 type AuthMiddleware interface {
 	RequireSession(c *gin.Context)
 	MaybeSession(c *gin.Context)
 	GenerateSession(email, ip, device string) (string, map[string]string, error)
-	ValidateSession(sessionId string) (map[string]string, error)
+	ValidateSession(sessionId string) (map[string]string, bool, error)
 }
 
 type Handler struct {
@@ -57,22 +61,26 @@ func NewHandler(users UserService, sessions AuthMiddleware, auth AuthService, va
 }
 
 func (h Handler) InitRoutes(r *gin.Engine) {
-	//TODO disable gin errors print
-	r.Use(gin.Recovery(), gin.Logger(), exceptions.ErrorHandler)
-
+	r.Use(gin.Logger(), gin.Recovery(), exceptions.ErrorHandler)
 	api := r.Group("/api")
+
+	docs := api.Group("/docs")
+	{
+		docs.GET("/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	}
 
 	auth := api.Group("/auth")
 	{
-		auth.POST("/sign-in", h.signIn)
-		auth.POST("/save-mail", h.saveMail)
-		auth.POST("/check-mail", h.checkMail)
+		auth.POST("/sign-in-with-password", h.signInWithPassword)
+		auth.POST("/sign-in-send-code", h.signInSendCode)
+		auth.POST("/sign-in-check-code", h.signInCheckCode)
 		auth.POST("/sign-out", h.signOut)
 	}
 
+	user := api.Group("/user")
 	{
-		api.GET("/:username", h.sessions.MaybeSession, h.getUserByUsername)
-		api.GET("/", h.sessions.RequireSession, h.getMe)
+		user.GET("/:username", h.sessions.MaybeSession, h.getUserByUsername)
+		user.GET("", h.sessions.RequireSession, h.getMe)
 	}
 
 }

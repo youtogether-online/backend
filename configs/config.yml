@@ -1,4 +1,4 @@
-is_debug: true
+prod: false
 session:
   secret: "opanki"
 
@@ -8,12 +8,10 @@ listen:
 
 db:
   postgres:
-    #host: "docker"
     username: "postgres"
     db_name: "you_together"
     password: "Ubythfkbcbvec2"
   redis:
-    #host: "docker"
     username: "redis"
     password: "Ubythfkbcbvec2"
     db: 0

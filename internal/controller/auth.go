@@ -3,7 +3,7 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/wtkeqrf0/you_together/internal/controller/dto"
-	"github.com/wtkeqrf0/you_together/internal/middlewares/exceptions"
+	"github.com/wtkeqrf0/you_together/internal/middleware/exceptions"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/mail.v2"
 	"math/rand"
@@ -12,9 +12,21 @@ import (
 
 var chars = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
-// signIn authentication by email and password. Returns a new session id in cookie, and deletes old, if exists
-func (h Handler) signIn(c *gin.Context) {
+// signInWithPassword authentication by email and password. Returns a new session id in cookie, and deletes old, if exists
 
+// SignInWithPassword godoc
+// @Summary Sign in by password
+// @Description Compare the user's password with an existing user's password. If it matches, create session of the user. If the user does not exist, create a new user
+// @Param user_info_with_password body dto.SignInDTO true "User's email, password and device"
+// @Accept application/json
+// @Produce application/json
+// @Tags Authorization
+// @Success 200 "return session id in cookie"
+// @Failure 400 {object} exceptions.MyError
+// @Failure 404 {object} exceptions.MyError "The password is not registered for this account"
+// @Failure 500 {object} exceptions.MyError
+// @Router /auth/sign-in-with-password [post]
+func (h Handler) signInWithPassword(c *gin.Context) {
 	auth := &dto.SignInDTO{}
 	if err := c.ShouldBindJSON(auth); err != nil {
 		c.Error(exceptions.DataError.AddErr(err))
@@ -27,6 +39,7 @@ func (h Handler) signIn(c *gin.Context) {
 	}
 
 	passwordHash, username, err := h.auth.AuthUserByEmail(auth.Email)
+
 	if err != nil {
 		passwordHash, username, err = h.auth.CreateUserWithPassword(auth.Email, auth.Password)
 
@@ -34,31 +47,48 @@ func (h Handler) signIn(c *gin.Context) {
 			c.Error(exceptions.ServerError.AddErr(err))
 			return
 		}
+	} else if len(passwordHash) < 1 {
+		c.Error(exceptions.PasswordNotFound)
+		return
 	}
 
 	if err = bcrypt.CompareHashAndPassword(passwordHash, []byte(auth.Password)); err != nil {
 		c.Error(exceptions.PasswordError.AddErr(err))
 		return
 	}
+	c.SetSameSite(http.SameSiteNoneMode)
 
 	id, _ := c.Cookie(cfg.Session.CookieName)
 	if err = h.valid.Var(id, "uuid4"); err == nil {
-		h.auth.DelSession(id)
+		h.auth.DelKeys(id)
 	}
 	id, _, err = h.sessions.GenerateSession(username, c.ClientIP(), auth.Device)
+
 	if err != nil {
 		c.Error(exceptions.ServerError.AddErr(err))
 		return
 	}
 
 	c.SetCookie(cfg.Session.CookieName, id, cfg.Session.DurationInSeconds,
-		"/api", cfg.Listen.Host, false, true)
+		"/api", cfg.Listen.Host, true, true)
 
 	c.Status(http.StatusOK)
 }
 
-// saveMail to users email and saves it
-func (h Handler) saveMail(c *gin.Context) {
+// signInSendCode to users email and saves it
+
+// SignInSendCode godoc
+// @Summary Send code to the user's email
+// @Description Send a secret 5-digit code to the specified email
+// @Param email body dto.EmailDTO true "User's email"
+// @Accept application/json
+// @Produce application/json
+// @Tags Authorization
+// @Success 200
+// @Failure 400 {object} exceptions.MyError
+// @Failure 500 {object} exceptions.MyError
+// @Router /auth/sign-in-send-code [post]
+func (h Handler) signInSendCode(c *gin.Context) {
 	to := &dto.EmailDTO{}
 	if err := c.ShouldBindJSON(to); err != nil {
 		c.Error(exceptions.DataError.AddErr(err))
@@ -76,16 +106,25 @@ func (h Handler) saveMail(c *gin.Context) {
 		return
 	}
 
-	if err := sendEmail(to.Email, code); err != nil {
-		c.Error(exceptions.ServerError.AddErr(err))
-		return
-	}
+	go sendEmail(to.Email, code)
 
 	c.Status(http.StatusOK)
 }
 
-// checkMail with saved code by email. Returns a new session id in cookie, and deletes old, if exists
-func (h Handler) checkMail(c *gin.Context) {
+// signInCheckCode with saved code by email. Returns a new session id in cookie, and deletes old, if exists
+
+// SignInCheckCode godoc
+// @Summary Sign in by email
+// @Description Compare the secret code with the previously sent codes. If at least one matches, create session of the user. If the user does not exist, create a new user
+// @Param user_info body dto.EmailWithCodeDTO true "User's email, secret code and device"
+// @Accept application/json
+// @Produce application/json
+// @Tags Authorization
+// @Success 200 "return session id in cookie"
+// @Failure 400 {object} exceptions.MyError
+// @Failure 500 {object} exceptions.MyError
+// @Router /auth/sign-in-check-code [post]
+func (h Handler) signInCheckCode(c *gin.Context) {
 	auth := &dto.EmailWithCodeDTO{}
 	if err := c.ShouldBindJSON(auth); err != nil {
 		c.Error(exceptions.DataError.AddErr(err))
@@ -120,10 +159,11 @@ func (h Handler) checkMail(c *gin.Context) {
 			return
 		}
 	}
+	c.SetSameSite(http.SameSiteNoneMode)
 
 	id, _ := c.Cookie(cfg.Session.CookieName)
 	if err = h.valid.Var(id, "uuid4"); err == nil {
-		h.auth.DelSession(id)
+		h.auth.DelKeys(id)
 	}
 	id, _, err = h.sessions.GenerateSession(username, c.ClientIP(), auth.Device)
 	if err != nil {
@@ -132,16 +172,25 @@ func (h Handler) checkMail(c *gin.Context) {
 	}
 
 	c.SetCookie(cfg.Session.CookieName, id, cfg.Session.DurationInSeconds,
-		"/api", cfg.Listen.Host, false, true)
+		"/api", cfg.Listen.Host, true, true)
 
 	c.Status(http.StatusOK)
 }
 
 // signOut deletes the session id from the database, which makes it invalid
+
+// SignOut godoc
+// @Summary Delete user's session
+// @Description Make the user's session invalid
+// @Tags Authorization
+// @Success 200
+// @Router /auth/sign-out [post]
 func (h Handler) signOut(c *gin.Context) {
+	c.SetSameSite(http.SameSiteNoneMode)
+
 	id, _ := c.Cookie(cfg.Session.CookieName)
 	if err := h.valid.Var(id, "uuid4"); err == nil {
-		h.auth.DelSession(id)
+		h.auth.DelKeys(id)
 	}
 
 	c.Status(http.StatusOK)
@@ -157,7 +206,7 @@ func generateSecretCode() string {
 }
 
 // sendEmail to user with a secret code
-func sendEmail(ToEmail string, code string) error {
+func sendEmail(ToEmail string, code string) {
 	d := mail.NewDialer(cfg.Email.Host, cfg.Email.Port, cfg.Email.User, cfg.Email.Password)
 	m := mail.NewMessage()
 	m.SetHeader("From", cfg.Email.From)
@@ -165,5 +214,5 @@ func sendEmail(ToEmail string, code string) error {
 	m.SetHeader("Subject", "Подтвердите ваш email")
 	m.SetBody("text/plain", code)
 
-	return d.DialAndSend(m)
+	d.DialAndSend(m)
 }

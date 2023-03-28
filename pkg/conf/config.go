@@ -8,7 +8,7 @@ import (
 )
 
 type Config struct {
-	IsDebug *bool `yaml:"is_debug" env-required:"true"`
+	Prod *bool `yaml:"prod" env-required:"true"`
 
 	Session struct {
 		Secret            string        `yaml:"secret" env-required:"true"`
@@ -87,11 +87,10 @@ func GetConfig() *Config {
 		if inst.Regexp.RoomPassword == "." {
 			logrus.Warn("room password regexp is not set. Using \".\" as a default value")
 		}
-		if inst.DB.Postgres.Host == "docker" {
+		if *inst.Prod {
 			inst.DB.Postgres.Host = "postgres"
-		}
-		if inst.DB.Redis.Host == "docker" {
 			inst.DB.Redis.Host = "redis"
+
 		}
 	})
 

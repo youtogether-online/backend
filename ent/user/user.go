@@ -91,6 +91,8 @@ var (
 	UpdateDefaultUpdateTime func() time.Time
 	// EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	EmailValidator func(string) error
+	// DefaultIsEmailVerified holds the default value on creation for the "is_email_verified" field.
+	DefaultIsEmailVerified bool
 	// BiographyValidator is a validator for the "biography" field. It is called by the builders before save.
 	BiographyValidator func(string) error
 	// FirstNameValidator is a validator for the "first_name" field. It is called by the builders before save.

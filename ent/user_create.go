@@ -237,6 +237,10 @@ func (uc *UserCreate) defaults() {
 		v := user.DefaultUpdateTime()
 		uc.mutation.SetUpdateTime(v)
 	}
+	if _, ok := uc.mutation.IsEmailVerified(); !ok {
+		v := user.DefaultIsEmailVerified
+		uc.mutation.SetIsEmailVerified(v)
+	}
 	if _, ok := uc.mutation.Role(); !ok {
 		v := user.DefaultRole
 		uc.mutation.SetRole(v)
@@ -271,8 +275,8 @@ func (uc *UserCreate) check() error {
 			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "User.email": %w`, err)}
 		}
 	}
-	if _, ok := uc.mutation.PasswordHash(); !ok {
-		return &ValidationError{Name: "password_hash", err: errors.New(`ent: missing required field "User.password_hash"`)}
+	if _, ok := uc.mutation.IsEmailVerified(); !ok {
+		return &ValidationError{Name: "is_email_verified", err: errors.New(`ent: missing required field "User.is_email_verified"`)}
 	}
 	if v, ok := uc.mutation.Biography(); ok {
 		if err := user.BiographyValidator(v); err != nil {

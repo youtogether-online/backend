@@ -3,7 +3,6 @@ package redis
 import (
 	"context"
 	"github.com/redis/go-redis/v9"
-	"github.com/sirupsen/logrus"
 	"github.com/wtkeqrf0/you_together/pkg/conf"
 	"time"
 )
@@ -27,7 +26,6 @@ func (r *RClient) SetSession(ctx context.Context, sessionId string, info map[str
 			return err
 		}
 	}
-	logrus.Info(r.client.HGetAll(ctx, sessionId).Val())
 
 	return r.client.Expire(ctx, sessionId, month).Err()
 }
@@ -38,12 +36,12 @@ func (r *RClient) GetSession(ctx context.Context, sessionId string) (map[string]
 }
 
 // ExpandExpireSession if key exists and have lesser than 15 days of expire
-func (r *RClient) ExpandExpireSession(ctx context.Context, sessionId string) error {
-	if v, err := r.client.TTL(ctx, sessionId).Result(); v <= cfg.Session.Duration/2 {
-		return r.client.ExpireLT(ctx, sessionId, month).Err()
-	} else {
-		return err
+func (r *RClient) ExpandExpireSession(ctx context.Context, sessionId string) (bool, error) {
+	v, err := r.client.TTL(ctx, sessionId).Result()
+	if v <= cfg.Session.Duration/2 {
+		return r.client.Expire(ctx, sessionId, month).Result()
 	}
+	return false, err
 }
 
 // FindSessionsByUsername returns all existing sessions by username
@@ -57,9 +55,9 @@ func (r *RClient) FindSessionsByUsername(ctx context.Context, userName string) [
 	return res
 }
 
-// DelSession fully deletes session id
-func (r *RClient) DelSession(ctx context.Context, sessionId string) {
-	r.client.Del(ctx, sessionId)
+// DelKeys fully deletes session id
+func (r *RClient) DelKeys(ctx context.Context, keys ...string) {
+	r.client.Del(ctx, keys...)
 }
 
 // EqualsPopCode returns true if code is involved in email and deletes it

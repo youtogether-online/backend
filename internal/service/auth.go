@@ -7,6 +7,7 @@ import (
 
 type AuthPostgres interface {
 	UserExists(ctx context.Context, username string) bool
+	UserExistsByEmail(ctx context.Context, email string) bool
 	CreateUserWithPassword(ctx context.Context, email string, hashedPassword []byte) (string, error)
 	CreateUserByEmail(ctx context.Context, email string) (string, error)
 	AuthUserByEmail(ctx context.Context, email string) ([]byte, string, error)
@@ -26,6 +27,11 @@ func NewAuthService(postgres AuthPostgres, redis AuthRedis) *AuthService {
 // UserExists returns true if user Exists. Panics if error occurred
 func (a AuthService) UserExists(username string) bool {
 	return a.postgres.UserExists(context.Background(), username)
+}
+
+// UserExistsByEmail returns true if user Exists. Panic if error occurred
+func (a AuthService) UserExistsByEmail(email string) bool {
+	return a.postgres.UserExistsByEmail(context.Background(), email)
 }
 
 // CreateUserWithPassword without verified email and returns it (only on registration)
@@ -61,9 +67,9 @@ func (a AuthService) SetEmailVerified(email string) error {
 type AuthRedis interface {
 	SetSession(ctx context.Context, sessionId string, info map[string]string) error
 	GetSession(ctx context.Context, sessionId string) (map[string]string, error)
-	ExpandExpireSession(ctx context.Context, sessionId string) error
+	ExpandExpireSession(ctx context.Context, sessionId string) (bool, error)
 	FindSessionsByUsername(ctx context.Context, userName string) []map[string]string
-	DelSession(ctx context.Context, sessionId string)
+	DelKeys(ctx context.Context, keys ...string)
 	EqualsPopCode(ctx context.Context, email string, code string) (bool, error)
 	SetCodes(ctx context.Context, key string, value ...any) error
 }
@@ -79,7 +85,7 @@ func (a AuthService) SetSession(sessionId string, info map[string]string) error 
 }
 
 // ExpandExpireSession if key exists and have lesser than 15 days of expire
-func (a AuthService) ExpandExpireSession(sessionId string) error {
+func (a AuthService) ExpandExpireSession(sessionId string) (bool, error) {
 	return a.redis.ExpandExpireSession(context.Background(), sessionId)
 }
 
@@ -88,9 +94,9 @@ func (a AuthService) FindSessionsByUsername(userName string) []map[string]string
 	return a.redis.FindSessionsByUsername(context.Background(), userName)
 }
 
-// DelSession fully deletes session id
-func (a AuthService) DelSession(sessionId string) {
-	a.redis.DelSession(context.Background(), sessionId)
+// DelKeys fully deletes session id
+func (a AuthService) DelKeys(keys ...string) {
+	a.redis.DelKeys(context.Background(), keys...)
 }
 
 // EqualsPopCode returns true if code is involved in email and deletes it

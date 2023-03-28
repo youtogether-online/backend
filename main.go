@@ -6,9 +6,10 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
+	_ "github.com/wtkeqrf0/you_together/docs"
 	"github.com/wtkeqrf0/you_together/ent"
 	"github.com/wtkeqrf0/you_together/internal/controller"
-	"github.com/wtkeqrf0/you_together/internal/middlewares/authorization"
+	"github.com/wtkeqrf0/you_together/internal/middleware/authorization"
 	"github.com/wtkeqrf0/you_together/internal/repo/postgres"
 	redis2 "github.com/wtkeqrf0/you_together/internal/repo/redis"
 	"github.com/wtkeqrf0/you_together/internal/service"
@@ -35,6 +36,17 @@ func init() {
 	logrus.SetReportCaller(true)
 }
 
+// @title You Together API
+// @version 1.0
+// @description It's an API interacting with You Together using Golang
+// @accept application/json
+// @produce application/json
+// @schemes http
+
+// @host localhost:3000
+// @BasePath /api
+
+// @authorization.docs.description Authorization, registration and authentication
 func main() {
 	cfg := conf.GetConfig()
 
@@ -52,7 +64,6 @@ func main() {
 		auth,
 		validator.New(),
 	)
-	//TODO Memorizing the set cookies
 	r := gin.New()
 	h.InitRoutes(r)
 

@@ -56,15 +56,15 @@ func (uu *UserUpdate) SetNillableIsEmailVerified(b *bool) *UserUpdate {
 	return uu
 }
 
-// ClearIsEmailVerified clears the value of the "is_email_verified" field.
-func (uu *UserUpdate) ClearIsEmailVerified() *UserUpdate {
-	uu.mutation.ClearIsEmailVerified()
-	return uu
-}
-
 // SetPasswordHash sets the "password_hash" field.
 func (uu *UserUpdate) SetPasswordHash(b []byte) *UserUpdate {
 	uu.mutation.SetPasswordHash(b)
+	return uu
+}
+
+// ClearPasswordHash clears the value of the "password_hash" field.
+func (uu *UserUpdate) ClearPasswordHash() *UserUpdate {
+	uu.mutation.ClearPasswordHash()
 	return uu
 }
 
@@ -326,11 +326,11 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := uu.mutation.IsEmailVerified(); ok {
 		_spec.SetField(user.FieldIsEmailVerified, field.TypeBool, value)
 	}
-	if uu.mutation.IsEmailVerifiedCleared() {
-		_spec.ClearField(user.FieldIsEmailVerified, field.TypeBool)
-	}
 	if value, ok := uu.mutation.PasswordHash(); ok {
 		_spec.SetField(user.FieldPasswordHash, field.TypeBytes, value)
+	}
+	if uu.mutation.PasswordHashCleared() {
+		_spec.ClearField(user.FieldPasswordHash, field.TypeBytes)
 	}
 	if value, ok := uu.mutation.Biography(); ok {
 		_spec.SetField(user.FieldBiography, field.TypeString, value)
@@ -470,15 +470,15 @@ func (uuo *UserUpdateOne) SetNillableIsEmailVerified(b *bool) *UserUpdateOne {
 	return uuo
 }
 
-// ClearIsEmailVerified clears the value of the "is_email_verified" field.
-func (uuo *UserUpdateOne) ClearIsEmailVerified() *UserUpdateOne {
-	uuo.mutation.ClearIsEmailVerified()
-	return uuo
-}
-
 // SetPasswordHash sets the "password_hash" field.
 func (uuo *UserUpdateOne) SetPasswordHash(b []byte) *UserUpdateOne {
 	uuo.mutation.SetPasswordHash(b)
+	return uuo
+}
+
+// ClearPasswordHash clears the value of the "password_hash" field.
+func (uuo *UserUpdateOne) ClearPasswordHash() *UserUpdateOne {
+	uuo.mutation.ClearPasswordHash()
 	return uuo
 }
 
@@ -770,11 +770,11 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if value, ok := uuo.mutation.IsEmailVerified(); ok {
 		_spec.SetField(user.FieldIsEmailVerified, field.TypeBool, value)
 	}
-	if uuo.mutation.IsEmailVerifiedCleared() {
-		_spec.ClearField(user.FieldIsEmailVerified, field.TypeBool)
-	}
 	if value, ok := uuo.mutation.PasswordHash(); ok {
 		_spec.SetField(user.FieldPasswordHash, field.TypeBytes, value)
+	}
+	if uuo.mutation.PasswordHashCleared() {
+		_spec.ClearField(user.FieldPasswordHash, field.TypeBytes)
 	}
 	if value, ok := uuo.mutation.Biography(); ok {
 		_spec.SetField(user.FieldBiography, field.TypeString, value)

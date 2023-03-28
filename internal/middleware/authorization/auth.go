@@ -8,7 +8,7 @@ import (
 type AuthService interface {
 	SetSession(sessionId string, info map[string]string) error
 	GetSession(sessionId string) (map[string]string, error)
-	ExpandExpireSession(sessionId string) error
+	ExpandExpireSession(sessionId string) (bool, error)
 	UserExists(username string) bool
 	FindSessionsByUsername(userName string) []map[string]string
 }
@@ -22,25 +22,26 @@ func NewAuth(auth AuthService) *Auth {
 }
 
 // ValidateSession validates the session and identifies the user in DB. Returns an error in case of unsuccessful validation
-func (a Auth) ValidateSession(sessionId string) (map[string]string, error) {
+func (a Auth) ValidateSession(sessionId string) (map[string]string, bool, error) {
 	if sessionId == "" {
-		return nil, fmt.Errorf("session id is not found")
+		return nil, false, fmt.Errorf("session id is not found")
 	}
 
 	info, err := a.auth.GetSession(sessionId)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	if !a.auth.UserExists(info["username"]) {
-		return nil, fmt.Errorf("user does not exists")
+		return nil, false, fmt.Errorf("user does not exists")
 	}
 
-	if err = a.auth.ExpandExpireSession(sessionId); err != nil {
-		return nil, fmt.Errorf("session does not exist: %v", err)
+	ok, err := a.auth.ExpandExpireSession(sessionId)
+	if err != nil {
+		return nil, false, fmt.Errorf("session does not exist: %v", err)
 	}
 
-	return info, nil
+	return info, ok, nil
 }
 
 // GenerateSession generates a new session, if not exists

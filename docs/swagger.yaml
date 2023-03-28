@@ -1,0 +1,317 @@
+basePath: /api
+consumes:
+- application/json
+definitions:
+  dto.EmailDTO:
+    properties:
+      email:
+        example: myemail@gmail.com
+        type: string
+    required:
+    - email
+    type: object
+  dto.EmailWithCodeDTO:
+    properties:
+      code:
+        example: I1ELB
+        type: string
+      device:
+        example: macOS 10.15.7 Chrome 111.0.0
+        type: string
+      email:
+        example: myemail@gmail.com
+        type: string
+    required:
+    - code
+    - device
+    - email
+    type: object
+  dto.MyUserDTO:
+    description: User detail information
+    properties:
+      biography:
+        example: I'd like to relax
+        type: string
+      email:
+        example: myemail@gmail.com
+        type: string
+      firstName:
+        example: Tele
+        type: string
+      friendsIds:
+        example:
+        - tldtb
+        - kigfv
+        items:
+          type: string
+        type: array
+      isEmailVerified:
+        type: boolean
+      language:
+        $ref: '#/definitions/user.Language'
+      lastName:
+        example: phone
+        type: string
+      role:
+        $ref: '#/definitions/user.Role'
+      theme:
+        $ref: '#/definitions/user.Theme'
+      username:
+        example: bobbas
+        type: string
+    type: object
+  dto.SignInDTO:
+    properties:
+      device:
+        example: macOS 10.15.7 Chrome 111.0.0
+        type: string
+      email:
+        example: myemail@gmail.com
+        type: string
+      password:
+        example: onkr3451
+        maxLength: 20
+        minLength: 4
+        type: string
+    required:
+    - device
+    - email
+    - password
+    type: object
+  dto.UserDTO:
+    description: User main information
+    properties:
+      biography:
+        example: I'd like to relax
+        type: string
+      firstName:
+        example: Tele
+        type: string
+      friendsIds:
+        example:
+        - tldtb
+        - kigfv
+        items:
+          type: string
+        type: array
+      lastName:
+        example: phone
+        type: string
+      role:
+        $ref: '#/definitions/user.Role'
+      username:
+        example: bobbas
+        type: string
+    type: object
+  exceptions.MyError:
+    description: All native errors must be this type
+    properties:
+      advice:
+        example: Try to send request later
+        type: string
+      message:
+        example: Exception was occurred
+        type: string
+    type: object
+  user.Language:
+    enum:
+    - EN
+    - EN
+    - RU
+    type: string
+    x-enum-varnames:
+    - DefaultLanguage
+    - LanguageEN
+    - LanguageRU
+  user.Role:
+    enum:
+    - USER
+    - USER
+    - ADMIN
+    type: string
+    x-enum-varnames:
+    - DefaultRole
+    - RoleUSER
+    - RoleADMIN
+  user.Theme:
+    enum:
+    - SYSTEM
+    - WHITE
+    - DARK
+    - SYSTEM
+    type: string
+    x-enum-varnames:
+    - DefaultTheme
+    - ThemeWHITE
+    - ThemeDARK
+    - ThemeSYSTEM
+host: localhost:3000
+info:
+  contact: {}
+  description: It's an API interacting with You Together using Golang
+  title: You Together API
+  version: "1.0"
+paths:
+  /auth/sign-in-check-code:
+    post:
+      consumes:
+      - application/json
+      description: Compare the secret code with the previously sent codes. If at least
+        one matches, create session of the user. If the user does not exist, create
+        a new user
+      parameters:
+      - description: User's email, secret code and device
+        in: body
+        name: user_info
+        required: true
+        schema:
+          $ref: '#/definitions/dto.EmailWithCodeDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: return session id in cookie
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+      summary: Sign in by email
+      tags:
+      - Authorization
+  /auth/sign-in-send-code:
+    post:
+      consumes:
+      - application/json
+      description: Send a secret 5-digit code to the specified email
+      parameters:
+      - description: User's email
+        in: body
+        name: email
+        required: true
+        schema:
+          $ref: '#/definitions/dto.EmailDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+      summary: Send code to the user's email
+      tags:
+      - Authorization
+  /auth/sign-in-with-password:
+    post:
+      consumes:
+      - application/json
+      description: Compare the user's password with an existing user's password. If
+        it matches, create session of the user. If the user does not exist, create
+        a new user
+      parameters:
+      - description: User's email, password and device
+        in: body
+        name: user_info_with_password
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SignInDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: return session id in cookie
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+        "404":
+          description: The password is not registered for this account
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+      summary: Sign in by password
+      tags:
+      - Authorization
+  /auth/sign-out:
+    post:
+      description: Make the user's session invalid
+      responses:
+        "200":
+          description: OK
+      summary: Delete user's session
+      tags:
+      - Authorization
+  /user:
+    get:
+      description: Return detail information about the user
+      parameters:
+      - description: user's session id
+        in: header
+        name: session_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.MyUserDTO'
+        "401":
+          description: User isn't logged in
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+      summary: Get detail information about user by session
+      tags:
+      - User
+  /user/{username}:
+    get:
+      consumes:
+      - application/json
+      description: Return basic information about the user. If the user tries to find
+        out information about himself, return detailed information about the user
+      parameters:
+      - description: find user by username
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: dto.UserDTO or dto.MyUserDTO
+          schema:
+            $ref: '#/definitions/dto.UserDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+        "404":
+          description: User doesn't exist
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+      summary: Get information about the user
+      tags:
+      - User
+produces:
+- application/json
+schemes:
+- http
+swagger: "2.0"

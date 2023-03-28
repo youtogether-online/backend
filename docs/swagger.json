@@ -1,0 +1,454 @@
+{
+    "consumes": [
+        "application/json"
+    ],
+    "produces": [
+        "application/json"
+    ],
+    "schemes": [
+        "http"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "It's an API interacting with You Together using Golang",
+        "title": "You Together API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:3000",
+    "basePath": "/api",
+    "paths": {
+        "/auth/sign-in-check-code": {
+            "post": {
+                "description": "Compare the secret code with the previously sent codes. If at least one matches, create session of the user. If the user does not exist, create a new user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authorization"
+                ],
+                "summary": "Sign in by email",
+                "parameters": [
+                    {
+                        "description": "User's email, secret code and device",
+                        "name": "user_info",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.EmailWithCodeDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "return session id in cookie"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/sign-in-send-code": {
+            "post": {
+                "description": "Send a secret 5-digit code to the specified email",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authorization"
+                ],
+                "summary": "Send code to the user's email",
+                "parameters": [
+                    {
+                        "description": "User's email",
+                        "name": "email",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.EmailDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/sign-in-with-password": {
+            "post": {
+                "description": "Compare the user's password with an existing user's password. If it matches, create session of the user. If the user does not exist, create a new user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authorization"
+                ],
+                "summary": "Sign in by password",
+                "parameters": [
+                    {
+                        "description": "User's email, password and device",
+                        "name": "user_info_with_password",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.SignInDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "return session id in cookie"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    },
+                    "404": {
+                        "description": "The password is not registered for this account",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/sign-out": {
+            "post": {
+                "description": "Make the user's session invalid",
+                "tags": [
+                    "Authorization"
+                ],
+                "summary": "Delete user's session",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/user": {
+            "get": {
+                "description": "Return detail information about the user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Get detail information about user by session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "user's session id",
+                        "name": "session_id",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MyUserDTO"
+                        }
+                    },
+                    "401": {
+                        "description": "User isn't logged in",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/{username}": {
+            "get": {
+                "description": "Return basic information about the user. If the user tries to find out information about himself, return detailed information about the user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Get information about the user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "find user by username",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "dto.UserDTO or dto.MyUserDTO",
+                        "schema": {
+                            "$ref": "#/definitions/dto.UserDTO"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    },
+                    "404": {
+                        "description": "User doesn't exist",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "dto.EmailDTO": {
+            "type": "object",
+            "required": [
+                "email"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "myemail@gmail.com"
+                }
+            }
+        },
+        "dto.EmailWithCodeDTO": {
+            "type": "object",
+            "required": [
+                "code",
+                "device",
+                "email"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "I1ELB"
+                },
+                "device": {
+                    "type": "string",
+                    "example": "macOS 10.15.7 Chrome 111.0.0"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "myemail@gmail.com"
+                }
+            }
+        },
+        "dto.MyUserDTO": {
+            "description": "User detail information",
+            "type": "object",
+            "properties": {
+                "biography": {
+                    "type": "string",
+                    "example": "I'd like to relax"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "myemail@gmail.com"
+                },
+                "firstName": {
+                    "type": "string",
+                    "example": "Tele"
+                },
+                "friendsIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "tldtb",
+                        "kigfv"
+                    ]
+                },
+                "isEmailVerified": {
+                    "type": "boolean"
+                },
+                "language": {
+                    "$ref": "#/definitions/user.Language"
+                },
+                "lastName": {
+                    "type": "string",
+                    "example": "phone"
+                },
+                "role": {
+                    "$ref": "#/definitions/user.Role"
+                },
+                "theme": {
+                    "$ref": "#/definitions/user.Theme"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "bobbas"
+                }
+            }
+        },
+        "dto.SignInDTO": {
+            "type": "object",
+            "required": [
+                "device",
+                "email",
+                "password"
+            ],
+            "properties": {
+                "device": {
+                    "type": "string",
+                    "example": "macOS 10.15.7 Chrome 111.0.0"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "myemail@gmail.com"
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 20,
+                    "minLength": 4,
+                    "example": "onkr3451"
+                }
+            }
+        },
+        "dto.UserDTO": {
+            "description": "User main information",
+            "type": "object",
+            "properties": {
+                "biography": {
+                    "type": "string",
+                    "example": "I'd like to relax"
+                },
+                "firstName": {
+                    "type": "string",
+                    "example": "Tele"
+                },
+                "friendsIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "tldtb",
+                        "kigfv"
+                    ]
+                },
+                "lastName": {
+                    "type": "string",
+                    "example": "phone"
+                },
+                "role": {
+                    "$ref": "#/definitions/user.Role"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "bobbas"
+                }
+            }
+        },
+        "exceptions.MyError": {
+            "description": "All native errors must be this type",
+            "type": "object",
+            "properties": {
+                "advice": {
+                    "type": "string",
+                    "example": "Try to send request later"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Exception was occurred"
+                }
+            }
+        },
+        "user.Language": {
+            "type": "string",
+            "enum": [
+                "EN",
+                "EN",
+                "RU"
+            ],
+            "x-enum-varnames": [
+                "DefaultLanguage",
+                "LanguageEN",
+                "LanguageRU"
+            ]
+        },
+        "user.Role": {
+            "type": "string",
+            "enum": [
+                "USER",
+                "USER",
+                "ADMIN"
+            ],
+            "x-enum-varnames": [
+                "DefaultRole",
+                "RoleUSER",
+                "RoleADMIN"
+            ]
+        },
+        "user.Theme": {
+            "type": "string",
+            "enum": [
+                "SYSTEM",
+                "WHITE",
+                "DARK",
+                "SYSTEM"
+            ],
+            "x-enum-varnames": [
+                "DefaultTheme",
+                "ThemeWHITE",
+                "ThemeDARK",
+                "ThemeSYSTEM"
+            ]
+        }
+    }
+}

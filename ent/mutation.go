@@ -1163,22 +1163,9 @@ func (m *UserMutation) OldIsEmailVerified(ctx context.Context) (v bool, err erro
 	return oldValue.IsEmailVerified, nil
 }
 
-// ClearIsEmailVerified clears the value of the "is_email_verified" field.
-func (m *UserMutation) ClearIsEmailVerified() {
-	m.is_email_verified = nil
-	m.clearedFields[user.FieldIsEmailVerified] = struct{}{}
-}
-
-// IsEmailVerifiedCleared returns if the "is_email_verified" field was cleared in this mutation.
-func (m *UserMutation) IsEmailVerifiedCleared() bool {
-	_, ok := m.clearedFields[user.FieldIsEmailVerified]
-	return ok
-}
-
 // ResetIsEmailVerified resets all changes to the "is_email_verified" field.
 func (m *UserMutation) ResetIsEmailVerified() {
 	m.is_email_verified = nil
-	delete(m.clearedFields, user.FieldIsEmailVerified)
 }
 
 // SetPasswordHash sets the "password_hash" field.
@@ -1212,9 +1199,22 @@ func (m *UserMutation) OldPasswordHash(ctx context.Context) (v []byte, err error
 	return oldValue.PasswordHash, nil
 }
 
+// ClearPasswordHash clears the value of the "password_hash" field.
+func (m *UserMutation) ClearPasswordHash() {
+	m.password_hash = nil
+	m.clearedFields[user.FieldPasswordHash] = struct{}{}
+}
+
+// PasswordHashCleared returns if the "password_hash" field was cleared in this mutation.
+func (m *UserMutation) PasswordHashCleared() bool {
+	_, ok := m.clearedFields[user.FieldPasswordHash]
+	return ok
+}
+
 // ResetPasswordHash resets all changes to the "password_hash" field.
 func (m *UserMutation) ResetPasswordHash() {
 	m.password_hash = nil
+	delete(m.clearedFields, user.FieldPasswordHash)
 }
 
 // SetBiography sets the "biography" field.
@@ -1850,8 +1850,8 @@ func (m *UserMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *UserMutation) ClearedFields() []string {
 	var fields []string
-	if m.FieldCleared(user.FieldIsEmailVerified) {
-		fields = append(fields, user.FieldIsEmailVerified)
+	if m.FieldCleared(user.FieldPasswordHash) {
+		fields = append(fields, user.FieldPasswordHash)
 	}
 	if m.FieldCleared(user.FieldBiography) {
 		fields = append(fields, user.FieldBiography)
@@ -1879,8 +1879,8 @@ func (m *UserMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *UserMutation) ClearField(name string) error {
 	switch name {
-	case user.FieldIsEmailVerified:
-		m.ClearIsEmailVerified()
+	case user.FieldPasswordHash:
+		m.ClearPasswordHash()
 		return nil
 	case user.FieldBiography:
 		m.ClearBiography()
