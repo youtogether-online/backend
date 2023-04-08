@@ -37,6 +37,7 @@ type RoomMutation struct {
 	id            *string
 	create_time   *time.Time
 	update_time   *time.Time
+	name          *string
 	custom_name   *string
 	owner         *string
 	privacy       *room.Privacy
@@ -226,6 +227,42 @@ func (m *RoomMutation) OldUpdateTime(ctx context.Context) (v time.Time, err erro
 // ResetUpdateTime resets all changes to the "update_time" field.
 func (m *RoomMutation) ResetUpdateTime() {
 	m.update_time = nil
+}
+
+// SetName sets the "name" field.
+func (m *RoomMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *RoomMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Room entity.
+// If the Room object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RoomMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *RoomMutation) ResetName() {
+	m.name = nil
 }
 
 // SetCustomName sets the "custom_name" field.
@@ -571,12 +608,15 @@ func (m *RoomMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *RoomMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 9)
 	if m.create_time != nil {
 		fields = append(fields, room.FieldCreateTime)
 	}
 	if m.update_time != nil {
 		fields = append(fields, room.FieldUpdateTime)
+	}
+	if m.name != nil {
+		fields = append(fields, room.FieldName)
 	}
 	if m.custom_name != nil {
 		fields = append(fields, room.FieldCustomName)
@@ -608,6 +648,8 @@ func (m *RoomMutation) Field(name string) (ent.Value, bool) {
 		return m.CreateTime()
 	case room.FieldUpdateTime:
 		return m.UpdateTime()
+	case room.FieldName:
+		return m.Name()
 	case room.FieldCustomName:
 		return m.CustomName()
 	case room.FieldOwner:
@@ -633,6 +675,8 @@ func (m *RoomMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldCreateTime(ctx)
 	case room.FieldUpdateTime:
 		return m.OldUpdateTime(ctx)
+	case room.FieldName:
+		return m.OldName(ctx)
 	case room.FieldCustomName:
 		return m.OldCustomName(ctx)
 	case room.FieldOwner:
@@ -667,6 +711,13 @@ func (m *RoomMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdateTime(v)
+		return nil
+	case room.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
 		return nil
 	case room.FieldCustomName:
 		v, ok := value.(string)
@@ -786,6 +837,9 @@ func (m *RoomMutation) ResetField(name string) error {
 	case room.FieldUpdateTime:
 		m.ResetUpdateTime()
 		return nil
+	case room.FieldName:
+		m.ResetName()
+		return nil
 	case room.FieldCustomName:
 		m.ResetCustomName()
 		return nil
@@ -900,6 +954,7 @@ type UserMutation struct {
 	id                *string
 	create_time       *time.Time
 	update_time       *time.Time
+	name              *string
 	email             *string
 	is_email_verified *bool
 	password_hash     *[]byte
@@ -911,6 +966,8 @@ type UserMutation struct {
 	theme             *user.Theme
 	first_name        *string
 	last_name         *string
+	sessions          *[]string
+	appendsessions    []string
 	clearedFields     map[string]struct{}
 	rooms             map[string]struct{}
 	removedrooms      map[string]struct{}
@@ -1094,6 +1151,42 @@ func (m *UserMutation) OldUpdateTime(ctx context.Context) (v time.Time, err erro
 // ResetUpdateTime resets all changes to the "update_time" field.
 func (m *UserMutation) ResetUpdateTime() {
 	m.update_time = nil
+}
+
+// SetName sets the "name" field.
+func (m *UserMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *UserMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *UserMutation) ResetName() {
+	m.name = nil
 }
 
 // SetEmail sets the "email" field.
@@ -1537,6 +1630,57 @@ func (m *UserMutation) ResetLastName() {
 	delete(m.clearedFields, user.FieldLastName)
 }
 
+// SetSessions sets the "sessions" field.
+func (m *UserMutation) SetSessions(s []string) {
+	m.sessions = &s
+	m.appendsessions = nil
+}
+
+// Sessions returns the value of the "sessions" field in the mutation.
+func (m *UserMutation) Sessions() (r []string, exists bool) {
+	v := m.sessions
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSessions returns the old "sessions" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldSessions(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSessions is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSessions requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSessions: %w", err)
+	}
+	return oldValue.Sessions, nil
+}
+
+// AppendSessions adds s to the "sessions" field.
+func (m *UserMutation) AppendSessions(s []string) {
+	m.appendsessions = append(m.appendsessions, s...)
+}
+
+// AppendedSessions returns the list of values that were appended to the "sessions" field in this mutation.
+func (m *UserMutation) AppendedSessions() ([]string, bool) {
+	if len(m.appendsessions) == 0 {
+		return nil, false
+	}
+	return m.appendsessions, true
+}
+
+// ResetSessions resets all changes to the "sessions" field.
+func (m *UserMutation) ResetSessions() {
+	m.sessions = nil
+	m.appendsessions = nil
+}
+
 // AddRoomIDs adds the "rooms" edge to the Room entity by ids.
 func (m *UserMutation) AddRoomIDs(ids ...string) {
 	if m.rooms == nil {
@@ -1625,12 +1769,15 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 12)
+	fields := make([]string, 0, 14)
 	if m.create_time != nil {
 		fields = append(fields, user.FieldCreateTime)
 	}
 	if m.update_time != nil {
 		fields = append(fields, user.FieldUpdateTime)
+	}
+	if m.name != nil {
+		fields = append(fields, user.FieldName)
 	}
 	if m.email != nil {
 		fields = append(fields, user.FieldEmail)
@@ -1662,6 +1809,9 @@ func (m *UserMutation) Fields() []string {
 	if m.last_name != nil {
 		fields = append(fields, user.FieldLastName)
 	}
+	if m.sessions != nil {
+		fields = append(fields, user.FieldSessions)
+	}
 	return fields
 }
 
@@ -1674,6 +1824,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.CreateTime()
 	case user.FieldUpdateTime:
 		return m.UpdateTime()
+	case user.FieldName:
+		return m.Name()
 	case user.FieldEmail:
 		return m.Email()
 	case user.FieldIsEmailVerified:
@@ -1694,6 +1846,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.FirstName()
 	case user.FieldLastName:
 		return m.LastName()
+	case user.FieldSessions:
+		return m.Sessions()
 	}
 	return nil, false
 }
@@ -1707,6 +1861,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldCreateTime(ctx)
 	case user.FieldUpdateTime:
 		return m.OldUpdateTime(ctx)
+	case user.FieldName:
+		return m.OldName(ctx)
 	case user.FieldEmail:
 		return m.OldEmail(ctx)
 	case user.FieldIsEmailVerified:
@@ -1727,6 +1883,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldFirstName(ctx)
 	case user.FieldLastName:
 		return m.OldLastName(ctx)
+	case user.FieldSessions:
+		return m.OldSessions(ctx)
 	}
 	return nil, fmt.Errorf("unknown User field %s", name)
 }
@@ -1749,6 +1907,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdateTime(v)
+		return nil
+	case user.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
 		return nil
 	case user.FieldEmail:
 		v, ok := value.(string)
@@ -1819,6 +1984,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetLastName(v)
+		return nil
+	case user.FieldSessions:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSessions(v)
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)
@@ -1908,6 +2080,9 @@ func (m *UserMutation) ResetField(name string) error {
 	case user.FieldUpdateTime:
 		m.ResetUpdateTime()
 		return nil
+	case user.FieldName:
+		m.ResetName()
+		return nil
 	case user.FieldEmail:
 		m.ResetEmail()
 		return nil
@@ -1937,6 +2112,9 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldLastName:
 		m.ResetLastName()
+		return nil
+	case user.FieldSessions:
+		m.ResetSessions()
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)

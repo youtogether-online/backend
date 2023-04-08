@@ -1,12 +1,27 @@
-FROM golang:1.20.2-alpine
+FROM golang:alpine AS builder
 
-WORKDIR /you_together
+LABEL stage=gobuilder
 
-COPY go.mod ./
-COPY go.sum ./
+ENV CGO_ENABLED 0
+
+RUN apk update --no-cache && apk add --no-cache tzdata
+
+WORKDIR /you-together
+
+ADD go.mod .
+ADD go.sum .
 RUN go mod download
+COPY . .
+RUN go build -ldflags="-s -w" -o /app/main cmd/main.go
+ADD /configs /app/configs
 
-COPY . ./
-EXPOSE 3000
 
-CMD ["go", "run","cmd/main/app.go"]
+FROM scratch
+
+MAINTAINER matvey-sizov@mail.ru
+
+WORKDIR /app
+COPY --from=builder /app/main /app/main
+COPY --from=builder /app/configs /app/configs
+
+CMD ["./main"]

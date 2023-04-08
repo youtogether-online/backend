@@ -21,6 +21,8 @@ type User struct {
 	CreateTime time.Time `json:"create_time,omitempty"`
 	// UpdateTime holds the value of the "update_time" field.
 	UpdateTime time.Time `json:"update_time,omitempty"`
+	// Name holds the value of the "name" field.
+	Name string `json:"name,omitempty"`
 	// Email holds the value of the "email" field.
 	Email string `json:"email,omitempty"`
 	// IsEmailVerified holds the value of the "is_email_verified" field.
@@ -41,6 +43,8 @@ type User struct {
 	FirstName string `json:"first_name,omitempty"`
 	// LastName holds the value of the "last_name" field.
 	LastName string `json:"last_name,omitempty"`
+	// Sessions holds the value of the "sessions" field.
+	Sessions []string `json:"sessions,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.
 	Edges UserEdges `json:"edges"`
@@ -69,11 +73,11 @@ func (*User) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case user.FieldPasswordHash, user.FieldFriendsIds:
+		case user.FieldPasswordHash, user.FieldFriendsIds, user.FieldSessions:
 			values[i] = new([]byte)
 		case user.FieldIsEmailVerified:
 			values[i] = new(sql.NullBool)
-		case user.FieldID, user.FieldEmail, user.FieldBiography, user.FieldRole, user.FieldLanguage, user.FieldTheme, user.FieldFirstName, user.FieldLastName:
+		case user.FieldID, user.FieldName, user.FieldEmail, user.FieldBiography, user.FieldRole, user.FieldLanguage, user.FieldTheme, user.FieldFirstName, user.FieldLastName:
 			values[i] = new(sql.NullString)
 		case user.FieldCreateTime, user.FieldUpdateTime:
 			values[i] = new(sql.NullTime)
@@ -109,6 +113,12 @@ func (u *User) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field update_time", values[i])
 			} else if value.Valid {
 				u.UpdateTime = value.Time
+			}
+		case user.FieldName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field name", values[i])
+			} else if value.Valid {
+				u.Name = value.String
 			}
 		case user.FieldEmail:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -172,6 +182,14 @@ func (u *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				u.LastName = value.String
 			}
+		case user.FieldSessions:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field sessions", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &u.Sessions); err != nil {
+					return fmt.Errorf("unmarshal field sessions: %w", err)
+				}
+			}
 		}
 	}
 	return nil
@@ -211,6 +229,9 @@ func (u *User) String() string {
 	builder.WriteString("update_time=")
 	builder.WriteString(u.UpdateTime.Format(time.ANSIC))
 	builder.WriteString(", ")
+	builder.WriteString("name=")
+	builder.WriteString(u.Name)
+	builder.WriteString(", ")
 	builder.WriteString("email=")
 	builder.WriteString(u.Email)
 	builder.WriteString(", ")
@@ -239,6 +260,9 @@ func (u *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("last_name=")
 	builder.WriteString(u.LastName)
+	builder.WriteString(", ")
+	builder.WriteString("sessions=")
+	builder.WriteString(fmt.Sprintf("%v", u.Sessions))
 	builder.WriteByte(')')
 	return builder.String()
 }

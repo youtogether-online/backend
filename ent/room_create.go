@@ -49,6 +49,20 @@ func (rc *RoomCreate) SetNillableUpdateTime(t *time.Time) *RoomCreate {
 	return rc
 }
 
+// SetName sets the "name" field.
+func (rc *RoomCreate) SetName(s string) *RoomCreate {
+	rc.mutation.SetName(s)
+	return rc
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (rc *RoomCreate) SetNillableName(s *string) *RoomCreate {
+	if s != nil {
+		rc.SetName(*s)
+	}
+	return rc
+}
+
 // SetCustomName sets the "custom_name" field.
 func (rc *RoomCreate) SetCustomName(s string) *RoomCreate {
 	rc.mutation.SetCustomName(s)
@@ -131,14 +145,6 @@ func (rc *RoomCreate) SetID(s string) *RoomCreate {
 	return rc
 }
 
-// SetNillableID sets the "id" field if the given value is not nil.
-func (rc *RoomCreate) SetNillableID(s *string) *RoomCreate {
-	if s != nil {
-		rc.SetID(*s)
-	}
-	return rc
-}
-
 // AddUserIDs adds the "users" edge to the User entity by IDs.
 func (rc *RoomCreate) AddUserIDs(ids ...string) *RoomCreate {
 	rc.mutation.AddUserIDs(ids...)
@@ -197,6 +203,10 @@ func (rc *RoomCreate) defaults() {
 		v := room.DefaultUpdateTime()
 		rc.mutation.SetUpdateTime(v)
 	}
+	if _, ok := rc.mutation.Name(); !ok {
+		v := room.DefaultName()
+		rc.mutation.SetName(v)
+	}
 	if _, ok := rc.mutation.Privacy(); !ok {
 		v := room.DefaultPrivacy
 		rc.mutation.SetPrivacy(v)
@@ -204,10 +214,6 @@ func (rc *RoomCreate) defaults() {
 	if _, ok := rc.mutation.HasChat(); !ok {
 		v := room.DefaultHasChat
 		rc.mutation.SetHasChat(v)
-	}
-	if _, ok := rc.mutation.ID(); !ok {
-		v := room.DefaultID()
-		rc.mutation.SetID(v)
 	}
 }
 
@@ -218,6 +224,14 @@ func (rc *RoomCreate) check() error {
 	}
 	if _, ok := rc.mutation.UpdateTime(); !ok {
 		return &ValidationError{Name: "update_time", err: errors.New(`ent: missing required field "Room.update_time"`)}
+	}
+	if _, ok := rc.mutation.Name(); !ok {
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Room.name"`)}
+	}
+	if v, ok := rc.mutation.Name(); ok {
+		if err := room.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Room.name": %w`, err)}
+		}
 	}
 	if v, ok := rc.mutation.CustomName(); ok {
 		if err := room.CustomNameValidator(v); err != nil {
@@ -246,11 +260,6 @@ func (rc *RoomCreate) check() error {
 	if v, ok := rc.mutation.Description(); ok {
 		if err := room.DescriptionValidator(v); err != nil {
 			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "Room.description": %w`, err)}
-		}
-	}
-	if v, ok := rc.mutation.ID(); ok {
-		if err := room.IDValidator(v); err != nil {
-			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "Room.id": %w`, err)}
 		}
 	}
 	return nil
@@ -295,6 +304,10 @@ func (rc *RoomCreate) createSpec() (*Room, *sqlgraph.CreateSpec) {
 	if value, ok := rc.mutation.UpdateTime(); ok {
 		_spec.SetField(room.FieldUpdateTime, field.TypeTime, value)
 		_node.UpdateTime = value
+	}
+	if value, ok := rc.mutation.Name(); ok {
+		_spec.SetField(room.FieldName, field.TypeString, value)
+		_node.Name = value
 	}
 	if value, ok := rc.mutation.CustomName(); ok {
 		_spec.SetField(room.FieldCustomName, field.TypeString, value)

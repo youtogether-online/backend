@@ -35,6 +35,20 @@ func (ru *RoomUpdate) SetUpdateTime(t time.Time) *RoomUpdate {
 	return ru
 }
 
+// SetName sets the "name" field.
+func (ru *RoomUpdate) SetName(s string) *RoomUpdate {
+	ru.mutation.SetName(s)
+	return ru
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (ru *RoomUpdate) SetNillableName(s *string) *RoomUpdate {
+	if s != nil {
+		ru.SetName(*s)
+	}
+	return ru
+}
+
 // SetCustomName sets the "custom_name" field.
 func (ru *RoomUpdate) SetCustomName(s string) *RoomUpdate {
 	ru.mutation.SetCustomName(s)
@@ -202,6 +216,11 @@ func (ru *RoomUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (ru *RoomUpdate) check() error {
+	if v, ok := ru.mutation.Name(); ok {
+		if err := room.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Room.name": %w`, err)}
+		}
+	}
 	if v, ok := ru.mutation.CustomName(); ok {
 		if err := room.CustomNameValidator(v); err != nil {
 			return &ValidationError{Name: "custom_name", err: fmt.Errorf(`ent: validator failed for field "Room.custom_name": %w`, err)}
@@ -234,6 +253,9 @@ func (ru *RoomUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := ru.mutation.UpdateTime(); ok {
 		_spec.SetField(room.FieldUpdateTime, field.TypeTime, value)
+	}
+	if value, ok := ru.mutation.Name(); ok {
+		_spec.SetField(room.FieldName, field.TypeString, value)
 	}
 	if value, ok := ru.mutation.CustomName(); ok {
 		_spec.SetField(room.FieldCustomName, field.TypeString, value)
@@ -336,6 +358,20 @@ type RoomUpdateOne struct {
 // SetUpdateTime sets the "update_time" field.
 func (ruo *RoomUpdateOne) SetUpdateTime(t time.Time) *RoomUpdateOne {
 	ruo.mutation.SetUpdateTime(t)
+	return ruo
+}
+
+// SetName sets the "name" field.
+func (ruo *RoomUpdateOne) SetName(s string) *RoomUpdateOne {
+	ruo.mutation.SetName(s)
+	return ruo
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (ruo *RoomUpdateOne) SetNillableName(s *string) *RoomUpdateOne {
+	if s != nil {
+		ruo.SetName(*s)
+	}
 	return ruo
 }
 
@@ -519,6 +555,11 @@ func (ruo *RoomUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (ruo *RoomUpdateOne) check() error {
+	if v, ok := ruo.mutation.Name(); ok {
+		if err := room.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Room.name": %w`, err)}
+		}
+	}
 	if v, ok := ruo.mutation.CustomName(); ok {
 		if err := room.CustomNameValidator(v); err != nil {
 			return &ValidationError{Name: "custom_name", err: fmt.Errorf(`ent: validator failed for field "Room.custom_name": %w`, err)}
@@ -568,6 +609,9 @@ func (ruo *RoomUpdateOne) sqlSave(ctx context.Context) (_node *Room, err error) 
 	}
 	if value, ok := ruo.mutation.UpdateTime(); ok {
 		_spec.SetField(room.FieldUpdateTime, field.TypeTime, value)
+	}
+	if value, ok := ruo.mutation.Name(); ok {
+		_spec.SetField(room.FieldName, field.TypeString, value)
 	}
 	if value, ok := ruo.mutation.CustomName(); ok {
 		_spec.SetField(room.FieldCustomName, field.TypeString, value)

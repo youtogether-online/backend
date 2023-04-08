@@ -11,11 +11,13 @@ const (
 	// Label holds the string label denoting the room type in the database.
 	Label = "room"
 	// FieldID holds the string denoting the id field in the database.
-	FieldID = "name"
+	FieldID = "id"
 	// FieldCreateTime holds the string denoting the create_time field in the database.
 	FieldCreateTime = "create_time"
 	// FieldUpdateTime holds the string denoting the update_time field in the database.
 	FieldUpdateTime = "update_time"
+	// FieldName holds the string denoting the name field in the database.
+	FieldName = "name"
 	// FieldCustomName holds the string denoting the custom_name field in the database.
 	FieldCustomName = "custom_name"
 	// FieldOwner holds the string denoting the owner field in the database.
@@ -30,8 +32,6 @@ const (
 	FieldDescription = "description"
 	// EdgeUsers holds the string denoting the users edge name in mutations.
 	EdgeUsers = "users"
-	// UserFieldID holds the string denoting the ID field of the User.
-	UserFieldID = "username"
 	// Table holds the table name of the room in the database.
 	Table = "rooms"
 	// UsersTable is the table that holds the users relation/edge. The primary key declared below.
@@ -46,6 +46,7 @@ var Columns = []string{
 	FieldID,
 	FieldCreateTime,
 	FieldUpdateTime,
+	FieldName,
 	FieldCustomName,
 	FieldOwner,
 	FieldPrivacy,
@@ -77,6 +78,10 @@ var (
 	DefaultUpdateTime func() time.Time
 	// UpdateDefaultUpdateTime holds the default value on update for the "update_time" field.
 	UpdateDefaultUpdateTime func() time.Time
+	// DefaultName holds the default value on creation for the "name" field.
+	DefaultName func() string
+	// NameValidator is a validator for the "name" field. It is called by the builders before save.
+	NameValidator func(string) error
 	// CustomNameValidator is a validator for the "custom_name" field. It is called by the builders before save.
 	CustomNameValidator func(string) error
 	// OwnerValidator is a validator for the "owner" field. It is called by the builders before save.
@@ -85,10 +90,6 @@ var (
 	DefaultHasChat bool
 	// DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
 	DescriptionValidator func(string) error
-	// DefaultID holds the default value on creation for the "id" field.
-	DefaultID func() string
-	// IDValidator is a validator for the "id" field. It is called by the builders before save.
-	IDValidator func(string) error
 )
 
 // Privacy defines the type for the "privacy" enum field.

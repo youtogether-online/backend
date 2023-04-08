@@ -36,6 +36,20 @@ func (uu *UserUpdate) SetUpdateTime(t time.Time) *UserUpdate {
 	return uu
 }
 
+// SetName sets the "name" field.
+func (uu *UserUpdate) SetName(s string) *UserUpdate {
+	uu.mutation.SetName(s)
+	return uu
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableName(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetName(*s)
+	}
+	return uu
+}
+
 // SetEmail sets the "email" field.
 func (uu *UserUpdate) SetEmail(s string) *UserUpdate {
 	uu.mutation.SetEmail(s)
@@ -188,6 +202,18 @@ func (uu *UserUpdate) ClearLastName() *UserUpdate {
 	return uu
 }
 
+// SetSessions sets the "sessions" field.
+func (uu *UserUpdate) SetSessions(s []string) *UserUpdate {
+	uu.mutation.SetSessions(s)
+	return uu
+}
+
+// AppendSessions appends s to the "sessions" field.
+func (uu *UserUpdate) AppendSessions(s []string) *UserUpdate {
+	uu.mutation.AppendSessions(s)
+	return uu
+}
+
 // AddRoomIDs adds the "rooms" edge to the Room entity by IDs.
 func (uu *UserUpdate) AddRoomIDs(ids ...string) *UserUpdate {
 	uu.mutation.AddRoomIDs(ids...)
@@ -267,6 +293,11 @@ func (uu *UserUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (uu *UserUpdate) check() error {
+	if v, ok := uu.mutation.Name(); ok {
+		if err := user.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "User.name": %w`, err)}
+		}
+	}
 	if v, ok := uu.mutation.Email(); ok {
 		if err := user.EmailValidator(v); err != nil {
 			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "User.email": %w`, err)}
@@ -320,6 +351,9 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := uu.mutation.UpdateTime(); ok {
 		_spec.SetField(user.FieldUpdateTime, field.TypeTime, value)
 	}
+	if value, ok := uu.mutation.Name(); ok {
+		_spec.SetField(user.FieldName, field.TypeString, value)
+	}
 	if value, ok := uu.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 	}
@@ -369,6 +403,14 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if uu.mutation.LastNameCleared() {
 		_spec.ClearField(user.FieldLastName, field.TypeString)
+	}
+	if value, ok := uu.mutation.Sessions(); ok {
+		_spec.SetField(user.FieldSessions, field.TypeJSON, value)
+	}
+	if value, ok := uu.mutation.AppendedSessions(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, user.FieldSessions, value)
+		})
 	}
 	if uu.mutation.RoomsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -447,6 +489,20 @@ type UserUpdateOne struct {
 // SetUpdateTime sets the "update_time" field.
 func (uuo *UserUpdateOne) SetUpdateTime(t time.Time) *UserUpdateOne {
 	uuo.mutation.SetUpdateTime(t)
+	return uuo
+}
+
+// SetName sets the "name" field.
+func (uuo *UserUpdateOne) SetName(s string) *UserUpdateOne {
+	uuo.mutation.SetName(s)
+	return uuo
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableName(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetName(*s)
+	}
 	return uuo
 }
 
@@ -602,6 +658,18 @@ func (uuo *UserUpdateOne) ClearLastName() *UserUpdateOne {
 	return uuo
 }
 
+// SetSessions sets the "sessions" field.
+func (uuo *UserUpdateOne) SetSessions(s []string) *UserUpdateOne {
+	uuo.mutation.SetSessions(s)
+	return uuo
+}
+
+// AppendSessions appends s to the "sessions" field.
+func (uuo *UserUpdateOne) AppendSessions(s []string) *UserUpdateOne {
+	uuo.mutation.AppendSessions(s)
+	return uuo
+}
+
 // AddRoomIDs adds the "rooms" edge to the Room entity by IDs.
 func (uuo *UserUpdateOne) AddRoomIDs(ids ...string) *UserUpdateOne {
 	uuo.mutation.AddRoomIDs(ids...)
@@ -694,6 +762,11 @@ func (uuo *UserUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (uuo *UserUpdateOne) check() error {
+	if v, ok := uuo.mutation.Name(); ok {
+		if err := user.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "User.name": %w`, err)}
+		}
+	}
 	if v, ok := uuo.mutation.Email(); ok {
 		if err := user.EmailValidator(v); err != nil {
 			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "User.email": %w`, err)}
@@ -764,6 +837,9 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if value, ok := uuo.mutation.UpdateTime(); ok {
 		_spec.SetField(user.FieldUpdateTime, field.TypeTime, value)
 	}
+	if value, ok := uuo.mutation.Name(); ok {
+		_spec.SetField(user.FieldName, field.TypeString, value)
+	}
 	if value, ok := uuo.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 	}
@@ -813,6 +889,14 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if uuo.mutation.LastNameCleared() {
 		_spec.ClearField(user.FieldLastName, field.TypeString)
+	}
+	if value, ok := uuo.mutation.Sessions(); ok {
+		_spec.SetField(user.FieldSessions, field.TypeJSON, value)
+	}
+	if value, ok := uuo.mutation.AppendedSessions(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, user.FieldSessions, value)
+		})
 	}
 	if uuo.mutation.RoomsCleared() {
 		edge := &sqlgraph.EdgeSpec{

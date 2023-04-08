@@ -22,58 +22,9 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/auth/sign-in-check-code": {
-            "post": {
-                "description": "Compare the secret code with the previously sent codes. If at least one matches, create session of the user. If the user does not exist, create a new user",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Authorization"
-                ],
-                "summary": "Sign in by email",
-                "parameters": [
-                    {
-                        "description": "User's email, secret code and device",
-                        "name": "user_info",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.EmailWithCodeDTO"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "return session id in cookie"
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/exceptions.MyError"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/exceptions.MyError"
-                        }
-                    }
-                }
-            }
-        },
-        "/auth/sign-in-send-code": {
+        "/auth/email/send-code": {
             "post": {
                 "description": "Send a secret 5-digit code to the specified email",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
                 "tags": [
                     "Authorization"
                 ],
@@ -108,33 +59,86 @@ const docTemplate = `{
                 }
             }
         },
-        "/auth/sign-in-with-password": {
+        "/auth/email/sign-in": {
+            "post": {
+                "description": "Compare the secret code with the previously sent codes. If at least one matches, create session of the user. If the user does not exist, create a new user",
+                "tags": [
+                    "Authorization"
+                ],
+                "summary": "Sign in by email",
+                "parameters": [
+                    {
+                        "description": "User's email, secret code and device",
+                        "name": "user_info",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.EmailWithCodeDTO"
+                        }
+                    },
+                    {
+                        "enum": [
+                            "EN",
+                            "EN",
+                            "RU"
+                        ],
+                        "type": "string",
+                        "description": "User's language. Default EN",
+                        "name": "Accept-Language",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "user's session"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/password/sign-in": {
             "post": {
                 "description": "Compare the user's password with an existing user's password. If it matches, create session of the user. If the user does not exist, create a new user",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
                 "tags": [
                     "Authorization"
                 ],
                 "summary": "Sign in by password",
                 "parameters": [
                     {
-                        "description": "User's email, password and device",
-                        "name": "user_info_with_password",
+                        "description": "User's email, password",
+                        "name": "EmailWithPasswordDTO",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.SignInDTO"
+                            "$ref": "#/definitions/dto.EmailWithPasswordDTO"
                         }
+                    },
+                    {
+                        "enum": [
+                            "EN",
+                            "EN",
+                            "RU"
+                        ],
+                        "type": "string",
+                        "description": "User's language. Default EN",
+                        "name": "Accept-Language",
+                        "in": "header"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "return session id in cookie"
+                        "description": "user's session"
                     },
                     "400": {
                         "description": "Bad Request",
@@ -143,7 +147,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "The password is not registered for this account",
+                        "description": "Password is not registered for this account",
                         "schema": {
                             "$ref": "#/definitions/exceptions.MyError"
                         }
@@ -159,7 +163,7 @@ const docTemplate = `{
         },
         "/auth/sign-out": {
             "post": {
-                "description": "Make the user's session invalid",
+                "description": "Make the user's session invalid (can accept cookie)",
                 "tags": [
                     "Authorization"
                 ],
@@ -173,28 +177,212 @@ const docTemplate = `{
         },
         "/user": {
             "get": {
-                "description": "Return detail information about the user",
-                "produces": [
-                    "application/json"
-                ],
+                "description": "Return detail information about the user (cookie required)",
                 "tags": [
-                    "User"
+                    "User Get"
                 ],
                 "summary": "Get detail information about user by session",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "user's session id",
-                        "name": "session_id",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/dto.MyUserDTO"
+                        }
+                    },
+                    "401": {
+                        "description": "User isn't logged in",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    },
+                    "404": {
+                        "description": "User doesn't exist",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/upd": {
+            "patch": {
+                "description": "Change user's main information (cookie required)",
+                "tags": [
+                    "User Update"
+                ],
+                "summary": "Update user's information",
+                "parameters": [
+                    {
+                        "description": "New user Information",
+                        "name": "UpdateUserDTO",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateUserDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    },
+                    "401": {
+                        "description": "User isn't logged in",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/upd/:username": {
+            "get": {
+                "description": "Status 200 if username not used or 403 if username already used",
+                "tags": [
+                    "User Get"
+                ],
+                "summary": "Check username on exist",
+                "responses": {
+                    "200": {
+                        "description": "name isn't used"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    },
+                    "403": {
+                        "description": "name already used"
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/upd/mail": {
+            "patch": {
+                "description": "Change user's email by password (cookie required)",
+                "tags": [
+                    "User Update"
+                ],
+                "summary": "Update user's email",
+                "parameters": [
+                    {
+                        "description": "user's password and new email",
+                        "name": "UpdateEmailDTO",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateEmailDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    },
+                    "401": {
+                        "description": "User isn't logged in",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/upd/name": {
+            "patch": {
+                "description": "Change user's username (cookie required)",
+                "tags": [
+                    "User Update"
+                ],
+                "summary": "Update user's username",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    },
+                    "401": {
+                        "description": "User isn't logged in",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/upd/pass": {
+            "patch": {
+                "description": "Change user's password by email (cookie required)",
+                "tags": [
+                    "User Update"
+                ],
+                "summary": "Update user's password",
+                "parameters": [
+                    {
+                        "description": "user's email, code and new password",
+                        "name": "UpdatePasswordDTO",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdatePasswordDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
                         }
                     },
                     "401": {
@@ -214,23 +402,17 @@ const docTemplate = `{
         },
         "/user/{username}": {
             "get": {
-                "description": "Return basic information about the user. If the user tries to find out information about himself, return detailed information about the user",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
+                "description": "Return main information about the user. If the user tries to find out information about himself, return detailed information about the user (can accept cookie)",
                 "tags": [
-                    "User"
+                    "User Get"
                 ],
-                "summary": "Get information about the user",
+                "summary": "Get main information about the user",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "find user by username",
+                        "description": "the name of the desired user to find",
                         "name": "username",
-                        "in": "path",
+                        "in": "header",
                         "required": true
                     }
                 ],
@@ -249,6 +431,12 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "User doesn't exist",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/exceptions.MyError"
                         }
@@ -274,7 +462,6 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "code",
-                "device",
                 "email"
             ],
             "properties": {
@@ -282,13 +469,44 @@ const docTemplate = `{
                     "type": "string",
                     "example": "I1ELB"
                 },
-                "device": {
-                    "type": "string",
-                    "example": "macOS 10.15.7 Chrome 111.0.0"
-                },
                 "email": {
                     "type": "string",
                     "example": "myemail@gmail.com"
+                },
+                "theme": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/user.Theme"
+                        }
+                    ],
+                    "example": "DARK"
+                }
+            }
+        },
+        "dto.EmailWithPasswordDTO": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "myemail@gmail.com"
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 20,
+                    "minLength": 4,
+                    "example": "onkr3451"
+                },
+                "theme": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/user.Theme"
+                        }
+                    ],
+                    "example": "DARK"
                 }
             }
         },
@@ -340,19 +558,14 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.SignInDTO": {
+        "dto.UpdateEmailDTO": {
             "type": "object",
             "required": [
-                "device",
-                "email",
+                "newEmail",
                 "password"
             ],
             "properties": {
-                "device": {
-                    "type": "string",
-                    "example": "macOS 10.15.7 Chrome 111.0.0"
-                },
-                "email": {
+                "newEmail": {
                     "type": "string",
                     "example": "myemail@gmail.com"
                 },
@@ -364,8 +577,57 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.UpdatePasswordDTO": {
+            "type": "object",
+            "required": [
+                "code",
+                "email",
+                "newPassword"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "I1ELB"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "myemail@gmail.com"
+                },
+                "newPassword": {
+                    "type": "string",
+                    "maxLength": 20,
+                    "minLength": 4,
+                    "example": "onkr3451"
+                }
+            }
+        },
+        "dto.UpdateUserDTO": {
+            "type": "object",
+            "properties": {
+                "biography": {
+                    "type": "string",
+                    "example": "I'd like to relax"
+                },
+                "firstName": {
+                    "type": "string",
+                    "maxLength": 30,
+                    "example": "Tele"
+                },
+                "language": {
+                    "$ref": "#/definitions/user.Language"
+                },
+                "lastName": {
+                    "type": "string",
+                    "maxLength": 30,
+                    "example": "phone"
+                },
+                "theme": {
+                    "$ref": "#/definitions/user.Theme"
+                }
+            }
+        },
         "dto.UserDTO": {
-            "description": "User main information",
+            "description": "User's main information",
             "type": "object",
             "properties": {
                 "biography": {
@@ -392,10 +654,6 @@ const docTemplate = `{
                 },
                 "role": {
                     "$ref": "#/definitions/user.Role"
-                },
-                "username": {
-                    "type": "string",
-                    "example": "bobbas"
                 }
             }
         },

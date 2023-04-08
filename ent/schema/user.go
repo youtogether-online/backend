@@ -6,7 +6,6 @@ import (
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/mixin"
 	"github.com/wtkeqrf0/you_together/pkg/conf"
-	"github.com/zhexuany/wordGenerator"
 	"math/rand"
 	"regexp"
 )
@@ -24,14 +23,13 @@ var (
 // Fields of the User.
 func (User) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("id").StorageKey("username").Unique().Match(regexp.MustCompile(cfg.Username)).DefaultFunc(func() string {
-			/*b := make([]rune, 6)
+		field.String("id"),
+		field.String("name").Unique().Match(regexp.MustCompile(cfg.Username)).DefaultFunc(func() string {
+			b := make([]rune, 6)
 			for i := range b {
 				b[i] = idRunes[rand.Intn(len(idRunes))]
 			}
 			return string(b)
-			*/
-			return wordGenerator.GetWord(rand.Intn(5) + 5)
 		}).MinLen(5).MaxLen(20),
 		field.String("email").Unique().Match(regexp.MustCompile(cfg.Email)),
 		field.Bool("is_email_verified").Default(false),
@@ -41,8 +39,9 @@ func (User) Fields() []ent.Field {
 		field.Strings("friends_ids").Optional(),
 		field.Enum("language").Values("EN", "RU").Default("EN"),
 		field.Enum("theme").Values("WHITE", "DARK", "SYSTEM").Default("SYSTEM"),
-		field.String("first_name").Optional().Match(regexp.MustCompile(cfg.Name)).MinLen(4).MaxLen(20),
-		field.String("last_name").Optional().Match(regexp.MustCompile(cfg.Name)).MinLen(4).MaxLen(20),
+		field.String("first_name").Optional().Match(regexp.MustCompile(cfg.Name)).MinLen(1).MaxLen(30),
+		field.String("last_name").Optional().Match(regexp.MustCompile(cfg.Name)).MinLen(1).MaxLen(30),
+		field.Strings("sessions"),
 	}
 }
 

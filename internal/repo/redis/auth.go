@@ -21,13 +21,14 @@ func NewRClient(client *redis.Client) *RClient {
 
 // SetSession and all its parameters
 func (r *RClient) SetSession(ctx context.Context, sessionId string, info map[string]string) error {
-	for k, v := range info {
-		if err := r.client.HSetNX(ctx, sessionId, k, v).Err(); err != nil {
-			return err
+	return r.client.Watch(ctx, func(tx *redis.Tx) error {
+		for k, v := range info {
+			if err := tx.HSetNX(ctx, sessionId, k, v).Err(); err != nil {
+				return err
+			}
 		}
-	}
-
-	return r.client.Expire(ctx, sessionId, month).Err()
+		return tx.Expire(ctx, sessionId, month).Err()
+	}, sessionId)
 }
 
 // GetSession and all its parameters
@@ -44,36 +45,31 @@ func (r *RClient) ExpandExpireSession(ctx context.Context, sessionId string) (bo
 	return false, err
 }
 
-// FindSessionsByUsername returns all existing sessions by username
-func (r *RClient) FindSessionsByUsername(ctx context.Context, userName string) []map[string]string {
-	res := make([]map[string]string, 5)
-	for _, v := range r.client.Keys(ctx, "/^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i").Val() {
-		if r.client.HGet(ctx, v, "username").Val() == userName {
-			res = append(res, r.client.HGetAll(ctx, v).Val())
-		}
-	}
-	return res
-}
-
 // DelKeys fully deletes session id
 func (r *RClient) DelKeys(ctx context.Context, keys ...string) {
 	r.client.Del(ctx, keys...)
 }
 
 // EqualsPopCode returns true if code is involved in email and deletes it
-func (r *RClient) EqualsPopCode(ctx context.Context, email string, code string) (bool, error) {
-	exist, err := r.client.SIsMember(ctx, email, code).Result()
-	if err != nil {
-		return false, err
-	}
-	return exist, r.client.Del(ctx, email).Err()
+func (r *RClient) EqualsPopCode(ctx context.Context, email string, code string) (exist bool, err error) {
+	err = r.client.Watch(ctx, func(tx *redis.Tx) error {
+		exist, err = tx.SIsMember(ctx, email, code).Result()
+		if err != nil {
+			return err
+		}
+		return tx.Del(ctx, email).Err()
+	}, email)
+
+	return
 }
 
 // SetCodes or add it to existing key
 func (r *RClient) SetCodes(ctx context.Context, key string, value ...any) error {
-	err := r.client.SAdd(ctx, key, value...).Err()
-	if err != nil {
-		return err
-	}
-	return r.client.Expire(ctx, key, time.Hour).Err()
+	return r.client.Watch(ctx, func(tx *redis.Tx) error {
+		err := tx.SAdd(ctx, key, value...).Err()
+		if err != nil {
+			return err
+		}
+		return tx.Expire(ctx, key, time.Hour).Err()
+	}, key)
 }

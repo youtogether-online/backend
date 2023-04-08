@@ -2,7 +2,7 @@ package exceptions
 
 // @Description All native errors must be this type
 type MyError struct {
-	Code   int    `json:"-"`
+	Status int    `json:"-"`
 	Msg    string `json:"message,omitempty" example:"Exception was occurred"`
 	Advice string `json:"advice,omitempty" example:"Try to send request later"`
 	Err    error  `json:"-"`
@@ -14,10 +14,10 @@ func (e MyError) Error() string {
 }
 
 // newError creates a new MyError and returns it
-func newError(code int, msg, advice string) MyError {
+func newError(status int, msg, advice string) MyError {
 	return MyError{
+		Status: status,
 		Msg:    msg,
-		Code:   code,
 		Advice: advice,
 	}
 }

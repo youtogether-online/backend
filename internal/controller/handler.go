@@ -9,6 +9,7 @@ import (
 	"github.com/wtkeqrf0/you_together/internal/controller/dto"
 	"github.com/wtkeqrf0/you_together/internal/middleware/exceptions"
 	"github.com/wtkeqrf0/you_together/pkg/conf"
+	"go/types"
 	"time"
 )
 
@@ -17,10 +18,13 @@ var cfg = conf.GetConfig()
 // UserService interacts with the users table
 type UserService interface {
 	FindUserByUsername(username string) (dto.UserDTO, error)
-	FindMe(username string) (dto.MyUserDTO, error)
-	FindAllUsers(limit int) ([]dto.UserDTO, error)
-	UpdateUser(user ent.User) error
-	DeleteUser(id int) error
+	FindUserByID(id string) (*ent.User, error)
+	FindMe(id string) (dto.MyUserDTO, error)
+	UpdateUser(customer dto.UpdateUserDTO, id string) error
+	UpdatePassword(password, id string) error
+	UpdateEmail(email, id string) error
+	UpdateUsername(username, id string) error
+	UsernameExist(username string) bool
 
 	SetVariable(key string, value any, exp time.Duration) error
 	ContainsKeys(keys ...string) (int64, error)
@@ -33,31 +37,30 @@ type AuthService interface {
 	SetSession(sessionId string, info map[string]string) error
 	DelKeys(keys ...string)
 
-	CreateUserWithPassword(email, password string) ([]byte, string, error)
+	CreateUserWithPassword(auth dto.EmailWithPasswordDTO) (*ent.User, error)
 	UserExistsByEmail(email string) bool
-	CreateUserByEmail(email string) (string, error)
-	AuthUserByEmail(email string) ([]byte, string, error)
-	AuthUserWithInfo(email string) (bool, string, error)
+	CreateUserByEmail(auth dto.EmailWithCodeDTO) (*ent.User, error)
+	AuthUserByEmail(email string) (*ent.User, error)
 	SetEmailVerified(email string) error
-	FindSessionsByUsername(userName string) []map[string]string
 }
 
 type AuthMiddleware interface {
 	RequireSession(c *gin.Context)
 	MaybeSession(c *gin.Context)
-	GenerateSession(email, ip, device string) (string, map[string]string, error)
-	ValidateSession(sessionId string) (map[string]string, bool, error)
+	GenerateSession(username, ip, userAgent string) (string, error)
+	SetNewCookie(username string, c *gin.Context)
+	GetSession(c *gin.Context) (map[string]string, error)
+	PopCookie(c *gin.Context)
 }
 
 type Handler struct {
 	users    UserService
 	sessions AuthMiddleware
 	auth     AuthService
-	valid    *validator.Validate
 }
 
-func NewHandler(users UserService, sessions AuthMiddleware, auth AuthService, valid *validator.Validate) *Handler {
-	return &Handler{users: users, sessions: sessions, auth: auth, valid: valid}
+func NewHandler(users UserService, sessions AuthMiddleware, auth AuthService) *Handler {
+	return &Handler{users: users, sessions: sessions, auth: auth}
 }
 
 func (h Handler) InitRoutes(r *gin.Engine) {
@@ -71,9 +74,17 @@ func (h Handler) InitRoutes(r *gin.Engine) {
 
 	auth := api.Group("/auth")
 	{
-		auth.POST("/sign-in-with-password", h.signInWithPassword)
-		auth.POST("/sign-in-send-code", h.signInSendCode)
-		auth.POST("/sign-in-check-code", h.signInCheckCode)
+		pass := auth.Group("/password")
+		{
+			pass.POST("/sign-in", h.signInByPassword)
+		}
+
+		email := auth.Group("/email")
+		{
+			email.POST("/send-code", h.sendEmailCode)
+			email.POST("/sign-in", h.signInByEmail)
+		}
+
 		auth.POST("/sign-out", h.signOut)
 	}
 
@@ -81,6 +92,26 @@ func (h Handler) InitRoutes(r *gin.Engine) {
 	{
 		user.GET("/:username", h.sessions.MaybeSession, h.getUserByUsername)
 		user.GET("", h.sessions.RequireSession, h.getMe)
-	}
 
+		update := user.Group("/upd", h.sessions.RequireSession)
+		{
+			update.PATCH("", h.updateUser)
+			update.PATCH("/mail", h.updateEmail)
+			update.PATCH("/pass", h.updatePassword)
+			update.PATCH("/name", h.updateUsername)
+			user.GET("/upd/:username", h.checkUsername)
+		}
+	}
+}
+
+var Valid = validator.New()
+
+func fillStruct[T dto.DTO | types.Nil](c *gin.Context) (t T) {
+	c.ShouldBindJSON(&t)
+
+	if err := Valid.Struct(&t); err != nil {
+		c.Error(exceptions.ValidError.AddErr(err))
+		return
+	}
+	return
 }

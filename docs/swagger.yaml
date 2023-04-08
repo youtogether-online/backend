@@ -15,16 +15,34 @@ definitions:
       code:
         example: I1ELB
         type: string
-      device:
-        example: macOS 10.15.7 Chrome 111.0.0
-        type: string
       email:
         example: myemail@gmail.com
         type: string
+      theme:
+        allOf:
+        - $ref: '#/definitions/user.Theme'
+        example: DARK
     required:
     - code
-    - device
     - email
+    type: object
+  dto.EmailWithPasswordDTO:
+    properties:
+      email:
+        example: myemail@gmail.com
+        type: string
+      password:
+        example: onkr3451
+        maxLength: 20
+        minLength: 4
+        type: string
+      theme:
+        allOf:
+        - $ref: '#/definitions/user.Theme'
+        example: DARK
+    required:
+    - email
+    - password
     type: object
   dto.MyUserDTO:
     description: User detail information
@@ -60,12 +78,9 @@ definitions:
         example: bobbas
         type: string
     type: object
-  dto.SignInDTO:
+  dto.UpdateEmailDTO:
     properties:
-      device:
-        example: macOS 10.15.7 Chrome 111.0.0
-        type: string
-      email:
+      newEmail:
         example: myemail@gmail.com
         type: string
       password:
@@ -74,12 +89,47 @@ definitions:
         minLength: 4
         type: string
     required:
-    - device
-    - email
+    - newEmail
     - password
     type: object
+  dto.UpdatePasswordDTO:
+    properties:
+      code:
+        example: I1ELB
+        type: string
+      email:
+        example: myemail@gmail.com
+        type: string
+      newPassword:
+        example: onkr3451
+        maxLength: 20
+        minLength: 4
+        type: string
+    required:
+    - code
+    - email
+    - newPassword
+    type: object
+  dto.UpdateUserDTO:
+    properties:
+      biography:
+        example: I'd like to relax
+        type: string
+      firstName:
+        example: Tele
+        maxLength: 30
+        type: string
+      language:
+        $ref: '#/definitions/user.Language'
+      lastName:
+        example: phone
+        maxLength: 30
+        type: string
+      theme:
+        $ref: '#/definitions/user.Theme'
+    type: object
   dto.UserDTO:
-    description: User main information
+    description: User's main information
     properties:
       biography:
         example: I'd like to relax
@@ -99,9 +149,6 @@ definitions:
         type: string
       role:
         $ref: '#/definitions/user.Role'
-      username:
-        example: bobbas
-        type: string
     type: object
   exceptions.MyError:
     description: All native errors must be this type
@@ -116,7 +163,6 @@ definitions:
   user.Language:
     enum:
     - EN
-    - EN
     - RU
     type: string
     x-enum-varnames:
@@ -126,7 +172,6 @@ definitions:
   user.Role:
     enum:
     - USER
-    - USER
     - ADMIN
     type: string
     x-enum-varnames:
@@ -135,7 +180,6 @@ definitions:
     - RoleADMIN
   user.Theme:
     enum:
-    - SYSTEM
     - WHITE
     - DARK
     - SYSTEM
@@ -152,40 +196,8 @@ info:
   title: You Together API
   version: "1.0"
 paths:
-  /auth/sign-in-check-code:
+  /auth/email/send-code:
     post:
-      consumes:
-      - application/json
-      description: Compare the secret code with the previously sent codes. If at least
-        one matches, create session of the user. If the user does not exist, create
-        a new user
-      parameters:
-      - description: User's email, secret code and device
-        in: body
-        name: user_info
-        required: true
-        schema:
-          $ref: '#/definitions/dto.EmailWithCodeDTO'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: return session id in cookie
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/exceptions.MyError'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/exceptions.MyError'
-      summary: Sign in by email
-      tags:
-      - Authorization
-  /auth/sign-in-send-code:
-    post:
-      consumes:
-      - application/json
       description: Send a secret 5-digit code to the specified email
       parameters:
       - description: User's email
@@ -194,8 +206,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/dto.EmailDTO'
-      produces:
-      - application/json
       responses:
         "200":
           description: OK
@@ -210,31 +220,67 @@ paths:
       summary: Send code to the user's email
       tags:
       - Authorization
-  /auth/sign-in-with-password:
+  /auth/email/sign-in:
     post:
-      consumes:
-      - application/json
+      description: Compare the secret code with the previously sent codes. If at least
+        one matches, create session of the user. If the user does not exist, create
+        a new user
+      parameters:
+      - description: User's email, secret code and device
+        in: body
+        name: user_info
+        required: true
+        schema:
+          $ref: '#/definitions/dto.EmailWithCodeDTO'
+      - description: User's language. Default EN
+        enum:
+        - EN
+        - RU
+        in: header
+        name: Accept-Language
+        type: string
+      responses:
+        "200":
+          description: user's session
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+      summary: Sign in by email
+      tags:
+      - Authorization
+  /auth/password/sign-in:
+    post:
       description: Compare the user's password with an existing user's password. If
         it matches, create session of the user. If the user does not exist, create
         a new user
       parameters:
-      - description: User's email, password and device
+      - description: User's email, password
         in: body
-        name: user_info_with_password
+        name: EmailWithPasswordDTO
         required: true
         schema:
-          $ref: '#/definitions/dto.SignInDTO'
-      produces:
-      - application/json
+          $ref: '#/definitions/dto.EmailWithPasswordDTO'
+      - description: User's language. Default EN
+        enum:
+        - EN
+        - RU
+        in: header
+        name: Accept-Language
+        type: string
       responses:
         "200":
-          description: return session id in cookie
+          description: user's session
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/exceptions.MyError'
         "404":
-          description: The password is not registered for this account
+          description: Password is not registered for this account
           schema:
             $ref: '#/definitions/exceptions.MyError'
         "500":
@@ -246,7 +292,7 @@ paths:
       - Authorization
   /auth/sign-out:
     post:
-      description: Make the user's session invalid
+      description: Make the user's session invalid (can accept cookie)
       responses:
         "200":
           description: OK
@@ -255,15 +301,7 @@ paths:
       - Authorization
   /user:
     get:
-      description: Return detail information about the user
-      parameters:
-      - description: user's session id
-        in: header
-        name: session_id
-        required: true
-        type: string
-      produces:
-      - application/json
+      description: Return detail information about the user (cookie required)
       responses:
         "200":
           description: OK
@@ -273,27 +311,28 @@ paths:
           description: User isn't logged in
           schema:
             $ref: '#/definitions/exceptions.MyError'
+        "404":
+          description: User doesn't exist
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/exceptions.MyError'
       summary: Get detail information about user by session
       tags:
-      - User
+      - User Get
   /user/{username}:
     get:
-      consumes:
-      - application/json
-      description: Return basic information about the user. If the user tries to find
+      description: Return main information about the user. If the user tries to find
         out information about himself, return detailed information about the user
+        (can accept cookie)
       parameters:
-      - description: find user by username
-        in: path
+      - description: the name of the desired user to find
+        in: header
         name: username
         required: true
         type: string
-      produces:
-      - application/json
       responses:
         "200":
           description: dto.UserDTO or dto.MyUserDTO
@@ -307,9 +346,137 @@ paths:
           description: User doesn't exist
           schema:
             $ref: '#/definitions/exceptions.MyError'
-      summary: Get information about the user
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+      summary: Get main information about the user
       tags:
-      - User
+      - User Get
+  /user/upd:
+    patch:
+      description: Change user's main information (cookie required)
+      parameters:
+      - description: New user Information
+        in: body
+        name: UpdateUserDTO
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateUserDTO'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+        "401":
+          description: User isn't logged in
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+      summary: Update user's information
+      tags:
+      - User Update
+  /user/upd/:username:
+    get:
+      description: Status 200 if username not used or 403 if username already used
+      responses:
+        "200":
+          description: name isn't used
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+        "403":
+          description: name already used
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+      summary: Check username on exist
+      tags:
+      - User Get
+  /user/upd/mail:
+    patch:
+      description: Change user's email by password (cookie required)
+      parameters:
+      - description: user's password and new email
+        in: body
+        name: UpdateEmailDTO
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateEmailDTO'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+        "401":
+          description: User isn't logged in
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+      summary: Update user's email
+      tags:
+      - User Update
+  /user/upd/name:
+    patch:
+      description: Change user's username (cookie required)
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+        "401":
+          description: User isn't logged in
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+      summary: Update user's username
+      tags:
+      - User Update
+  /user/upd/pass:
+    patch:
+      description: Change user's password by email (cookie required)
+      parameters:
+      - description: user's email, code and new password
+        in: body
+        name: UpdatePasswordDTO
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdatePasswordDTO'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+        "401":
+          description: User isn't logged in
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+      summary: Update user's password
+      tags:
+      - User Update
 produces:
 - application/json
 schemes:

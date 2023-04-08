@@ -10,10 +10,10 @@ import (
 
 // Sign-in errors
 var (
-	SignInUnknown    = newError(http.StatusNotFound, "There is no such user", "But you can still find another existing user!")
-	CodeError        = newError(http.StatusBadRequest, "Code is not correct", "Try to request a new one")
+	NoSuchUser       = newError(http.StatusNotFound, "There is no such user", "But you can still find another existing user!")
+	CodeError        = newError(http.StatusBadRequest, "Status is not correct", "Try to request a new one")
 	PasswordError    = newError(http.StatusBadRequest, "Wrong password", "You can still sign in by your email!")
-	PasswordNotFound = newError(http.StatusNotFound, "You have not registered a password for you account", "Sign in to your account by email")
+	PasswordNotFound = newError(http.StatusNotFound, "You have not registered a password for you account", "Try change the password in your profile")
 )
 
 // Auth errors
@@ -24,8 +24,9 @@ var (
 
 // Input errors
 var (
-	ValidError = newError(http.StatusBadRequest, "Validation error", "Try to enter the correct data")
-	DataError  = newError(http.StatusBadRequest, "Insufficient data", "Try to enter the remaining data")
+	ValidError   = newError(http.StatusBadRequest, "Validation error", "Try to enter the correct data")
+	DataError    = newError(http.StatusBadRequest, "Insufficient data", "Try to enter the remaining data")
+	AlreadyExist = newError(http.StatusBadRequest, "Already exist", "Try to enter another data")
 )
 
 // ServerError err
@@ -54,6 +55,9 @@ func ErrorHandler(c *gin.Context) {
 
 				for _, vErr := range vErrs {
 					field := vErr.Field()
+					if field == "" {
+						field = "Field"
+					}
 					switch vErr.Tag() {
 					case "email":
 						fields[field] = fmt.Sprintf("%s is not the correct email", field)
@@ -73,18 +77,21 @@ func ErrorHandler(c *gin.Context) {
 						fields[field] = fmt.Sprintf("%s must be lesser than %s", field, vErr.Param())
 					case "printascii":
 						fields[field] = fmt.Sprintf("%s can contain only /:@-._~!?$&'()*+,;= and any english letters", field)
+					case "required_without_all":
+						fields[field] = fmt.Sprintf("%s should not be empty", field)
+						break
 					}
 				}
 				res["fields"] = fields
 			}
 
 			if i == 0 {
-				c.JSON(my.Code, res)
+				c.JSON(my.Status, res)
 			}
 		} else {
 			logrus.WithError(err.Err).Error("UNEXPECTED ERROR")
 			if i == 0 {
-				c.JSON(ServerError.Code, ServerError.Msg)
+				c.JSON(ServerError.Status, ServerError.Msg)
 			}
 		}
 	}

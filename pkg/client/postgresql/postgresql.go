@@ -10,6 +10,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/wtkeqrf0/you_together/ent"
 	"github.com/wtkeqrf0/you_together/ent/migrate"
+	"log"
+	"time"
 )
 
 // Open postgres connection, check it and create tables (if not exist). Returns the client of defined postgres database
@@ -32,5 +34,18 @@ func Open(username, password, host, port, DBName string) *ent.Client {
 	if err = client.Schema.Create(context.Background(), migrate.WithGlobalUniqueID(true)); err != nil {
 		logrus.Fatalf("Tables Initialization Failed: %s\n", err)
 	}
+
+	client.Use(logger)
+
 	return client
+}
+
+func logger(next ent.Mutator) ent.Mutator {
+	return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+		start := time.Now()
+		defer func() {
+			log.Printf("Op=%s\tType=%s\tTime=%s\n", m.Op(), m.Type(), time.Since(start))
+		}()
+		return next.Mutate(ctx, m)
+	})
 }

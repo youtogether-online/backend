@@ -11,11 +11,13 @@ const (
 	// Label holds the string label denoting the user type in the database.
 	Label = "user"
 	// FieldID holds the string denoting the id field in the database.
-	FieldID = "username"
+	FieldID = "id"
 	// FieldCreateTime holds the string denoting the create_time field in the database.
 	FieldCreateTime = "create_time"
 	// FieldUpdateTime holds the string denoting the update_time field in the database.
 	FieldUpdateTime = "update_time"
+	// FieldName holds the string denoting the name field in the database.
+	FieldName = "name"
 	// FieldEmail holds the string denoting the email field in the database.
 	FieldEmail = "email"
 	// FieldIsEmailVerified holds the string denoting the is_email_verified field in the database.
@@ -36,10 +38,10 @@ const (
 	FieldFirstName = "first_name"
 	// FieldLastName holds the string denoting the last_name field in the database.
 	FieldLastName = "last_name"
+	// FieldSessions holds the string denoting the sessions field in the database.
+	FieldSessions = "sessions"
 	// EdgeRooms holds the string denoting the rooms edge name in mutations.
 	EdgeRooms = "rooms"
-	// RoomFieldID holds the string denoting the ID field of the Room.
-	RoomFieldID = "name"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// RoomsTable is the table that holds the rooms relation/edge. The primary key declared below.
@@ -54,6 +56,7 @@ var Columns = []string{
 	FieldID,
 	FieldCreateTime,
 	FieldUpdateTime,
+	FieldName,
 	FieldEmail,
 	FieldIsEmailVerified,
 	FieldPasswordHash,
@@ -64,6 +67,7 @@ var Columns = []string{
 	FieldTheme,
 	FieldFirstName,
 	FieldLastName,
+	FieldSessions,
 }
 
 var (
@@ -89,6 +93,10 @@ var (
 	DefaultUpdateTime func() time.Time
 	// UpdateDefaultUpdateTime holds the default value on update for the "update_time" field.
 	UpdateDefaultUpdateTime func() time.Time
+	// DefaultName holds the default value on creation for the "name" field.
+	DefaultName func() string
+	// NameValidator is a validator for the "name" field. It is called by the builders before save.
+	NameValidator func(string) error
 	// EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	EmailValidator func(string) error
 	// DefaultIsEmailVerified holds the default value on creation for the "is_email_verified" field.
@@ -99,10 +107,6 @@ var (
 	FirstNameValidator func(string) error
 	// LastNameValidator is a validator for the "last_name" field. It is called by the builders before save.
 	LastNameValidator func(string) error
-	// DefaultID holds the default value on creation for the "id" field.
-	DefaultID func() string
-	// IDValidator is a validator for the "id" field. It is called by the builders before save.
-	IDValidator func(string) error
 )
 
 // Role defines the type for the "role" enum field.

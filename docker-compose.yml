@@ -1,37 +1,42 @@
 version: '3.9'
 
 services:
+
   backend:
-    build: .
-    image: wtkeqrf0/you_together-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: wtkeqrf0/you_together-app:latest
     volumes:
       - ./:/server/http
     ports:
       - "3000:3000"
-    command: ["go","run","cmd/main/app.go"]
     depends_on:
-      - postgres
-      - redis
-    links:
-      - postgres
-      - redis
-  frontend:
-    image: frkam/you-together-frontend
-    ports:
-      - "5173:5173"
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   postgres:
-    image: postgres:alpine
+    image: postgres:15-alpine3.17
     environment:
+      - POSTGRES_DB=you_together
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=Ubythfkbcbvec2
-      - POSTGRES_DB=you_together
     ports:
       - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 1s
+      timeout: 3s
+      retries: 5
+
   redis:
     image: redis/redis-stack
     ports:
       - "6379:6379"
-  proxy:
-    image: frkam/you-together-proxy
-    ports:
-      - "80:80"
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli ping | grep PONG" ]
+      interval: 1s
+      timeout: 3s
+      retries: 5

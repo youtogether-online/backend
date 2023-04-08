@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	_ "github.com/wtkeqrf0/you_together/docs"
@@ -62,8 +61,9 @@ func main() {
 		service.NewUserService(pConn, rConn),
 		authorization.NewAuth(auth),
 		auth,
-		validator.New(),
 	)
+	//TODO try to run swagger in docker container
+
 	r := gin.New()
 	h.InitRoutes(r)
 

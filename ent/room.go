@@ -20,6 +20,8 @@ type Room struct {
 	CreateTime time.Time `json:"create_time,omitempty"`
 	// UpdateTime holds the value of the "update_time" field.
 	UpdateTime time.Time `json:"update_time,omitempty"`
+	// Name holds the value of the "name" field.
+	Name string `json:"name,omitempty"`
 	// CustomName holds the value of the "custom_name" field.
 	CustomName string `json:"custom_name,omitempty"`
 	// Owner holds the value of the "owner" field.
@@ -62,7 +64,7 @@ func (*Room) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case room.FieldHasChat:
 			values[i] = new(sql.NullBool)
-		case room.FieldID, room.FieldCustomName, room.FieldOwner, room.FieldPrivacy, room.FieldPasswordHash, room.FieldDescription:
+		case room.FieldID, room.FieldName, room.FieldCustomName, room.FieldOwner, room.FieldPrivacy, room.FieldPasswordHash, room.FieldDescription:
 			values[i] = new(sql.NullString)
 		case room.FieldCreateTime, room.FieldUpdateTime:
 			values[i] = new(sql.NullTime)
@@ -98,6 +100,12 @@ func (r *Room) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field update_time", values[i])
 			} else if value.Valid {
 				r.UpdateTime = value.Time
+			}
+		case room.FieldName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field name", values[i])
+			} else if value.Valid {
+				r.Name = value.String
 			}
 		case room.FieldCustomName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -173,6 +181,9 @@ func (r *Room) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("update_time=")
 	builder.WriteString(r.UpdateTime.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("name=")
+	builder.WriteString(r.Name)
 	builder.WriteString(", ")
 	builder.WriteString("custom_name=")
 	builder.WriteString(r.CustomName)

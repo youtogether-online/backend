@@ -13,6 +13,7 @@ type Config struct {
 	Session struct {
 		Secret            string        `yaml:"secret" env-required:"true"`
 		CookieName        string        `yaml:"cookie_name" env-default:"session_id"`
+		CookiePath        string        `yaml:"cookie_path" env-default:"/you_together"`
 		DurationInSeconds int           `yaml:"refresh_duration_in_seconds" env-default:"2592000"`
 		Duration          time.Duration `yaml:"duration" env-default:"720h"`
 	} `yaml:"session"`
@@ -47,6 +48,7 @@ type Config struct {
 		UserPassword string `yaml:"user_password" env-default:"."`
 		RoomPassword string `yaml:"room_password" env-default:"."`
 		FilePath     string `yaml:"filePath" env-default:"."`
+		UUID4        string `yaml:"uuid4" env-default:"/^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i"`
 	} `yaml:"regexp"`
 
 	Email struct {
@@ -58,15 +60,16 @@ type Config struct {
 	} `yaml:"email"`
 }
 
-var inst *Config
+var inst Config
+
+// TODO config in global var
 var once sync.Once
 
 // GetConfig builds the configuration file in golang type and returns it
-func GetConfig() *Config {
+func GetConfig() Config {
 	once.Do(func() {
-		inst = &Config{}
 
-		if err := cleanenv.ReadConfig("C:\\Users\\matve\\GolandProjects\\you-together\\configs\\config.yml", inst); err != nil {
+		if err := cleanenv.ReadConfig("configs/config.yml", &inst); err != nil {
 			help, _ := cleanenv.GetDescription(inst, nil)
 			logrus.Info(help)
 			logrus.Fatalf("error occurred while reading config file: %v", err)
@@ -90,7 +93,6 @@ func GetConfig() *Config {
 		if *inst.Prod {
 			inst.DB.Postgres.Host = "postgres"
 			inst.DB.Redis.Host = "redis"
-
 		}
 	})
 

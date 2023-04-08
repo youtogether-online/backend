@@ -10,9 +10,10 @@ import (
 var (
 	// RoomsColumns holds the columns for the "rooms" table.
 	RoomsColumns = []*schema.Column{
-		{Name: "name", Type: field.TypeString, Unique: true, Size: 20},
+		{Name: "id", Type: field.TypeString},
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString, Unique: true, Size: 20},
 		{Name: "custom_name", Type: field.TypeString, Nullable: true, Size: 20},
 		{Name: "owner", Type: field.TypeString, Unique: true},
 		{Name: "privacy", Type: field.TypeEnum, Enums: []string{"PRIVATE", "FRIENDS", "PUBLIC"}, Default: "PUBLIC"},
@@ -28,9 +29,10 @@ var (
 	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
-		{Name: "username", Type: field.TypeString, Unique: true, Size: 20},
+		{Name: "id", Type: field.TypeString},
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString, Unique: true, Size: 20},
 		{Name: "email", Type: field.TypeString, Unique: true},
 		{Name: "is_email_verified", Type: field.TypeBool, Default: false},
 		{Name: "password_hash", Type: field.TypeBytes, Nullable: true},
@@ -39,8 +41,9 @@ var (
 		{Name: "friends_ids", Type: field.TypeJSON, Nullable: true},
 		{Name: "language", Type: field.TypeEnum, Enums: []string{"EN", "RU"}, Default: "EN"},
 		{Name: "theme", Type: field.TypeEnum, Enums: []string{"WHITE", "DARK", "SYSTEM"}, Default: "SYSTEM"},
-		{Name: "first_name", Type: field.TypeString, Nullable: true, Size: 20},
-		{Name: "last_name", Type: field.TypeString, Nullable: true, Size: 20},
+		{Name: "first_name", Type: field.TypeString, Nullable: true, Size: 30},
+		{Name: "last_name", Type: field.TypeString, Nullable: true, Size: 30},
+		{Name: "sessions", Type: field.TypeJSON},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{
@@ -50,8 +53,8 @@ var (
 	}
 	// UserRoomsColumns holds the columns for the "user_rooms" table.
 	UserRoomsColumns = []*schema.Column{
-		{Name: "user_id", Type: field.TypeString, Size: 20},
-		{Name: "room_id", Type: field.TypeString, Size: 20},
+		{Name: "user_id", Type: field.TypeString},
+		{Name: "room_id", Type: field.TypeString},
 	}
 	// UserRoomsTable holds the schema information for the "user_rooms" table.
 	UserRoomsTable = &schema.Table{

@@ -4,15 +4,19 @@ import (
 	"context"
 	"github.com/wtkeqrf0/you_together/ent"
 	"github.com/wtkeqrf0/you_together/internal/controller/dto"
+	"strings"
 	"time"
 )
 
 type UserPostgres interface {
-	FindMe(ctx context.Context, username string) (dto.MyUserDTO, error)
+	FindMe(ctx context.Context, id string) (dto.MyUserDTO, error)
 	FindUserByUsername(ctx context.Context, username string) (dto.UserDTO, error)
-	FindAllUsers(ctx context.Context, limit int) ([]*ent.User, error)
-	UpdateUser(ctx context.Context, user *ent.User) error
-	DeleteUser(ctx context.Context, id int) error
+	FindUserByID(ctx context.Context, id string) (*ent.User, error)
+	UpdateUser(ctx context.Context, customer dto.UpdateUserDTO, username string) error
+	UpdatePassword(ctx context.Context, password, username string) error
+	UpdateEmail(ctx context.Context, email, username string) error
+	UpdateUsername(ctx context.Context, newUsername, username string) error
+	UsernameExist(ctx context.Context, username string) bool
 }
 
 type UserService struct {
@@ -29,26 +33,38 @@ func (u UserService) FindUserByUsername(username string) (dto.UserDTO, error) {
 	return u.postgres.FindUserByUsername(context.Background(), username)
 }
 
+func (u UserService) FindUserByID(id string) (*ent.User, error) {
+	return u.postgres.FindUserByID(context.Background(), id)
+}
+
 // FindMe returns the detail information about user
-func (u UserService) FindMe(username string) (dto.MyUserDTO, error) {
-	user, err := u.postgres.FindMe(context.Background(), username)
+func (u UserService) FindMe(id string) (dto.MyUserDTO, error) {
+	user, err := u.postgres.FindMe(context.Background(), id)
 	if err != nil {
 		return dto.MyUserDTO{}, err
 	}
-	user.CutEmail()
+	user.Email = user.Email[:1] + "**" + user.Email[strings.Index(user.Email, "@")-1:]
 	return user, nil
 }
 
-func (u UserService) FindAllUsers(limit int) ([]dto.UserDTO, error) {
-	return nil, nil
+func (u UserService) UpdateUser(customer dto.UpdateUserDTO, id string) error {
+	return u.postgres.UpdateUser(context.Background(), customer, id)
 }
 
-func (u UserService) UpdateUser(user ent.User) error {
-	return nil
+func (u UserService) UpdatePassword(password, id string) error {
+	return u.postgres.UpdatePassword(context.Background(), id, password)
 }
 
-func (u UserService) DeleteUser(id int) error {
-	return nil
+func (u UserService) UpdateEmail(email, id string) error {
+	return u.postgres.UpdateEmail(context.Background(), email, id)
+}
+
+func (u UserService) UpdateUsername(username, id string) error {
+	return u.postgres.UpdateUsername(context.Background(), username, id)
+}
+
+func (u UserService) UsernameExist(username string) bool {
+	return u.postgres.UsernameExist(context.Background(), username)
 }
 
 type UserRedis interface {

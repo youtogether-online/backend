@@ -17,7 +17,8 @@ type Room struct {
 // Fields of the Room
 func (Room) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("id").StorageKey("name").Unique().Match(regexp.MustCompile(cfg.Username)).DefaultFunc(func() string {
+		field.String("id"),
+		field.String("name").Unique().Match(regexp.MustCompile(cfg.Username)).DefaultFunc(func() string {
 			b := make([]rune, 6)
 			for i := range b {
 				b[i] = idRunes[rand.Intn(len(idRunes))]
