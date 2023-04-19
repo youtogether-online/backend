@@ -14,10 +14,9 @@ type Room struct {
 	ent.Schema
 }
 
-// Fields of the Room
+// Fields of the Room.
 func (Room) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("id"),
 		field.String("name").Unique().Match(regexp.MustCompile(cfg.Username)).DefaultFunc(func() string {
 			b := make([]rune, 6)
 			for i := range b {
@@ -25,17 +24,16 @@ func (Room) Fields() []ent.Field {
 			}
 			return string(b)
 		}).MinLen(5).MaxLen(20),
-		field.String("custom_name").Optional().MinLen(3).MaxLen(20),
+		field.String("custom_name").Optional().MinLen(3).MaxLen(20).Nillable(),
 		field.String("owner").Unique().Immutable().Match(regexp.MustCompile(cfg.Email)),
 		field.Enum("privacy").Values("PRIVATE", "FRIENDS", "PUBLIC").Default("PUBLIC"),
-		field.String("password_hash").Optional().Sensitive(),
+		field.String("password_hash").Optional().Sensitive().Nillable(),
 		field.Bool("has_chat").Default(true),
-		field.String("description").Optional().MaxLen(140),
-		//time accurately syncing
+		field.String("description").Optional().MaxLen(140).Nillable(),
 	}
 }
 
-// Edges of the Room
+// Edges of the Room.
 func (Room) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("users", User.Type).Ref("rooms"),

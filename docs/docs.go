@@ -22,43 +22,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/auth/email/send-code": {
-            "post": {
-                "description": "Send a secret 5-digit code to the specified email",
-                "tags": [
-                    "Authorization"
-                ],
-                "summary": "Send code to the user's email",
-                "parameters": [
-                    {
-                        "description": "User's email",
-                        "name": "email",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.EmailDTO"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/exceptions.MyError"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/exceptions.MyError"
-                        }
-                    }
-                }
-            }
-        },
         "/auth/email/sign-in": {
             "post": {
                 "description": "Compare the secret code with the previously sent codes. If at least one matches, create session of the user. If the user does not exist, create a new user",
@@ -79,11 +42,10 @@ const docTemplate = `{
                     {
                         "enum": [
                             "EN",
-                            "EN",
                             "RU"
                         ],
                         "type": "string",
-                        "description": "User's language. Default EN",
+                        "description": "User's language",
                         "name": "Accept-Language",
                         "in": "header"
                     }
@@ -127,11 +89,10 @@ const docTemplate = `{
                     {
                         "enum": [
                             "EN",
-                            "EN",
                             "RU"
                         ],
                         "type": "string",
-                        "description": "User's language. Default EN",
+                        "description": "User's language",
                         "name": "Accept-Language",
                         "in": "header"
                     }
@@ -161,25 +122,48 @@ const docTemplate = `{
                 }
             }
         },
-        "/auth/sign-out": {
+        "/email/send-code": {
             "post": {
-                "description": "Make the user's session invalid (can accept cookie)",
+                "description": "Send a secret 5-digit code to the specified email",
                 "tags": [
-                    "Authorization"
+                    "Email"
                 ],
-                "summary": "Delete user's session",
+                "summary": "Send code to the user's email",
+                "parameters": [
+                    {
+                        "description": "User's email",
+                        "name": "email",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.EmailDTO"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
                     }
                 }
             }
         },
-        "/user": {
+        "/session": {
             "get": {
                 "description": "Return detail information about the user (cookie required)",
                 "tags": [
-                    "User Get"
+                    "Sessions"
                 ],
                 "summary": "Get detail information about user by session",
                 "responses": {
@@ -208,9 +192,21 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "delete": {
+                "description": "Make the user's session invalid (can accept cookie)",
+                "tags": [
+                    "Sessions"
+                ],
+                "summary": "Delete user's session",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
             }
         },
-        "/user/upd": {
+        "/user": {
             "patch": {
                 "description": "Change user's main information (cookie required)",
                 "tags": [
@@ -253,13 +249,22 @@ const docTemplate = `{
                 }
             }
         },
-        "/user/upd/:username": {
+        "/user/check-name/{username}": {
             "get": {
                 "description": "Status 200 if username not used or 403 if username already used",
                 "tags": [
                     "User Get"
                 ],
                 "summary": "Check username on exist",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Name of the user",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "name isn't used"
@@ -282,7 +287,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/user/upd/mail": {
+        "/user/email": {
             "patch": {
                 "description": "Change user's email by password (cookie required)",
                 "tags": [
@@ -325,7 +330,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/user/upd/name": {
+        "/user/name": {
             "patch": {
                 "description": "Change user's username (cookie required)",
                 "tags": [
@@ -357,7 +362,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/user/upd/pass": {
+        "/user/password": {
             "patch": {
                 "description": "Change user's password by email (cookie required)",
                 "tags": [
@@ -410,15 +415,59 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "the name of the desired user to find",
+                        "description": "Name of the user",
                         "name": "username",
-                        "in": "header",
+                        "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "dto.UserDTO or dto.MyUserDTO",
+                        "description": "main info, without cookie or dto.MyUserDTO",
+                        "schema": {
+                            "$ref": "#/definitions/dto.UserDTO"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    },
+                    "404": {
+                        "description": "User doesn't exist",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/exceptions.MyError"
+                        }
+                    }
+                }
+            }
+        },
+        "/{name}": {
+            "get": {
+                "description": "Returns type of object (NOT WORKING)",
+                "tags": [
+                    "Get"
+                ],
+                "summary": "Get type of the user (NOT WORKING)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Name of something",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "string type with object",
                         "schema": {
                             "$ref": "#/definitions/dto.UserDTO"
                         }
@@ -474,11 +523,8 @@ const docTemplate = `{
                     "example": "myemail@gmail.com"
                 },
                 "theme": {
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/user.Theme"
-                        }
-                    ],
+                    "type": "string",
+                    "default": "SYSTEM",
                     "example": "DARK"
                 }
             }
@@ -501,11 +547,8 @@ const docTemplate = `{
                     "example": "onkr3451"
                 },
                 "theme": {
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/user.Theme"
-                        }
-                    ],
+                    "type": "string",
+                    "default": "SYSTEM",
                     "example": "DARK"
                 }
             }
@@ -540,21 +583,21 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "language": {
-                    "$ref": "#/definitions/user.Language"
+                    "type": "string"
                 },
                 "lastName": {
                     "type": "string",
                     "example": "phone"
                 },
-                "role": {
-                    "$ref": "#/definitions/user.Role"
-                },
-                "theme": {
-                    "$ref": "#/definitions/user.Theme"
-                },
-                "username": {
+                "name": {
                     "type": "string",
                     "example": "bobbas"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "theme": {
+                    "type": "string"
                 }
             }
         },
@@ -614,7 +657,7 @@ const docTemplate = `{
                     "example": "Tele"
                 },
                 "language": {
-                    "$ref": "#/definitions/user.Language"
+                    "type": "string"
                 },
                 "lastName": {
                     "type": "string",
@@ -622,7 +665,7 @@ const docTemplate = `{
                     "example": "phone"
                 },
                 "theme": {
-                    "$ref": "#/definitions/user.Theme"
+                    "type": "string"
                 }
             }
         },
@@ -652,8 +695,12 @@ const docTemplate = `{
                     "type": "string",
                     "example": "phone"
                 },
+                "name": {
+                    "type": "string",
+                    "example": "bobbas"
+                },
                 "role": {
-                    "$ref": "#/definitions/user.Role"
+                    "type": "string"
                 }
             }
         },
@@ -670,47 +717,6 @@ const docTemplate = `{
                     "example": "Exception was occurred"
                 }
             }
-        },
-        "user.Language": {
-            "type": "string",
-            "enum": [
-                "EN",
-                "EN",
-                "RU"
-            ],
-            "x-enum-varnames": [
-                "DefaultLanguage",
-                "LanguageEN",
-                "LanguageRU"
-            ]
-        },
-        "user.Role": {
-            "type": "string",
-            "enum": [
-                "USER",
-                "USER",
-                "ADMIN"
-            ],
-            "x-enum-varnames": [
-                "DefaultRole",
-                "RoleUSER",
-                "RoleADMIN"
-            ]
-        },
-        "user.Theme": {
-            "type": "string",
-            "enum": [
-                "SYSTEM",
-                "WHITE",
-                "DARK",
-                "SYSTEM"
-            ],
-            "x-enum-varnames": [
-                "DefaultTheme",
-                "ThemeWHITE",
-                "ThemeDARK",
-                "ThemeSYSTEM"
-            ]
         }
     }
 }`

@@ -9,7 +9,7 @@ import (
 )
 
 // IDExist returns true if username exists. Panics if error occurred
-func (r *UserStorage) IDExist(ctx context.Context, id string) bool {
+func (r *UserStorage) IDExist(ctx context.Context, id int) bool {
 	return r.userClient.Query().Where(user.ID(id)).ExistX(ctx)
 }
 
@@ -26,12 +26,14 @@ func (r *UserStorage) CreateUserWithPassword(ctx context.Context, auth dto.Email
 	}
 
 	return r.userClient.Create().SetEmail(auth.Email).
+		SetTheme(auth.Theme).SetLanguage(auth.Language).
 		SetPasswordHash(hashedPassword).Save(ctx)
 }
 
 // CreateUserByEmail without password and returns it (only on registration)
 func (r *UserStorage) CreateUserByEmail(ctx context.Context, auth dto.EmailWithCodeDTO) (*ent.User, error) {
 	return r.userClient.Create().SetEmail(auth.Email).
+		SetNillableTheme(&auth.Theme).SetNillableLanguage(&auth.Language).
 		SetIsEmailVerified(true).Save(ctx)
 }
 
@@ -47,6 +49,6 @@ func (r *UserStorage) SetEmailVerified(ctx context.Context, email string) error 
 	return r.userClient.Update().SetIsEmailVerified(true).Where(user.Email(email)).Exec(ctx)
 }
 
-func (r *UserStorage) AddSession(ctx context.Context, id string, sessions ...string) error {
+func (r *UserStorage) AddSession(ctx context.Context, id int, sessions ...string) error {
 	return r.userClient.Update().AppendSessions(sessions).Where(user.ID(id)).Exec(ctx)
 }

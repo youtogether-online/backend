@@ -3,7 +3,9 @@ package redis
 import (
 	"context"
 	"github.com/redis/go-redis/v9"
+	"github.com/wtkeqrf0/you_together/internal/controller/dto"
 	"github.com/wtkeqrf0/you_together/pkg/conf"
+	"reflect"
 	"time"
 )
 
@@ -20,20 +22,27 @@ func NewRClient(client *redis.Client) *RClient {
 }
 
 // SetSession and all its parameters
-func (r *RClient) SetSession(ctx context.Context, sessionId string, info map[string]string) error {
+func (r *RClient) SetSession(ctx context.Context, sessionId string, info dto.Session) error {
 	return r.client.Watch(ctx, func(tx *redis.Tx) error {
-		for k, v := range info {
-			if err := tx.HSetNX(ctx, sessionId, k, v).Err(); err != nil {
+
+		v := reflect.ValueOf(info)
+		typeOfFields := v.Type()
+
+		for i := 0; i < v.NumField(); i++ {
+			if err := tx.HSetNX(ctx, sessionId, typeOfFields.Field(i).Name,
+				v.Field(i).Interface()).Err(); err != nil {
 				return err
 			}
 		}
+
 		return tx.Expire(ctx, sessionId, month).Err()
 	}, sessionId)
 }
 
 // GetSession and all its parameters
-func (r *RClient) GetSession(ctx context.Context, sessionId string) (map[string]string, error) {
-	return r.client.HGetAll(ctx, sessionId).Result()
+func (r *RClient) GetSession(ctx context.Context, sessionId string) (info *dto.Session, err error) {
+	err = r.client.HGetAll(ctx, sessionId).Scan(&info)
+	return info, err
 }
 
 // ExpandExpireSession if key exists and have lesser than 15 days of expire

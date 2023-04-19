@@ -62,7 +62,6 @@ func main() {
 		authorization.NewAuth(auth),
 		auth,
 	)
-	//TODO try to run swagger in docker container
 
 	r := gin.New()
 	h.InitRoutes(r)

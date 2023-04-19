@@ -19,80 +19,82 @@ func NewUserStorage(userClient *ent.UserClient) *UserStorage {
 }
 
 // FindMe returns the detail information about user
-func (r *UserStorage) FindMe(ctx context.Context, id string) (dto.MyUserDTO, error) {
-	var userDTO []dto.MyUserDTO
+func (r *UserStorage) FindMe(ctx context.Context, id int) (*dto.MyUserDTO, error) {
+	userDTO := new([]dto.MyUserDTO)
 
 	err := r.userClient.Query().Where(user.ID(id)).
-		Select(user.FieldID, user.FieldEmail, user.FieldIsEmailVerified,
+		Select(user.FieldName, user.FieldEmail, user.FieldIsEmailVerified,
 			user.FieldBiography, user.FieldRole, user.FieldFriendsIds,
 			user.FieldLanguage, user.FieldTheme, user.FieldFirstName,
-			user.FieldLastName).Scan(ctx, &userDTO)
+			user.FieldLastName).Scan(ctx, userDTO)
 
-	if len(userDTO) != 1 {
-		return dto.MyUserDTO{}, ent.MaskNotFound(err)
+	if len(*userDTO) < 1 {
+		return nil, exceptions.NoSuchUser
+
 	} else if err != nil {
-		return dto.MyUserDTO{}, err
+		return nil, err
 	}
-	return userDTO[0], nil
+
+	return &(*userDTO)[0], nil
 }
 
 // FindUserByUsername returns the main information about user
-func (r *UserStorage) FindUserByUsername(ctx context.Context, username string) (dto.UserDTO, error) {
-	var userDTO []dto.UserDTO
+func (r *UserStorage) FindUserByUsername(ctx context.Context, username string) (*dto.UserDTO, error) {
+	userDTO := new([]dto.UserDTO)
 
 	err := r.userClient.Query().Where(user.Name(username)).
-		Select(user.FieldID, user.FieldBiography,
-			user.FieldRole, user.FieldFirstName, user.FieldLastName).
-		Scan(ctx, &userDTO)
+		Select(user.FieldName, user.FieldBiography, user.FieldRole,
+			user.FieldFriendsIds, user.FieldFirstName, user.FieldLastName).
+		Scan(ctx, userDTO)
 
-	if len(userDTO) != 1 {
-		return dto.UserDTO{}, exceptions.NoSuchUser
+	if len(*userDTO) < 1 {
+		return nil, exceptions.NoSuchUser
 
 	} else if err != nil {
-		return dto.UserDTO{}, err
+		return nil, err
 	}
 
-	return userDTO[0], nil
+	return &(*userDTO)[0], nil
 }
 
-func (r *UserStorage) FindUserByID(ctx context.Context, id string) (*ent.User, error) {
+func (r *UserStorage) FindUserByID(ctx context.Context, id int) (*ent.User, error) {
 	return r.userClient.Get(ctx, id)
 }
 
-func (r *UserStorage) UpdateUser(ctx context.Context, customer dto.UpdateUserDTO, id string) error {
+func (r *UserStorage) UpdateUser(ctx context.Context, customer dto.UpdateUserDTO, id int) error {
 	updCustomer, err := r.userClient.Update().
-		SetNillableBiography(&customer.Biography).
-		SetNillableLanguage(&customer.Language).
-		SetNillableTheme(&customer.Theme).
-		SetNillableFirstName(&customer.FirstName).
-		SetNillableLastName(&customer.LastName).Where(user.Name(id)).Save(ctx)
+		SetNillableBiography(customer.Biography).
+		SetNillableLanguage(customer.Language).
+		SetNillableTheme(customer.Theme).
+		SetNillableFirstName(customer.FirstName).
+		SetNillableLastName(customer.LastName).Where(user.ID(id)).Save(ctx)
 
 	logrus.WithError(err).Info(updCustomer)
 	return err
 }
 
-func (r *UserStorage) UpdateEmail(ctx context.Context, email, id string) error {
+func (r *UserStorage) UpdateEmail(ctx context.Context, email string, id int) error {
 	res, err := r.userClient.Update().SetEmail(email).
-		SetIsEmailVerified(false).Where(user.Name(id)).Save(ctx)
+		SetIsEmailVerified(false).Where(user.ID(id)).Save(ctx)
 	logrus.WithError(err).Info(res)
 	return err
 }
 
-func (r *UserStorage) UpdatePassword(ctx context.Context, password, id string) error {
+func (r *UserStorage) UpdatePassword(ctx context.Context, password string, id int) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	if err != nil {
 		return err
 	}
 
 	customer, err := r.userClient.Update().SetPasswordHash(hashedPassword).
-		SetIsEmailVerified(true).Where(user.Name(id)).Save(ctx)
+		SetIsEmailVerified(true).Where(user.ID(id)).Save(ctx)
 
 	logrus.WithError(err).Info(customer)
 	return err
 }
 
-func (r *UserStorage) UpdateUsername(ctx context.Context, username, id string) error {
-	customer, err := r.userClient.Update().SetName(username).Where(user.Name(id)).Save(ctx)
+func (r *UserStorage) UpdateUsername(ctx context.Context, username string, id int) error {
+	customer, err := r.userClient.Update().SetName(username).Where(user.ID(id)).Save(ctx)
 	logrus.WithError(err).Info(customer)
 	return err
 }

@@ -104,15 +104,15 @@ func (uc *UserCreate) SetNillableBiography(s *string) *UserCreate {
 }
 
 // SetRole sets the "role" field.
-func (uc *UserCreate) SetRole(u user.Role) *UserCreate {
-	uc.mutation.SetRole(u)
+func (uc *UserCreate) SetRole(s string) *UserCreate {
+	uc.mutation.SetRole(s)
 	return uc
 }
 
 // SetNillableRole sets the "role" field if the given value is not nil.
-func (uc *UserCreate) SetNillableRole(u *user.Role) *UserCreate {
-	if u != nil {
-		uc.SetRole(*u)
+func (uc *UserCreate) SetNillableRole(s *string) *UserCreate {
+	if s != nil {
+		uc.SetRole(*s)
 	}
 	return uc
 }
@@ -124,29 +124,29 @@ func (uc *UserCreate) SetFriendsIds(s []string) *UserCreate {
 }
 
 // SetLanguage sets the "language" field.
-func (uc *UserCreate) SetLanguage(u user.Language) *UserCreate {
-	uc.mutation.SetLanguage(u)
+func (uc *UserCreate) SetLanguage(s string) *UserCreate {
+	uc.mutation.SetLanguage(s)
 	return uc
 }
 
 // SetNillableLanguage sets the "language" field if the given value is not nil.
-func (uc *UserCreate) SetNillableLanguage(u *user.Language) *UserCreate {
-	if u != nil {
-		uc.SetLanguage(*u)
+func (uc *UserCreate) SetNillableLanguage(s *string) *UserCreate {
+	if s != nil {
+		uc.SetLanguage(*s)
 	}
 	return uc
 }
 
 // SetTheme sets the "theme" field.
-func (uc *UserCreate) SetTheme(u user.Theme) *UserCreate {
-	uc.mutation.SetTheme(u)
+func (uc *UserCreate) SetTheme(s string) *UserCreate {
+	uc.mutation.SetTheme(s)
 	return uc
 }
 
 // SetNillableTheme sets the "theme" field if the given value is not nil.
-func (uc *UserCreate) SetNillableTheme(u *user.Theme) *UserCreate {
-	if u != nil {
-		uc.SetTheme(*u)
+func (uc *UserCreate) SetNillableTheme(s *string) *UserCreate {
+	if s != nil {
+		uc.SetTheme(*s)
 	}
 	return uc
 }
@@ -185,21 +185,15 @@ func (uc *UserCreate) SetSessions(s []string) *UserCreate {
 	return uc
 }
 
-// SetID sets the "id" field.
-func (uc *UserCreate) SetID(s string) *UserCreate {
-	uc.mutation.SetID(s)
-	return uc
-}
-
 // AddRoomIDs adds the "rooms" edge to the Room entity by IDs.
-func (uc *UserCreate) AddRoomIDs(ids ...string) *UserCreate {
+func (uc *UserCreate) AddRoomIDs(ids ...int) *UserCreate {
 	uc.mutation.AddRoomIDs(ids...)
 	return uc
 }
 
 // AddRooms adds the "rooms" edges to the Room entity.
 func (uc *UserCreate) AddRooms(r ...*Room) *UserCreate {
-	ids := make([]string, len(r))
+	ids := make([]int, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -306,26 +300,11 @@ func (uc *UserCreate) check() error {
 	if _, ok := uc.mutation.Role(); !ok {
 		return &ValidationError{Name: "role", err: errors.New(`ent: missing required field "User.role"`)}
 	}
-	if v, ok := uc.mutation.Role(); ok {
-		if err := user.RoleValidator(v); err != nil {
-			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "User.role": %w`, err)}
-		}
-	}
 	if _, ok := uc.mutation.Language(); !ok {
 		return &ValidationError{Name: "language", err: errors.New(`ent: missing required field "User.language"`)}
 	}
-	if v, ok := uc.mutation.Language(); ok {
-		if err := user.LanguageValidator(v); err != nil {
-			return &ValidationError{Name: "language", err: fmt.Errorf(`ent: validator failed for field "User.language": %w`, err)}
-		}
-	}
 	if _, ok := uc.mutation.Theme(); !ok {
 		return &ValidationError{Name: "theme", err: errors.New(`ent: missing required field "User.theme"`)}
-	}
-	if v, ok := uc.mutation.Theme(); ok {
-		if err := user.ThemeValidator(v); err != nil {
-			return &ValidationError{Name: "theme", err: fmt.Errorf(`ent: validator failed for field "User.theme": %w`, err)}
-		}
 	}
 	if v, ok := uc.mutation.FirstName(); ok {
 		if err := user.FirstNameValidator(v); err != nil {
@@ -336,9 +315,6 @@ func (uc *UserCreate) check() error {
 		if err := user.LastNameValidator(v); err != nil {
 			return &ValidationError{Name: "last_name", err: fmt.Errorf(`ent: validator failed for field "User.last_name": %w`, err)}
 		}
-	}
-	if _, ok := uc.mutation.Sessions(); !ok {
-		return &ValidationError{Name: "sessions", err: errors.New(`ent: missing required field "User.sessions"`)}
 	}
 	return nil
 }
@@ -354,13 +330,8 @@ func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
 		}
 		return nil, err
 	}
-	if _spec.ID.Value != nil {
-		if id, ok := _spec.ID.Value.(string); ok {
-			_node.ID = id
-		} else {
-			return nil, fmt.Errorf("unexpected User.ID type: %T", _spec.ID.Value)
-		}
-	}
+	id := _spec.ID.Value.(int64)
+	_node.ID = int(id)
 	uc.mutation.id = &_node.ID
 	uc.mutation.done = true
 	return _node, nil
@@ -369,12 +340,8 @@ func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
 func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	var (
 		_node = &User{config: uc.config}
-		_spec = sqlgraph.NewCreateSpec(user.Table, sqlgraph.NewFieldSpec(user.FieldID, field.TypeString))
+		_spec = sqlgraph.NewCreateSpec(user.Table, sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt))
 	)
-	if id, ok := uc.mutation.ID(); ok {
-		_node.ID = id
-		_spec.ID.Value = id
-	}
 	if value, ok := uc.mutation.CreateTime(); ok {
 		_spec.SetField(user.FieldCreateTime, field.TypeTime, value)
 		_node.CreateTime = value
@@ -397,14 +364,14 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	}
 	if value, ok := uc.mutation.PasswordHash(); ok {
 		_spec.SetField(user.FieldPasswordHash, field.TypeBytes, value)
-		_node.PasswordHash = value
+		_node.PasswordHash = &value
 	}
 	if value, ok := uc.mutation.Biography(); ok {
 		_spec.SetField(user.FieldBiography, field.TypeString, value)
-		_node.Biography = value
+		_node.Biography = &value
 	}
 	if value, ok := uc.mutation.Role(); ok {
-		_spec.SetField(user.FieldRole, field.TypeEnum, value)
+		_spec.SetField(user.FieldRole, field.TypeString, value)
 		_node.Role = value
 	}
 	if value, ok := uc.mutation.FriendsIds(); ok {
@@ -412,20 +379,20 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_node.FriendsIds = value
 	}
 	if value, ok := uc.mutation.Language(); ok {
-		_spec.SetField(user.FieldLanguage, field.TypeEnum, value)
+		_spec.SetField(user.FieldLanguage, field.TypeString, value)
 		_node.Language = value
 	}
 	if value, ok := uc.mutation.Theme(); ok {
-		_spec.SetField(user.FieldTheme, field.TypeEnum, value)
+		_spec.SetField(user.FieldTheme, field.TypeString, value)
 		_node.Theme = value
 	}
 	if value, ok := uc.mutation.FirstName(); ok {
 		_spec.SetField(user.FieldFirstName, field.TypeString, value)
-		_node.FirstName = value
+		_node.FirstName = &value
 	}
 	if value, ok := uc.mutation.LastName(); ok {
 		_spec.SetField(user.FieldLastName, field.TypeString, value)
-		_node.LastName = value
+		_node.LastName = &value
 	}
 	if value, ok := uc.mutation.Sessions(); ok {
 		_spec.SetField(user.FieldSessions, field.TypeJSON, value)
@@ -440,7 +407,7 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: room.FieldID,
 				},
 			},
@@ -494,6 +461,10 @@ func (ucb *UserCreateBulk) Save(ctx context.Context) ([]*User, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
+				if specs[i].ID.Value != nil {
+					id := specs[i].ID.Value.(int64)
+					nodes[i].ID = int(id)
+				}
 				mutation.done = true
 				return nodes[i], nil
 			})

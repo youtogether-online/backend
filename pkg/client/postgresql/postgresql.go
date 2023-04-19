@@ -32,7 +32,7 @@ func Open(username, password, host, port, DBName string) *ent.Client {
 	client := ent.NewClient(ent.Driver(drv))
 
 	if err = client.Schema.Create(context.Background(), migrate.WithGlobalUniqueID(true)); err != nil {
-		logrus.Fatalf("Tables Initialization Failed: %s\n", err)
+		logrus.Fatalf("Tables Initialization Failed: %v\n", err)
 	}
 
 	client.Use(logger)

@@ -7,13 +7,13 @@ import (
 )
 
 type AuthPostgres interface {
-	IDExist(ctx context.Context, id string) bool
+	IDExist(ctx context.Context, id int) bool
 	UserExistsByEmail(ctx context.Context, email string) bool
 	CreateUserWithPassword(ctx context.Context, auth dto.EmailWithPasswordDTO) (*ent.User, error)
 	CreateUserByEmail(ctx context.Context, auth dto.EmailWithCodeDTO) (*ent.User, error)
 	AuthUserByEmail(ctx context.Context, email string) (*ent.User, error)
 	SetEmailVerified(ctx context.Context, email string) error
-	AddSession(ctx context.Context, id string, sessions ...string) error
+	AddSession(ctx context.Context, id int, sessions ...string) error
 }
 
 type AuthService struct {
@@ -26,7 +26,7 @@ func NewAuthService(postgres AuthPostgres, redis AuthRedis) *AuthService {
 }
 
 // IDExist returns true if user Exists. Panics if error occurred
-func (a AuthService) IDExist(id string) bool {
+func (a AuthService) IDExist(id int) bool {
 	return a.postgres.IDExist(context.Background(), id)
 }
 
@@ -55,13 +55,13 @@ func (a AuthService) SetEmailVerified(email string) error {
 	return a.postgres.SetEmailVerified(context.Background(), email)
 }
 
-func (a AuthService) AddSession(id string, sessions ...string) error {
+func (a AuthService) AddSession(id int, sessions ...string) error {
 	return a.postgres.AddSession(context.Background(), id, sessions...)
 }
 
 type AuthRedis interface {
-	SetSession(ctx context.Context, sessionId string, info map[string]string) error
-	GetSession(ctx context.Context, sessionId string) (map[string]string, error)
+	SetSession(ctx context.Context, sessionId string, info dto.Session) error
+	GetSession(ctx context.Context, sessionId string) (*dto.Session, error)
 	ExpandExpireSession(ctx context.Context, sessionId string) (bool, error)
 	DelKeys(ctx context.Context, keys ...string)
 	EqualsPopCode(ctx context.Context, email string, code string) (bool, error)
@@ -69,12 +69,12 @@ type AuthRedis interface {
 }
 
 // GetSession and all its parameters
-func (a AuthService) GetSession(sessionId string) (map[string]string, error) {
+func (a AuthService) GetSession(sessionId string) (*dto.Session, error) {
 	return a.redis.GetSession(context.Background(), sessionId)
 }
 
 // SetSession and all its parameters
-func (a AuthService) SetSession(sessionId string, info map[string]string) error {
+func (a AuthService) SetSession(sessionId string, info dto.Session) error {
 	return a.redis.SetSession(context.Background(), sessionId, info)
 }
 

@@ -9,7 +9,6 @@ import (
 	"github.com/wtkeqrf0/you_together/internal/controller/dto"
 	"github.com/wtkeqrf0/you_together/internal/middleware/exceptions"
 	"github.com/wtkeqrf0/you_together/pkg/conf"
-	"go/types"
 	"time"
 )
 
@@ -17,13 +16,13 @@ var cfg = conf.GetConfig()
 
 // UserService interacts with the users table
 type UserService interface {
-	FindUserByUsername(username string) (dto.UserDTO, error)
-	FindUserByID(id string) (*ent.User, error)
-	FindMe(id string) (dto.MyUserDTO, error)
-	UpdateUser(customer dto.UpdateUserDTO, id string) error
-	UpdatePassword(password, id string) error
-	UpdateEmail(email, id string) error
-	UpdateUsername(username, id string) error
+	FindUserByUsername(username string) (*dto.UserDTO, error)
+	FindUserByID(id int) (*ent.User, error)
+	FindMe(id int) (*dto.MyUserDTO, error)
+	UpdateUser(customer dto.UpdateUserDTO, id int) error
+	UpdatePassword(password string, id int) error
+	UpdateEmail(email string, id int) error
+	UpdateUsername(username string, id int) error
 	UsernameExist(username string) bool
 
 	SetVariable(key string, value any, exp time.Duration) error
@@ -33,8 +32,8 @@ type UserService interface {
 type AuthService interface {
 	SetCodes(key string, value ...any) error
 	EqualsPopCode(email string, code string) (bool, error)
-	GetSession(sessionId string) (map[string]string, error)
-	SetSession(sessionId string, info map[string]string) error
+	GetSession(sessionId string) (*dto.Session, error)
+	SetSession(sessionId string, info dto.Session) error
 	DelKeys(keys ...string)
 
 	CreateUserWithPassword(auth dto.EmailWithPasswordDTO) (*ent.User, error)
@@ -47,9 +46,9 @@ type AuthService interface {
 type AuthMiddleware interface {
 	RequireSession(c *gin.Context)
 	MaybeSession(c *gin.Context)
-	GenerateSession(username, ip, userAgent string) (string, error)
-	SetNewCookie(username string, c *gin.Context)
-	GetSession(c *gin.Context) (map[string]string, error)
+	GenerateSession(id int, ip, userAgent string) (string, error)
+	SetNewCookie(id int, c *gin.Context)
+	GetSession(c *gin.Context) (*dto.Session, error)
 	PopCookie(c *gin.Context)
 }
 
@@ -67,6 +66,8 @@ func (h Handler) InitRoutes(r *gin.Engine) {
 	r.Use(gin.Logger(), gin.Recovery(), exceptions.ErrorHandler)
 	api := r.Group("/api")
 
+	//api.GET("/:name", h.getTypeByName)
+
 	docs := api.Group("/docs")
 	{
 		docs.GET("/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -81,37 +82,41 @@ func (h Handler) InitRoutes(r *gin.Engine) {
 
 		email := auth.Group("/email")
 		{
-			email.POST("/send-code", h.sendEmailCode)
 			email.POST("/sign-in", h.signInByEmail)
 		}
+	}
 
-		auth.POST("/sign-out", h.signOut)
+	session := api.Group("/session")
+	{
+		session.GET("", h.sessions.RequireSession, h.getMe)
+		session.DELETE("", h.signOut)
 	}
 
 	user := api.Group("/user")
 	{
 		user.GET("/:username", h.sessions.MaybeSession, h.getUserByUsername)
-		user.GET("", h.sessions.RequireSession, h.getMe)
+		user.PATCH("", h.sessions.RequireSession, h.updateUser)
+		user.PATCH("/email", h.sessions.RequireSession, h.updateEmail)
+		user.PATCH("/password", h.sessions.RequireSession, h.updatePassword)
+		user.PATCH("/name", h.sessions.RequireSession, h.updateUsername)
+		user.GET("/check-name/:username", h.checkUsername)
+	}
 
-		update := user.Group("/upd", h.sessions.RequireSession)
-		{
-			update.PATCH("", h.updateUser)
-			update.PATCH("/mail", h.updateEmail)
-			update.PATCH("/pass", h.updatePassword)
-			update.PATCH("/name", h.updateUsername)
-			user.GET("/upd/:username", h.checkUsername)
-		}
+	email := api.Group("/email")
+	{
+		email.POST("/send-code", h.sendEmailCode)
 	}
 }
 
-var Valid = validator.New()
+var valid = validator.New()
 
-func fillStruct[T dto.DTO | types.Nil](c *gin.Context) (t T) {
+func fillStruct[T dto.DTO](c *gin.Context) (t T, ok bool) {
 	c.ShouldBindJSON(&t)
 
-	if err := Valid.Struct(&t); err != nil {
+	if err := valid.Struct(&t); err != nil {
 		c.Error(exceptions.ValidError.AddErr(err))
 		return
 	}
+	ok = true
 	return
 }

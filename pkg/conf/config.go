@@ -60,10 +60,10 @@ type Config struct {
 	} `yaml:"email"`
 }
 
-var inst Config
-
-// TODO config in global var
-var once sync.Once
+var (
+	inst Config
+	once sync.Once
+)
 
 // GetConfig builds the configuration file in golang type and returns it
 func GetConfig() Config {

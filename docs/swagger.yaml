@@ -19,9 +19,9 @@ definitions:
         example: myemail@gmail.com
         type: string
       theme:
-        allOf:
-        - $ref: '#/definitions/user.Theme'
+        default: SYSTEM
         example: DARK
+        type: string
     required:
     - code
     - email
@@ -37,9 +37,9 @@ definitions:
         minLength: 4
         type: string
       theme:
-        allOf:
-        - $ref: '#/definitions/user.Theme'
+        default: SYSTEM
         example: DARK
+        type: string
     required:
     - email
     - password
@@ -66,16 +66,16 @@ definitions:
       isEmailVerified:
         type: boolean
       language:
-        $ref: '#/definitions/user.Language'
+        type: string
       lastName:
         example: phone
         type: string
-      role:
-        $ref: '#/definitions/user.Role'
-      theme:
-        $ref: '#/definitions/user.Theme'
-      username:
+      name:
         example: bobbas
+        type: string
+      role:
+        type: string
+      theme:
         type: string
     type: object
   dto.UpdateEmailDTO:
@@ -120,13 +120,13 @@ definitions:
         maxLength: 30
         type: string
       language:
-        $ref: '#/definitions/user.Language'
+        type: string
       lastName:
         example: phone
         maxLength: 30
         type: string
       theme:
-        $ref: '#/definitions/user.Theme'
+        type: string
     type: object
   dto.UserDTO:
     description: User's main information
@@ -147,8 +147,11 @@ definitions:
       lastName:
         example: phone
         type: string
+      name:
+        example: bobbas
+        type: string
       role:
-        $ref: '#/definitions/user.Role'
+        type: string
     type: object
   exceptions.MyError:
     description: All native errors must be this type
@@ -160,35 +163,6 @@ definitions:
         example: Exception was occurred
         type: string
     type: object
-  user.Language:
-    enum:
-    - EN
-    - RU
-    type: string
-    x-enum-varnames:
-    - DefaultLanguage
-    - LanguageEN
-    - LanguageRU
-  user.Role:
-    enum:
-    - USER
-    - ADMIN
-    type: string
-    x-enum-varnames:
-    - DefaultRole
-    - RoleUSER
-    - RoleADMIN
-  user.Theme:
-    enum:
-    - WHITE
-    - DARK
-    - SYSTEM
-    type: string
-    x-enum-varnames:
-    - DefaultTheme
-    - ThemeWHITE
-    - ThemeDARK
-    - ThemeSYSTEM
 host: localhost:3000
 info:
   contact: {}
@@ -196,30 +170,35 @@ info:
   title: You Together API
   version: "1.0"
 paths:
-  /auth/email/send-code:
-    post:
-      description: Send a secret 5-digit code to the specified email
+  /{name}:
+    get:
+      description: Returns type of object (NOT WORKING)
       parameters:
-      - description: User's email
-        in: body
-        name: email
+      - description: Name of something
+        in: path
+        name: name
         required: true
-        schema:
-          $ref: '#/definitions/dto.EmailDTO'
+        type: string
       responses:
         "200":
-          description: OK
+          description: string type with object
+          schema:
+            $ref: '#/definitions/dto.UserDTO'
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+        "404":
+          description: User doesn't exist
           schema:
             $ref: '#/definitions/exceptions.MyError'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/exceptions.MyError'
-      summary: Send code to the user's email
+      summary: Get type of the user (NOT WORKING)
       tags:
-      - Authorization
+      - Get
   /auth/email/sign-in:
     post:
       description: Compare the secret code with the previously sent codes. If at least
@@ -232,7 +211,7 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/dto.EmailWithCodeDTO'
-      - description: User's language. Default EN
+      - description: User's language
         enum:
         - EN
         - RU
@@ -265,7 +244,7 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/dto.EmailWithPasswordDTO'
-      - description: User's language. Default EN
+      - description: User's language
         enum:
         - EN
         - RU
@@ -290,16 +269,39 @@ paths:
       summary: Sign in by password
       tags:
       - Authorization
-  /auth/sign-out:
+  /email/send-code:
     post:
+      description: Send a secret 5-digit code to the specified email
+      parameters:
+      - description: User's email
+        in: body
+        name: email
+        required: true
+        schema:
+          $ref: '#/definitions/dto.EmailDTO'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+      summary: Send code to the user's email
+      tags:
+      - Email
+  /session:
+    delete:
       description: Make the user's session invalid (can accept cookie)
       responses:
         "200":
           description: OK
       summary: Delete user's session
       tags:
-      - Authorization
-  /user:
+      - Sessions
     get:
       description: Return detail information about the user (cookie required)
       responses:
@@ -321,39 +323,8 @@ paths:
             $ref: '#/definitions/exceptions.MyError'
       summary: Get detail information about user by session
       tags:
-      - User Get
-  /user/{username}:
-    get:
-      description: Return main information about the user. If the user tries to find
-        out information about himself, return detailed information about the user
-        (can accept cookie)
-      parameters:
-      - description: the name of the desired user to find
-        in: header
-        name: username
-        required: true
-        type: string
-      responses:
-        "200":
-          description: dto.UserDTO or dto.MyUserDTO
-          schema:
-            $ref: '#/definitions/dto.UserDTO'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/exceptions.MyError'
-        "404":
-          description: User doesn't exist
-          schema:
-            $ref: '#/definitions/exceptions.MyError'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/exceptions.MyError'
-      summary: Get main information about the user
-      tags:
-      - User Get
-  /user/upd:
+      - Sessions
+  /user:
     patch:
       description: Change user's main information (cookie required)
       parameters:
@@ -381,9 +352,46 @@ paths:
       summary: Update user's information
       tags:
       - User Update
-  /user/upd/:username:
+  /user/{username}:
+    get:
+      description: Return main information about the user. If the user tries to find
+        out information about himself, return detailed information about the user
+        (can accept cookie)
+      parameters:
+      - description: Name of the user
+        in: path
+        name: username
+        required: true
+        type: string
+      responses:
+        "200":
+          description: main info, without cookie or dto.MyUserDTO
+          schema:
+            $ref: '#/definitions/dto.UserDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+        "404":
+          description: User doesn't exist
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/exceptions.MyError'
+      summary: Get main information about the user
+      tags:
+      - User Get
+  /user/check-name/{username}:
     get:
       description: Status 200 if username not used or 403 if username already used
+      parameters:
+      - description: Name of the user
+        in: path
+        name: username
+        required: true
+        type: string
       responses:
         "200":
           description: name isn't used
@@ -400,7 +408,7 @@ paths:
       summary: Check username on exist
       tags:
       - User Get
-  /user/upd/mail:
+  /user/email:
     patch:
       description: Change user's email by password (cookie required)
       parameters:
@@ -428,7 +436,7 @@ paths:
       summary: Update user's email
       tags:
       - User Update
-  /user/upd/name:
+  /user/name:
     patch:
       description: Change user's username (cookie required)
       responses:
@@ -449,7 +457,7 @@ paths:
       summary: Update user's username
       tags:
       - User Update
-  /user/upd/pass:
+  /user/password:
     patch:
       description: Change user's password by email (cookie required)
       parameters:

@@ -15,7 +15,7 @@ import (
 type Room struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID string `json:"id,omitempty"`
+	ID int `json:"id,omitempty"`
 	// CreateTime holds the value of the "create_time" field.
 	CreateTime time.Time `json:"create_time,omitempty"`
 	// UpdateTime holds the value of the "update_time" field.
@@ -23,17 +23,17 @@ type Room struct {
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// CustomName holds the value of the "custom_name" field.
-	CustomName string `json:"custom_name,omitempty"`
+	CustomName *string `json:"custom_name,omitempty"`
 	// Owner holds the value of the "owner" field.
 	Owner string `json:"owner,omitempty"`
 	// Privacy holds the value of the "privacy" field.
 	Privacy room.Privacy `json:"privacy,omitempty"`
 	// PasswordHash holds the value of the "password_hash" field.
-	PasswordHash string `json:"-"`
+	PasswordHash *string `json:"-"`
 	// HasChat holds the value of the "has_chat" field.
 	HasChat bool `json:"has_chat,omitempty"`
 	// Description holds the value of the "description" field.
-	Description string `json:"description,omitempty"`
+	Description *string `json:"description,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RoomQuery when eager-loading is set.
 	Edges RoomEdges `json:"edges"`
@@ -64,7 +64,9 @@ func (*Room) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case room.FieldHasChat:
 			values[i] = new(sql.NullBool)
-		case room.FieldID, room.FieldName, room.FieldCustomName, room.FieldOwner, room.FieldPrivacy, room.FieldPasswordHash, room.FieldDescription:
+		case room.FieldID:
+			values[i] = new(sql.NullInt64)
+		case room.FieldName, room.FieldCustomName, room.FieldOwner, room.FieldPrivacy, room.FieldPasswordHash, room.FieldDescription:
 			values[i] = new(sql.NullString)
 		case room.FieldCreateTime, room.FieldUpdateTime:
 			values[i] = new(sql.NullTime)
@@ -84,11 +86,11 @@ func (r *Room) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case room.FieldID:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field id", values[i])
-			} else if value.Valid {
-				r.ID = value.String
+			value, ok := values[i].(*sql.NullInt64)
+			if !ok {
+				return fmt.Errorf("unexpected type %T for field id", value)
 			}
+			r.ID = int(value.Int64)
 		case room.FieldCreateTime:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field create_time", values[i])
@@ -111,7 +113,8 @@ func (r *Room) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field custom_name", values[i])
 			} else if value.Valid {
-				r.CustomName = value.String
+				r.CustomName = new(string)
+				*r.CustomName = value.String
 			}
 		case room.FieldOwner:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -129,7 +132,8 @@ func (r *Room) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field password_hash", values[i])
 			} else if value.Valid {
-				r.PasswordHash = value.String
+				r.PasswordHash = new(string)
+				*r.PasswordHash = value.String
 			}
 		case room.FieldHasChat:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -141,7 +145,8 @@ func (r *Room) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field description", values[i])
 			} else if value.Valid {
-				r.Description = value.String
+				r.Description = new(string)
+				*r.Description = value.String
 			}
 		}
 	}
@@ -185,8 +190,10 @@ func (r *Room) String() string {
 	builder.WriteString("name=")
 	builder.WriteString(r.Name)
 	builder.WriteString(", ")
-	builder.WriteString("custom_name=")
-	builder.WriteString(r.CustomName)
+	if v := r.CustomName; v != nil {
+		builder.WriteString("custom_name=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	builder.WriteString("owner=")
 	builder.WriteString(r.Owner)
@@ -199,8 +206,10 @@ func (r *Room) String() string {
 	builder.WriteString("has_chat=")
 	builder.WriteString(fmt.Sprintf("%v", r.HasChat))
 	builder.WriteString(", ")
-	builder.WriteString("description=")
-	builder.WriteString(r.Description)
+	if v := r.Description; v != nil {
+		builder.WriteString("description=")
+		builder.WriteString(*v)
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

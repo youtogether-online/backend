@@ -16,7 +16,7 @@ import (
 type User struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID string `json:"id,omitempty"`
+	ID int `json:"id,omitempty"`
 	// CreateTime holds the value of the "create_time" field.
 	CreateTime time.Time `json:"create_time,omitempty"`
 	// UpdateTime holds the value of the "update_time" field.
@@ -28,21 +28,21 @@ type User struct {
 	// IsEmailVerified holds the value of the "is_email_verified" field.
 	IsEmailVerified bool `json:"is_email_verified,omitempty"`
 	// PasswordHash holds the value of the "password_hash" field.
-	PasswordHash []byte `json:"-"`
+	PasswordHash *[]byte `json:"-"`
 	// Biography holds the value of the "biography" field.
-	Biography string `json:"biography,omitempty"`
+	Biography *string `json:"biography,omitempty"`
 	// Role holds the value of the "role" field.
-	Role user.Role `json:"role,omitempty"`
+	Role string `json:"role,omitempty"`
 	// FriendsIds holds the value of the "friends_ids" field.
 	FriendsIds []string `json:"friends_ids,omitempty"`
 	// Language holds the value of the "language" field.
-	Language user.Language `json:"language,omitempty"`
+	Language string `json:"language,omitempty"`
 	// Theme holds the value of the "theme" field.
-	Theme user.Theme `json:"theme,omitempty"`
+	Theme string `json:"theme,omitempty"`
 	// FirstName holds the value of the "first_name" field.
-	FirstName string `json:"first_name,omitempty"`
+	FirstName *string `json:"first_name,omitempty"`
 	// LastName holds the value of the "last_name" field.
-	LastName string `json:"last_name,omitempty"`
+	LastName *string `json:"last_name,omitempty"`
 	// Sessions holds the value of the "sessions" field.
 	Sessions []string `json:"sessions,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -77,7 +77,9 @@ func (*User) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case user.FieldIsEmailVerified:
 			values[i] = new(sql.NullBool)
-		case user.FieldID, user.FieldName, user.FieldEmail, user.FieldBiography, user.FieldRole, user.FieldLanguage, user.FieldTheme, user.FieldFirstName, user.FieldLastName:
+		case user.FieldID:
+			values[i] = new(sql.NullInt64)
+		case user.FieldName, user.FieldEmail, user.FieldBiography, user.FieldRole, user.FieldLanguage, user.FieldTheme, user.FieldFirstName, user.FieldLastName:
 			values[i] = new(sql.NullString)
 		case user.FieldCreateTime, user.FieldUpdateTime:
 			values[i] = new(sql.NullTime)
@@ -97,11 +99,11 @@ func (u *User) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case user.FieldID:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field id", values[i])
-			} else if value.Valid {
-				u.ID = value.String
+			value, ok := values[i].(*sql.NullInt64)
+			if !ok {
+				return fmt.Errorf("unexpected type %T for field id", value)
 			}
+			u.ID = int(value.Int64)
 		case user.FieldCreateTime:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field create_time", values[i])
@@ -136,19 +138,20 @@ func (u *User) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field password_hash", values[i])
 			} else if value != nil {
-				u.PasswordHash = *value
+				u.PasswordHash = value
 			}
 		case user.FieldBiography:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field biography", values[i])
 			} else if value.Valid {
-				u.Biography = value.String
+				u.Biography = new(string)
+				*u.Biography = value.String
 			}
 		case user.FieldRole:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field role", values[i])
 			} else if value.Valid {
-				u.Role = user.Role(value.String)
+				u.Role = value.String
 			}
 		case user.FieldFriendsIds:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -162,25 +165,27 @@ func (u *User) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field language", values[i])
 			} else if value.Valid {
-				u.Language = user.Language(value.String)
+				u.Language = value.String
 			}
 		case user.FieldTheme:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field theme", values[i])
 			} else if value.Valid {
-				u.Theme = user.Theme(value.String)
+				u.Theme = value.String
 			}
 		case user.FieldFirstName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field first_name", values[i])
 			} else if value.Valid {
-				u.FirstName = value.String
+				u.FirstName = new(string)
+				*u.FirstName = value.String
 			}
 		case user.FieldLastName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field last_name", values[i])
 			} else if value.Valid {
-				u.LastName = value.String
+				u.LastName = new(string)
+				*u.LastName = value.String
 			}
 		case user.FieldSessions:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -240,26 +245,32 @@ func (u *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("password_hash=<sensitive>")
 	builder.WriteString(", ")
-	builder.WriteString("biography=")
-	builder.WriteString(u.Biography)
+	if v := u.Biography; v != nil {
+		builder.WriteString("biography=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	builder.WriteString("role=")
-	builder.WriteString(fmt.Sprintf("%v", u.Role))
+	builder.WriteString(u.Role)
 	builder.WriteString(", ")
 	builder.WriteString("friends_ids=")
 	builder.WriteString(fmt.Sprintf("%v", u.FriendsIds))
 	builder.WriteString(", ")
 	builder.WriteString("language=")
-	builder.WriteString(fmt.Sprintf("%v", u.Language))
+	builder.WriteString(u.Language)
 	builder.WriteString(", ")
 	builder.WriteString("theme=")
-	builder.WriteString(fmt.Sprintf("%v", u.Theme))
+	builder.WriteString(u.Theme)
 	builder.WriteString(", ")
-	builder.WriteString("first_name=")
-	builder.WriteString(u.FirstName)
+	if v := u.FirstName; v != nil {
+		builder.WriteString("first_name=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
-	builder.WriteString("last_name=")
-	builder.WriteString(u.LastName)
+	if v := u.LastName; v != nil {
+		builder.WriteString("last_name=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	builder.WriteString("sessions=")
 	builder.WriteString(fmt.Sprintf("%v", u.Sessions))

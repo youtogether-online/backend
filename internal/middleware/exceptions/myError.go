@@ -10,7 +10,7 @@ type MyError struct {
 
 // Error implements the Error type
 func (e MyError) Error() string {
-	return e.Err.Error()
+	return e.Msg
 }
 
 // newError creates a new MyError and returns it

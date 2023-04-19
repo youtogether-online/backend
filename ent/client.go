@@ -244,7 +244,7 @@ func (c *RoomClient) UpdateOne(r *Room) *RoomUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *RoomClient) UpdateOneID(id string) *RoomUpdateOne {
+func (c *RoomClient) UpdateOneID(id int) *RoomUpdateOne {
 	mutation := newRoomMutation(c.config, OpUpdateOne, withRoomID(id))
 	return &RoomUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -261,7 +261,7 @@ func (c *RoomClient) DeleteOne(r *Room) *RoomDeleteOne {
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *RoomClient) DeleteOneID(id string) *RoomDeleteOne {
+func (c *RoomClient) DeleteOneID(id int) *RoomDeleteOne {
 	builder := c.Delete().Where(room.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -278,12 +278,12 @@ func (c *RoomClient) Query() *RoomQuery {
 }
 
 // Get returns a Room entity by its id.
-func (c *RoomClient) Get(ctx context.Context, id string) (*Room, error) {
+func (c *RoomClient) Get(ctx context.Context, id int) (*Room, error) {
 	return c.Query().Where(room.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *RoomClient) GetX(ctx context.Context, id string) *Room {
+func (c *RoomClient) GetX(ctx context.Context, id int) *Room {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -378,7 +378,7 @@ func (c *UserClient) UpdateOne(u *User) *UserUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *UserClient) UpdateOneID(id string) *UserUpdateOne {
+func (c *UserClient) UpdateOneID(id int) *UserUpdateOne {
 	mutation := newUserMutation(c.config, OpUpdateOne, withUserID(id))
 	return &UserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -395,7 +395,7 @@ func (c *UserClient) DeleteOne(u *User) *UserDeleteOne {
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *UserClient) DeleteOneID(id string) *UserDeleteOne {
+func (c *UserClient) DeleteOneID(id int) *UserDeleteOne {
 	builder := c.Delete().Where(user.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -412,12 +412,12 @@ func (c *UserClient) Query() *UserQuery {
 }
 
 // Get returns a User entity by its id.
-func (c *UserClient) Get(ctx context.Context, id string) (*User, error) {
+func (c *UserClient) Get(ctx context.Context, id int) (*User, error) {
 	return c.Query().Where(user.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *UserClient) GetX(ctx context.Context, id string) *User {
+func (c *UserClient) GetX(ctx context.Context, id int) *User {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)

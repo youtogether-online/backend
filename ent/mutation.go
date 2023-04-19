@@ -34,7 +34,7 @@ type RoomMutation struct {
 	config
 	op            Op
 	typ           string
-	id            *string
+	id            *int
 	create_time   *time.Time
 	update_time   *time.Time
 	name          *string
@@ -45,8 +45,8 @@ type RoomMutation struct {
 	has_chat      *bool
 	description   *string
 	clearedFields map[string]struct{}
-	users         map[string]struct{}
-	removedusers  map[string]struct{}
+	users         map[int]struct{}
+	removedusers  map[int]struct{}
 	clearedusers  bool
 	done          bool
 	oldValue      func(context.Context) (*Room, error)
@@ -73,7 +73,7 @@ func newRoomMutation(c config, op Op, opts ...roomOption) *RoomMutation {
 }
 
 // withRoomID sets the ID field of the mutation.
-func withRoomID(id string) roomOption {
+func withRoomID(id int) roomOption {
 	return func(m *RoomMutation) {
 		var (
 			err   error
@@ -123,15 +123,9 @@ func (m RoomMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
-// SetID sets the value of the id field. Note that this
-// operation is only accepted on creation of Room entities.
-func (m *RoomMutation) SetID(id string) {
-	m.id = &id
-}
-
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *RoomMutation) ID() (id string, exists bool) {
+func (m *RoomMutation) ID() (id int, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -142,12 +136,12 @@ func (m *RoomMutation) ID() (id string, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *RoomMutation) IDs(ctx context.Context) ([]string, error) {
+func (m *RoomMutation) IDs(ctx context.Context) ([]int, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []string{id}, nil
+			return []int{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -282,7 +276,7 @@ func (m *RoomMutation) CustomName() (r string, exists bool) {
 // OldCustomName returns the old "custom_name" field's value of the Room entity.
 // If the Room object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *RoomMutation) OldCustomName(ctx context.Context) (v string, err error) {
+func (m *RoomMutation) OldCustomName(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCustomName is only allowed on UpdateOne operations")
 	}
@@ -403,7 +397,7 @@ func (m *RoomMutation) PasswordHash() (r string, exists bool) {
 // OldPasswordHash returns the old "password_hash" field's value of the Room entity.
 // If the Room object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *RoomMutation) OldPasswordHash(ctx context.Context) (v string, err error) {
+func (m *RoomMutation) OldPasswordHash(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPasswordHash is only allowed on UpdateOne operations")
 	}
@@ -488,7 +482,7 @@ func (m *RoomMutation) Description() (r string, exists bool) {
 // OldDescription returns the old "description" field's value of the Room entity.
 // If the Room object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *RoomMutation) OldDescription(ctx context.Context) (v string, err error) {
+func (m *RoomMutation) OldDescription(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
 	}
@@ -521,9 +515,9 @@ func (m *RoomMutation) ResetDescription() {
 }
 
 // AddUserIDs adds the "users" edge to the User entity by ids.
-func (m *RoomMutation) AddUserIDs(ids ...string) {
+func (m *RoomMutation) AddUserIDs(ids ...int) {
 	if m.users == nil {
-		m.users = make(map[string]struct{})
+		m.users = make(map[int]struct{})
 	}
 	for i := range ids {
 		m.users[ids[i]] = struct{}{}
@@ -541,9 +535,9 @@ func (m *RoomMutation) UsersCleared() bool {
 }
 
 // RemoveUserIDs removes the "users" edge to the User entity by IDs.
-func (m *RoomMutation) RemoveUserIDs(ids ...string) {
+func (m *RoomMutation) RemoveUserIDs(ids ...int) {
 	if m.removedusers == nil {
-		m.removedusers = make(map[string]struct{})
+		m.removedusers = make(map[int]struct{})
 	}
 	for i := range ids {
 		delete(m.users, ids[i])
@@ -552,7 +546,7 @@ func (m *RoomMutation) RemoveUserIDs(ids ...string) {
 }
 
 // RemovedUsers returns the removed IDs of the "users" edge to the User entity.
-func (m *RoomMutation) RemovedUsersIDs() (ids []string) {
+func (m *RoomMutation) RemovedUsersIDs() (ids []int) {
 	for id := range m.removedusers {
 		ids = append(ids, id)
 	}
@@ -560,7 +554,7 @@ func (m *RoomMutation) RemovedUsersIDs() (ids []string) {
 }
 
 // UsersIDs returns the "users" edge IDs in the mutation.
-func (m *RoomMutation) UsersIDs() (ids []string) {
+func (m *RoomMutation) UsersIDs() (ids []int) {
 	for id := range m.users {
 		ids = append(ids, id)
 	}
@@ -951,7 +945,7 @@ type UserMutation struct {
 	config
 	op                Op
 	typ               string
-	id                *string
+	id                *int
 	create_time       *time.Time
 	update_time       *time.Time
 	name              *string
@@ -959,18 +953,18 @@ type UserMutation struct {
 	is_email_verified *bool
 	password_hash     *[]byte
 	biography         *string
-	role              *user.Role
+	role              *string
 	friends_ids       *[]string
 	appendfriends_ids []string
-	language          *user.Language
-	theme             *user.Theme
+	language          *string
+	theme             *string
 	first_name        *string
 	last_name         *string
 	sessions          *[]string
 	appendsessions    []string
 	clearedFields     map[string]struct{}
-	rooms             map[string]struct{}
-	removedrooms      map[string]struct{}
+	rooms             map[int]struct{}
+	removedrooms      map[int]struct{}
 	clearedrooms      bool
 	done              bool
 	oldValue          func(context.Context) (*User, error)
@@ -997,7 +991,7 @@ func newUserMutation(c config, op Op, opts ...userOption) *UserMutation {
 }
 
 // withUserID sets the ID field of the mutation.
-func withUserID(id string) userOption {
+func withUserID(id int) userOption {
 	return func(m *UserMutation) {
 		var (
 			err   error
@@ -1047,15 +1041,9 @@ func (m UserMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
-// SetID sets the value of the id field. Note that this
-// operation is only accepted on creation of User entities.
-func (m *UserMutation) SetID(id string) {
-	m.id = &id
-}
-
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *UserMutation) ID() (id string, exists bool) {
+func (m *UserMutation) ID() (id int, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -1066,12 +1054,12 @@ func (m *UserMutation) ID() (id string, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *UserMutation) IDs(ctx context.Context) ([]string, error) {
+func (m *UserMutation) IDs(ctx context.Context) ([]int, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []string{id}, nil
+			return []int{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -1278,7 +1266,7 @@ func (m *UserMutation) PasswordHash() (r []byte, exists bool) {
 // OldPasswordHash returns the old "password_hash" field's value of the User entity.
 // If the User object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserMutation) OldPasswordHash(ctx context.Context) (v []byte, err error) {
+func (m *UserMutation) OldPasswordHash(ctx context.Context) (v *[]byte, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPasswordHash is only allowed on UpdateOne operations")
 	}
@@ -1327,7 +1315,7 @@ func (m *UserMutation) Biography() (r string, exists bool) {
 // OldBiography returns the old "biography" field's value of the User entity.
 // If the User object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserMutation) OldBiography(ctx context.Context) (v string, err error) {
+func (m *UserMutation) OldBiography(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldBiography is only allowed on UpdateOne operations")
 	}
@@ -1360,12 +1348,12 @@ func (m *UserMutation) ResetBiography() {
 }
 
 // SetRole sets the "role" field.
-func (m *UserMutation) SetRole(u user.Role) {
-	m.role = &u
+func (m *UserMutation) SetRole(s string) {
+	m.role = &s
 }
 
 // Role returns the value of the "role" field in the mutation.
-func (m *UserMutation) Role() (r user.Role, exists bool) {
+func (m *UserMutation) Role() (r string, exists bool) {
 	v := m.role
 	if v == nil {
 		return
@@ -1376,7 +1364,7 @@ func (m *UserMutation) Role() (r user.Role, exists bool) {
 // OldRole returns the old "role" field's value of the User entity.
 // If the User object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserMutation) OldRole(ctx context.Context) (v user.Role, err error) {
+func (m *UserMutation) OldRole(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldRole is only allowed on UpdateOne operations")
 	}
@@ -1461,12 +1449,12 @@ func (m *UserMutation) ResetFriendsIds() {
 }
 
 // SetLanguage sets the "language" field.
-func (m *UserMutation) SetLanguage(u user.Language) {
-	m.language = &u
+func (m *UserMutation) SetLanguage(s string) {
+	m.language = &s
 }
 
 // Language returns the value of the "language" field in the mutation.
-func (m *UserMutation) Language() (r user.Language, exists bool) {
+func (m *UserMutation) Language() (r string, exists bool) {
 	v := m.language
 	if v == nil {
 		return
@@ -1477,7 +1465,7 @@ func (m *UserMutation) Language() (r user.Language, exists bool) {
 // OldLanguage returns the old "language" field's value of the User entity.
 // If the User object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserMutation) OldLanguage(ctx context.Context) (v user.Language, err error) {
+func (m *UserMutation) OldLanguage(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldLanguage is only allowed on UpdateOne operations")
 	}
@@ -1497,12 +1485,12 @@ func (m *UserMutation) ResetLanguage() {
 }
 
 // SetTheme sets the "theme" field.
-func (m *UserMutation) SetTheme(u user.Theme) {
-	m.theme = &u
+func (m *UserMutation) SetTheme(s string) {
+	m.theme = &s
 }
 
 // Theme returns the value of the "theme" field in the mutation.
-func (m *UserMutation) Theme() (r user.Theme, exists bool) {
+func (m *UserMutation) Theme() (r string, exists bool) {
 	v := m.theme
 	if v == nil {
 		return
@@ -1513,7 +1501,7 @@ func (m *UserMutation) Theme() (r user.Theme, exists bool) {
 // OldTheme returns the old "theme" field's value of the User entity.
 // If the User object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserMutation) OldTheme(ctx context.Context) (v user.Theme, err error) {
+func (m *UserMutation) OldTheme(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldTheme is only allowed on UpdateOne operations")
 	}
@@ -1549,7 +1537,7 @@ func (m *UserMutation) FirstName() (r string, exists bool) {
 // OldFirstName returns the old "first_name" field's value of the User entity.
 // If the User object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserMutation) OldFirstName(ctx context.Context) (v string, err error) {
+func (m *UserMutation) OldFirstName(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldFirstName is only allowed on UpdateOne operations")
 	}
@@ -1598,7 +1586,7 @@ func (m *UserMutation) LastName() (r string, exists bool) {
 // OldLastName returns the old "last_name" field's value of the User entity.
 // If the User object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserMutation) OldLastName(ctx context.Context) (v string, err error) {
+func (m *UserMutation) OldLastName(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldLastName is only allowed on UpdateOne operations")
 	}
@@ -1675,16 +1663,30 @@ func (m *UserMutation) AppendedSessions() ([]string, bool) {
 	return m.appendsessions, true
 }
 
+// ClearSessions clears the value of the "sessions" field.
+func (m *UserMutation) ClearSessions() {
+	m.sessions = nil
+	m.appendsessions = nil
+	m.clearedFields[user.FieldSessions] = struct{}{}
+}
+
+// SessionsCleared returns if the "sessions" field was cleared in this mutation.
+func (m *UserMutation) SessionsCleared() bool {
+	_, ok := m.clearedFields[user.FieldSessions]
+	return ok
+}
+
 // ResetSessions resets all changes to the "sessions" field.
 func (m *UserMutation) ResetSessions() {
 	m.sessions = nil
 	m.appendsessions = nil
+	delete(m.clearedFields, user.FieldSessions)
 }
 
 // AddRoomIDs adds the "rooms" edge to the Room entity by ids.
-func (m *UserMutation) AddRoomIDs(ids ...string) {
+func (m *UserMutation) AddRoomIDs(ids ...int) {
 	if m.rooms == nil {
-		m.rooms = make(map[string]struct{})
+		m.rooms = make(map[int]struct{})
 	}
 	for i := range ids {
 		m.rooms[ids[i]] = struct{}{}
@@ -1702,9 +1704,9 @@ func (m *UserMutation) RoomsCleared() bool {
 }
 
 // RemoveRoomIDs removes the "rooms" edge to the Room entity by IDs.
-func (m *UserMutation) RemoveRoomIDs(ids ...string) {
+func (m *UserMutation) RemoveRoomIDs(ids ...int) {
 	if m.removedrooms == nil {
-		m.removedrooms = make(map[string]struct{})
+		m.removedrooms = make(map[int]struct{})
 	}
 	for i := range ids {
 		delete(m.rooms, ids[i])
@@ -1713,7 +1715,7 @@ func (m *UserMutation) RemoveRoomIDs(ids ...string) {
 }
 
 // RemovedRooms returns the removed IDs of the "rooms" edge to the Room entity.
-func (m *UserMutation) RemovedRoomsIDs() (ids []string) {
+func (m *UserMutation) RemovedRoomsIDs() (ids []int) {
 	for id := range m.removedrooms {
 		ids = append(ids, id)
 	}
@@ -1721,7 +1723,7 @@ func (m *UserMutation) RemovedRoomsIDs() (ids []string) {
 }
 
 // RoomsIDs returns the "rooms" edge IDs in the mutation.
-func (m *UserMutation) RoomsIDs() (ids []string) {
+func (m *UserMutation) RoomsIDs() (ids []int) {
 	for id := range m.rooms {
 		ids = append(ids, id)
 	}
@@ -1944,7 +1946,7 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		m.SetBiography(v)
 		return nil
 	case user.FieldRole:
-		v, ok := value.(user.Role)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -1958,14 +1960,14 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		m.SetFriendsIds(v)
 		return nil
 	case user.FieldLanguage:
-		v, ok := value.(user.Language)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetLanguage(v)
 		return nil
 	case user.FieldTheme:
-		v, ok := value.(user.Theme)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -2037,6 +2039,9 @@ func (m *UserMutation) ClearedFields() []string {
 	if m.FieldCleared(user.FieldLastName) {
 		fields = append(fields, user.FieldLastName)
 	}
+	if m.FieldCleared(user.FieldSessions) {
+		fields = append(fields, user.FieldSessions)
+	}
 	return fields
 }
 
@@ -2065,6 +2070,9 @@ func (m *UserMutation) ClearField(name string) error {
 		return nil
 	case user.FieldLastName:
 		m.ClearLastName()
+		return nil
+	case user.FieldSessions:
+		m.ClearSessions()
 		return nil
 	}
 	return fmt.Errorf("unknown User nullable field %s", name)

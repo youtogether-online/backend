@@ -2,7 +2,6 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/wtkeqrf0/you_together/ent/user"
 	"github.com/wtkeqrf0/you_together/internal/controller/dto"
 	"github.com/wtkeqrf0/you_together/internal/middleware/exceptions"
 	"golang.org/x/crypto/bcrypt"
@@ -17,7 +16,7 @@ const acceptLanguage string = "Accept-Language"
 // @Summary Sign in by password
 // @Description Compare the user's password with an existing user's password. If it matches, create session of the user. If the user does not exist, create a new user
 // @Param EmailWithPasswordDTO body dto.EmailWithPasswordDTO true "User's email, password"
-// @Param Accept-Language header user.Language false "User's language. Default EN"
+// @Param Accept-Language header string false "User's language" Enums(EN,RU)
 // @Tags Authorization
 // @Success 200 "user's session"
 // @Failure 400 {object} exceptions.MyError
@@ -25,14 +24,12 @@ const acceptLanguage string = "Accept-Language"
 // @Failure 500 {object} exceptions.MyError
 // @Router /auth/password/sign-in [post]
 func (h Handler) signInByPassword(c *gin.Context) {
-	auth := fillStruct[dto.EmailWithPasswordDTO](c)
-	if c.Errors.Last() != nil {
+	auth, ok := fillStruct[dto.EmailWithPasswordDTO](c)
+	if !ok {
 		return
 	}
 
-	if c.GetHeader(acceptLanguage) == "RU" {
-		auth.Language = user.LanguageRU
-	}
+	auth.Language = validLanguage(c.GetHeader(acceptLanguage))
 
 	customer, err := h.auth.AuthUserByEmail(auth.Email)
 
@@ -43,12 +40,12 @@ func (h Handler) signInByPassword(c *gin.Context) {
 			c.Error(exceptions.ServerError.AddErr(err))
 			return
 		}
-	} else if customer.PasswordHash == nil || len(customer.PasswordHash) < 1 {
+	} else if customer.PasswordHash == nil {
 		c.Error(exceptions.PasswordNotFound)
 		return
 	}
 
-	if err = bcrypt.CompareHashAndPassword(customer.PasswordHash, []byte(auth.Password)); err != nil {
+	if err = bcrypt.CompareHashAndPassword(*customer.PasswordHash, []byte(auth.Password)); err != nil {
 		c.Error(exceptions.PasswordError.AddErr(err))
 		return
 	}
@@ -61,14 +58,14 @@ func (h Handler) signInByPassword(c *gin.Context) {
 // @Summary Send code to the user's email
 // @Description Send a secret 5-digit code to the specified email
 // @Param email body dto.EmailDTO true "User's email"
-// @Tags Authorization
+// @Tags Email
 // @Success 200
 // @Failure 400 {object} exceptions.MyError
 // @Failure 500 {object} exceptions.MyError
-// @Router /auth/email/send-code [post]
+// @Router /email/send-code [post]
 func (h Handler) sendEmailCode(c *gin.Context) {
-	to := fillStruct[dto.EmailDTO](c)
-	if c.Errors.Last() != nil {
+	to, ok := fillStruct[dto.EmailDTO](c)
+	if !ok {
 		return
 	}
 
@@ -87,21 +84,19 @@ func (h Handler) sendEmailCode(c *gin.Context) {
 // @Summary Sign in by email
 // @Description Compare the secret code with the previously sent codes. If at least one matches, create session of the user. If the user does not exist, create a new user
 // @Param user_info body dto.EmailWithCodeDTO true "User's email, secret code and device"
-// @Param Accept-Language header user.Language false "User's language. Default EN"
+// @Param Accept-Language header string false "User's language" Enums(EN,RU)
 // @Tags Authorization
 // @Success 200 "user's session"
 // @Failure 400 {object} exceptions.MyError
 // @Failure 500 {object} exceptions.MyError
 // @Router /auth/email/sign-in [post]
 func (h Handler) signInByEmail(c *gin.Context) {
-	auth := fillStruct[dto.EmailWithCodeDTO](c)
-	if c.Errors.Last() != nil {
+	auth, ok := fillStruct[dto.EmailWithCodeDTO](c)
+	if !ok {
 		return
 	}
 
-	if c.GetHeader(acceptLanguage) == "RU" {
-		auth.Language = user.LanguageRU
-	}
+	auth.Language = validLanguage(c.GetHeader(acceptLanguage))
 
 	if ok, err := h.auth.EqualsPopCode(auth.Email, auth.Code); !ok || err != nil {
 		c.Error(exceptions.CodeError.AddErr(err))
@@ -134,9 +129,9 @@ func (h Handler) signInByEmail(c *gin.Context) {
 // SignOut godoc
 // @Summary Delete user's session
 // @Description Make the user's session invalid (can accept cookie)
-// @Tags Authorization
+// @Tags Sessions
 // @Success 200
-// @Router /auth/sign-out [post]
+// @Router /session [delete]
 func (h Handler) signOut(c *gin.Context) {
 	h.sessions.PopCookie(c)
 	c.Status(http.StatusOK)
@@ -163,4 +158,13 @@ func sendEmail(ToEmail string, code string) {
 	m.SetBody("text/plain", code)
 
 	d.DialAndSend(m)
+}
+
+func validLanguage(language string) string {
+	switch language {
+	case "RU":
+		return "RU"
+	default:
+		return "EN"
+	}
 }

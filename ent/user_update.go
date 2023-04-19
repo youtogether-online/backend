@@ -103,15 +103,15 @@ func (uu *UserUpdate) ClearBiography() *UserUpdate {
 }
 
 // SetRole sets the "role" field.
-func (uu *UserUpdate) SetRole(u user.Role) *UserUpdate {
-	uu.mutation.SetRole(u)
+func (uu *UserUpdate) SetRole(s string) *UserUpdate {
+	uu.mutation.SetRole(s)
 	return uu
 }
 
 // SetNillableRole sets the "role" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableRole(u *user.Role) *UserUpdate {
-	if u != nil {
-		uu.SetRole(*u)
+func (uu *UserUpdate) SetNillableRole(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetRole(*s)
 	}
 	return uu
 }
@@ -135,29 +135,29 @@ func (uu *UserUpdate) ClearFriendsIds() *UserUpdate {
 }
 
 // SetLanguage sets the "language" field.
-func (uu *UserUpdate) SetLanguage(u user.Language) *UserUpdate {
-	uu.mutation.SetLanguage(u)
+func (uu *UserUpdate) SetLanguage(s string) *UserUpdate {
+	uu.mutation.SetLanguage(s)
 	return uu
 }
 
 // SetNillableLanguage sets the "language" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableLanguage(u *user.Language) *UserUpdate {
-	if u != nil {
-		uu.SetLanguage(*u)
+func (uu *UserUpdate) SetNillableLanguage(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetLanguage(*s)
 	}
 	return uu
 }
 
 // SetTheme sets the "theme" field.
-func (uu *UserUpdate) SetTheme(u user.Theme) *UserUpdate {
-	uu.mutation.SetTheme(u)
+func (uu *UserUpdate) SetTheme(s string) *UserUpdate {
+	uu.mutation.SetTheme(s)
 	return uu
 }
 
 // SetNillableTheme sets the "theme" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableTheme(u *user.Theme) *UserUpdate {
-	if u != nil {
-		uu.SetTheme(*u)
+func (uu *UserUpdate) SetNillableTheme(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetTheme(*s)
 	}
 	return uu
 }
@@ -214,15 +214,21 @@ func (uu *UserUpdate) AppendSessions(s []string) *UserUpdate {
 	return uu
 }
 
+// ClearSessions clears the value of the "sessions" field.
+func (uu *UserUpdate) ClearSessions() *UserUpdate {
+	uu.mutation.ClearSessions()
+	return uu
+}
+
 // AddRoomIDs adds the "rooms" edge to the Room entity by IDs.
-func (uu *UserUpdate) AddRoomIDs(ids ...string) *UserUpdate {
+func (uu *UserUpdate) AddRoomIDs(ids ...int) *UserUpdate {
 	uu.mutation.AddRoomIDs(ids...)
 	return uu
 }
 
 // AddRooms adds the "rooms" edges to the Room entity.
 func (uu *UserUpdate) AddRooms(r ...*Room) *UserUpdate {
-	ids := make([]string, len(r))
+	ids := make([]int, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -241,14 +247,14 @@ func (uu *UserUpdate) ClearRooms() *UserUpdate {
 }
 
 // RemoveRoomIDs removes the "rooms" edge to Room entities by IDs.
-func (uu *UserUpdate) RemoveRoomIDs(ids ...string) *UserUpdate {
+func (uu *UserUpdate) RemoveRoomIDs(ids ...int) *UserUpdate {
 	uu.mutation.RemoveRoomIDs(ids...)
 	return uu
 }
 
 // RemoveRooms removes "rooms" edges to Room entities.
 func (uu *UserUpdate) RemoveRooms(r ...*Room) *UserUpdate {
-	ids := make([]string, len(r))
+	ids := make([]int, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -308,21 +314,6 @@ func (uu *UserUpdate) check() error {
 			return &ValidationError{Name: "biography", err: fmt.Errorf(`ent: validator failed for field "User.biography": %w`, err)}
 		}
 	}
-	if v, ok := uu.mutation.Role(); ok {
-		if err := user.RoleValidator(v); err != nil {
-			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "User.role": %w`, err)}
-		}
-	}
-	if v, ok := uu.mutation.Language(); ok {
-		if err := user.LanguageValidator(v); err != nil {
-			return &ValidationError{Name: "language", err: fmt.Errorf(`ent: validator failed for field "User.language": %w`, err)}
-		}
-	}
-	if v, ok := uu.mutation.Theme(); ok {
-		if err := user.ThemeValidator(v); err != nil {
-			return &ValidationError{Name: "theme", err: fmt.Errorf(`ent: validator failed for field "User.theme": %w`, err)}
-		}
-	}
 	if v, ok := uu.mutation.FirstName(); ok {
 		if err := user.FirstNameValidator(v); err != nil {
 			return &ValidationError{Name: "first_name", err: fmt.Errorf(`ent: validator failed for field "User.first_name": %w`, err)}
@@ -340,7 +331,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := uu.check(); err != nil {
 		return n, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeString))
+	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt))
 	if ps := uu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -373,7 +364,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.ClearField(user.FieldBiography, field.TypeString)
 	}
 	if value, ok := uu.mutation.Role(); ok {
-		_spec.SetField(user.FieldRole, field.TypeEnum, value)
+		_spec.SetField(user.FieldRole, field.TypeString, value)
 	}
 	if value, ok := uu.mutation.FriendsIds(); ok {
 		_spec.SetField(user.FieldFriendsIds, field.TypeJSON, value)
@@ -387,10 +378,10 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.ClearField(user.FieldFriendsIds, field.TypeJSON)
 	}
 	if value, ok := uu.mutation.Language(); ok {
-		_spec.SetField(user.FieldLanguage, field.TypeEnum, value)
+		_spec.SetField(user.FieldLanguage, field.TypeString, value)
 	}
 	if value, ok := uu.mutation.Theme(); ok {
-		_spec.SetField(user.FieldTheme, field.TypeEnum, value)
+		_spec.SetField(user.FieldTheme, field.TypeString, value)
 	}
 	if value, ok := uu.mutation.FirstName(); ok {
 		_spec.SetField(user.FieldFirstName, field.TypeString, value)
@@ -412,6 +403,9 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			sqljson.Append(u, user.FieldSessions, value)
 		})
 	}
+	if uu.mutation.SessionsCleared() {
+		_spec.ClearField(user.FieldSessions, field.TypeJSON)
+	}
 	if uu.mutation.RoomsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -421,7 +415,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: room.FieldID,
 				},
 			},
@@ -437,7 +431,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: room.FieldID,
 				},
 			},
@@ -456,7 +450,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: room.FieldID,
 				},
 			},
@@ -559,15 +553,15 @@ func (uuo *UserUpdateOne) ClearBiography() *UserUpdateOne {
 }
 
 // SetRole sets the "role" field.
-func (uuo *UserUpdateOne) SetRole(u user.Role) *UserUpdateOne {
-	uuo.mutation.SetRole(u)
+func (uuo *UserUpdateOne) SetRole(s string) *UserUpdateOne {
+	uuo.mutation.SetRole(s)
 	return uuo
 }
 
 // SetNillableRole sets the "role" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableRole(u *user.Role) *UserUpdateOne {
-	if u != nil {
-		uuo.SetRole(*u)
+func (uuo *UserUpdateOne) SetNillableRole(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetRole(*s)
 	}
 	return uuo
 }
@@ -591,29 +585,29 @@ func (uuo *UserUpdateOne) ClearFriendsIds() *UserUpdateOne {
 }
 
 // SetLanguage sets the "language" field.
-func (uuo *UserUpdateOne) SetLanguage(u user.Language) *UserUpdateOne {
-	uuo.mutation.SetLanguage(u)
+func (uuo *UserUpdateOne) SetLanguage(s string) *UserUpdateOne {
+	uuo.mutation.SetLanguage(s)
 	return uuo
 }
 
 // SetNillableLanguage sets the "language" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableLanguage(u *user.Language) *UserUpdateOne {
-	if u != nil {
-		uuo.SetLanguage(*u)
+func (uuo *UserUpdateOne) SetNillableLanguage(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetLanguage(*s)
 	}
 	return uuo
 }
 
 // SetTheme sets the "theme" field.
-func (uuo *UserUpdateOne) SetTheme(u user.Theme) *UserUpdateOne {
-	uuo.mutation.SetTheme(u)
+func (uuo *UserUpdateOne) SetTheme(s string) *UserUpdateOne {
+	uuo.mutation.SetTheme(s)
 	return uuo
 }
 
 // SetNillableTheme sets the "theme" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableTheme(u *user.Theme) *UserUpdateOne {
-	if u != nil {
-		uuo.SetTheme(*u)
+func (uuo *UserUpdateOne) SetNillableTheme(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetTheme(*s)
 	}
 	return uuo
 }
@@ -670,15 +664,21 @@ func (uuo *UserUpdateOne) AppendSessions(s []string) *UserUpdateOne {
 	return uuo
 }
 
+// ClearSessions clears the value of the "sessions" field.
+func (uuo *UserUpdateOne) ClearSessions() *UserUpdateOne {
+	uuo.mutation.ClearSessions()
+	return uuo
+}
+
 // AddRoomIDs adds the "rooms" edge to the Room entity by IDs.
-func (uuo *UserUpdateOne) AddRoomIDs(ids ...string) *UserUpdateOne {
+func (uuo *UserUpdateOne) AddRoomIDs(ids ...int) *UserUpdateOne {
 	uuo.mutation.AddRoomIDs(ids...)
 	return uuo
 }
 
 // AddRooms adds the "rooms" edges to the Room entity.
 func (uuo *UserUpdateOne) AddRooms(r ...*Room) *UserUpdateOne {
-	ids := make([]string, len(r))
+	ids := make([]int, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -697,14 +697,14 @@ func (uuo *UserUpdateOne) ClearRooms() *UserUpdateOne {
 }
 
 // RemoveRoomIDs removes the "rooms" edge to Room entities by IDs.
-func (uuo *UserUpdateOne) RemoveRoomIDs(ids ...string) *UserUpdateOne {
+func (uuo *UserUpdateOne) RemoveRoomIDs(ids ...int) *UserUpdateOne {
 	uuo.mutation.RemoveRoomIDs(ids...)
 	return uuo
 }
 
 // RemoveRooms removes "rooms" edges to Room entities.
 func (uuo *UserUpdateOne) RemoveRooms(r ...*Room) *UserUpdateOne {
-	ids := make([]string, len(r))
+	ids := make([]int, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -777,21 +777,6 @@ func (uuo *UserUpdateOne) check() error {
 			return &ValidationError{Name: "biography", err: fmt.Errorf(`ent: validator failed for field "User.biography": %w`, err)}
 		}
 	}
-	if v, ok := uuo.mutation.Role(); ok {
-		if err := user.RoleValidator(v); err != nil {
-			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "User.role": %w`, err)}
-		}
-	}
-	if v, ok := uuo.mutation.Language(); ok {
-		if err := user.LanguageValidator(v); err != nil {
-			return &ValidationError{Name: "language", err: fmt.Errorf(`ent: validator failed for field "User.language": %w`, err)}
-		}
-	}
-	if v, ok := uuo.mutation.Theme(); ok {
-		if err := user.ThemeValidator(v); err != nil {
-			return &ValidationError{Name: "theme", err: fmt.Errorf(`ent: validator failed for field "User.theme": %w`, err)}
-		}
-	}
 	if v, ok := uuo.mutation.FirstName(); ok {
 		if err := user.FirstNameValidator(v); err != nil {
 			return &ValidationError{Name: "first_name", err: fmt.Errorf(`ent: validator failed for field "User.first_name": %w`, err)}
@@ -809,7 +794,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if err := uuo.check(); err != nil {
 		return _node, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeString))
+	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt))
 	id, ok := uuo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "User.id" for update`)}
@@ -859,7 +844,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		_spec.ClearField(user.FieldBiography, field.TypeString)
 	}
 	if value, ok := uuo.mutation.Role(); ok {
-		_spec.SetField(user.FieldRole, field.TypeEnum, value)
+		_spec.SetField(user.FieldRole, field.TypeString, value)
 	}
 	if value, ok := uuo.mutation.FriendsIds(); ok {
 		_spec.SetField(user.FieldFriendsIds, field.TypeJSON, value)
@@ -873,10 +858,10 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		_spec.ClearField(user.FieldFriendsIds, field.TypeJSON)
 	}
 	if value, ok := uuo.mutation.Language(); ok {
-		_spec.SetField(user.FieldLanguage, field.TypeEnum, value)
+		_spec.SetField(user.FieldLanguage, field.TypeString, value)
 	}
 	if value, ok := uuo.mutation.Theme(); ok {
-		_spec.SetField(user.FieldTheme, field.TypeEnum, value)
+		_spec.SetField(user.FieldTheme, field.TypeString, value)
 	}
 	if value, ok := uuo.mutation.FirstName(); ok {
 		_spec.SetField(user.FieldFirstName, field.TypeString, value)
@@ -898,6 +883,9 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			sqljson.Append(u, user.FieldSessions, value)
 		})
 	}
+	if uuo.mutation.SessionsCleared() {
+		_spec.ClearField(user.FieldSessions, field.TypeJSON)
+	}
 	if uuo.mutation.RoomsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -907,7 +895,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: room.FieldID,
 				},
 			},
@@ -923,7 +911,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: room.FieldID,
 				},
 			},
@@ -942,7 +930,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: room.FieldID,
 				},
 			},

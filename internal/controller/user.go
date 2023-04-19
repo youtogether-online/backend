@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/wtkeqrf0/you_together/ent"
 	"github.com/wtkeqrf0/you_together/internal/controller/dto"
@@ -9,15 +10,40 @@ import (
 	"net/http"
 )
 
+// GetUserByUsername godoc
+// @Summary Get type of the user (NOT WORKING)
+// @Description Returns type of object (NOT WORKING)
+// @Tags Get
+// @Param name path string true "Name of something"
+// @Success 200 {object} dto.UserDTO "string type with object"
+// @Failure 400 {object} exceptions.MyError
+// @Failure 404 {object} exceptions.MyError "User doesn't exist"
+// @Failure 500 {object} exceptions.MyError
+// @Router /{name} [get]
+func (h Handler) getTypeByName(c *gin.Context) {
+	name := c.Param("name")
+	if err := valid.Struct(&dto.NameDTO{Name: name}); err != nil {
+		c.Error(exceptions.ValidError.AddErr(err))
+		return
+	}
+
+	if user, err := h.users.FindUserByUsername(name); err == nil {
+		c.JSON(http.StatusOK, dto.TypeDTO{
+			Type:   "user",
+			Object: user,
+		})
+	} // else if room, err := h.rooms
+}
+
 // GetMe godoc
 // @Summary Get detail information about user by session
 // @Description Return detail information about the user (cookie required)
-// @Tags User Get
+// @Tags Sessions
 // @Success 200 {object} dto.MyUserDTO
 // @Failure 401 {object} exceptions.MyError "User isn't logged in"
 // @Failure 404 {object} exceptions.MyError "User doesn't exist"
 // @Failure 500 {object} exceptions.MyError
-// @Router /user [get]
+// @Router /session [get]
 func (h Handler) getMe(c *gin.Context) {
 	info, err := h.sessions.GetSession(c)
 	if err != nil {
@@ -25,7 +51,7 @@ func (h Handler) getMe(c *gin.Context) {
 		return
 	}
 
-	user, err := h.users.FindMe(info["id"])
+	user, err := h.users.FindMe(info.ID)
 	if err != nil {
 		if _, ok := err.(exceptions.MyError); ok {
 			c.Error(exceptions.NoSuchUser)
@@ -41,47 +67,53 @@ func (h Handler) getMe(c *gin.Context) {
 // GetUserByUsername godoc
 // @Summary Get main information about the user
 // @Description Return main information about the user. If the user tries to find out information about himself, return detailed information about the user (can accept cookie)
-// @Param username header string true "the name of the desired user to find"
 // @Tags User Get
-// @Success 200 {object} dto.UserDTO "dto.UserDTO or dto.MyUserDTO"
+// @Param username path string true "Name of the user"
+// @Success 200 {object} dto.UserDTO "main info, without cookie or dto.MyUserDTO"
 // @Failure 400 {object} exceptions.MyError
 // @Failure 404 {object} exceptions.MyError "User doesn't exist"
 // @Failure 500 {object} exceptions.MyError
 // @Router /user/{username} [get]
 func (h Handler) getUserByUsername(c *gin.Context) {
 	username := c.Param("username")
-	if err := Valid.Struct(&dto.UsernameDTO{Username: username}); err != nil {
+	if err := valid.Struct(&dto.NameDTO{Name: username}); err != nil {
 		c.Error(exceptions.ValidError.AddErr(err))
 		return
 	}
 
 	var (
-		user any
+		user *dto.UserDTO
+		me   *dto.MyUserDTO
+		info *dto.Session
 		err  error
 	)
 
-	info, err := h.sessions.GetSession(c)
-	if err != nil {
+	if info, err = h.sessions.GetSession(c); err != nil {
 		user, err = h.users.FindUserByUsername(username)
+
 	} else {
-		customer, err := h.users.FindUserByID(info["id"])
-		if err != nil {
+		me, err = h.users.FindMe(info.ID)
+
+		if err != nil && me.Name != username {
 			user, err = h.users.FindUserByUsername(username)
-		} else {
-			user = dto.Convert(customer)
 		}
 	}
 
 	if err != nil {
-		if _, ok := err.(exceptions.MyError); ok {
+		if exceptions.NoSuchUser == err {
 			c.Error(exceptions.NoSuchUser)
+			fmt.Println(err)
 		} else {
 			c.Error(exceptions.ServerError.AddErr(err))
 		}
 		return
 	}
 
-	c.JSON(http.StatusOK, user)
+	if user != nil {
+		c.JSON(http.StatusOK, user)
+	} else {
+		c.JSON(http.StatusOK, me)
+	}
 }
 
 // UpdateUser godoc
@@ -93,10 +125,10 @@ func (h Handler) getUserByUsername(c *gin.Context) {
 // @Failure 400 {object} exceptions.MyError
 // @Failure 401 {object} exceptions.MyError "User isn't logged in"
 // @Failure 500 {object} exceptions.MyError
-// @Router /user/upd [patch]
+// @Router /user [patch]
 func (h Handler) updateUser(c *gin.Context) {
-	upd := fillStruct[dto.UpdateUserDTO](c)
-	if c.Errors.Last() != nil {
+	upd, ok := fillStruct[dto.UpdateUserDTO](c)
+	if !ok {
 		return
 	}
 
@@ -106,7 +138,7 @@ func (h Handler) updateUser(c *gin.Context) {
 		return
 	}
 
-	if err = h.users.UpdateUser(upd, info["id"]); err != nil {
+	if err = h.users.UpdateUser(upd, info.ID); err != nil {
 		if ent.IsNotFound(err) {
 			c.Error(exceptions.NoSuchUser.AddErr(err))
 		} else {
@@ -127,10 +159,10 @@ func (h Handler) updateUser(c *gin.Context) {
 // @Failure 400 {object} exceptions.MyError
 // @Failure 401 {object} exceptions.MyError "User isn't logged in"
 // @Failure 500 {object} exceptions.MyError
-// @Router /user/upd/mail [patch]
+// @Router /user/email [patch]
 func (h Handler) updateEmail(c *gin.Context) {
-	upd := fillStruct[dto.UpdateEmailDTO](c)
-	if c.Errors.Last() != nil {
+	upd, ok := fillStruct[dto.UpdateEmailDTO](c)
+	if !ok {
 		return
 	}
 
@@ -140,7 +172,7 @@ func (h Handler) updateEmail(c *gin.Context) {
 		return
 	}
 
-	user, err := h.users.FindUserByID(info["id"])
+	user, err := h.users.FindUserByID(info.ID)
 
 	if err != nil {
 		if _, ok := err.(exceptions.MyError); ok {
@@ -149,17 +181,17 @@ func (h Handler) updateEmail(c *gin.Context) {
 			c.Error(exceptions.ServerError.AddErr(err))
 		}
 		return
-	} else if user.PasswordHash == nil || len(user.PasswordHash) < 1 {
+	} else if user.PasswordHash == nil {
 		c.Error(exceptions.PasswordNotFound)
 		return
 	}
 
-	if err = bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(upd.Password)); err != nil {
+	if err = bcrypt.CompareHashAndPassword(*user.PasswordHash, []byte(upd.Password)); err != nil {
 		c.Error(exceptions.PasswordError.AddErr(err))
 		return
 	}
 
-	if err = h.users.UpdateEmail(upd.NewEmail, info["id"]); err != nil {
+	if err = h.users.UpdateEmail(upd.NewEmail, info.ID); err != nil {
 		if ent.IsValidationError(err) {
 			c.Error(exceptions.AlreadyExist.AddErr(err))
 		} else {
@@ -180,13 +212,12 @@ func (h Handler) updateEmail(c *gin.Context) {
 // @Failure 400 {object} exceptions.MyError
 // @Failure 401 {object} exceptions.MyError "User isn't logged in"
 // @Failure 500 {object} exceptions.MyError
-// @Router /user/upd/pass [patch]
+// @Router /user/password [patch]
 func (h Handler) updatePassword(c *gin.Context) {
-	upd := fillStruct[dto.UpdatePasswordDTO](c)
-	if c.Errors.Last() != nil {
+	upd, ok := fillStruct[dto.UpdatePasswordDTO](c)
+	if !ok {
 		return
 	}
-
 	info, err := h.sessions.GetSession(c)
 	if err != nil {
 		c.Error(exceptions.ServerError.AddErr(err))
@@ -201,7 +232,7 @@ func (h Handler) updatePassword(c *gin.Context) {
 		return
 	}
 
-	if err = h.users.UpdatePassword(upd.NewPassword, info["id"]); err != nil {
+	if err = h.users.UpdatePassword(upd.NewPassword, info.ID); err != nil {
 		if ent.IsNotFound(err) {
 			c.Error(exceptions.NoSuchUser.AddErr(err))
 		} else {
@@ -221,20 +252,19 @@ func (h Handler) updatePassword(c *gin.Context) {
 // @Failure 400 {object} exceptions.MyError
 // @Failure 401 {object} exceptions.MyError "User isn't logged in"
 // @Failure 500 {object} exceptions.MyError
-// @Router /user/upd/name [patch]
+// @Router /user/name [patch]
 func (h Handler) updateUsername(c *gin.Context) {
-	upd := fillStruct[dto.UpdateUsernameDTO](c)
-	if c.Errors.Last() != nil {
+	upd, ok := fillStruct[dto.UpdateNameDTO](c)
+	if !ok {
 		return
 	}
-
 	info, err := h.sessions.GetSession(c)
 	if err != nil {
 		c.Error(exceptions.ServerError.AddErr(err))
 		return
 	}
 
-	if err = h.users.UpdateUsername(upd.NewUsername, info["id"]); err != nil {
+	if err = h.users.UpdateUsername(upd.NewUsername, info.ID); err != nil {
 		switch {
 		case ent.IsNotFound(err):
 			c.Error(exceptions.NoSuchUser.AddErr(err))
@@ -253,15 +283,16 @@ func (h Handler) updateUsername(c *gin.Context) {
 // @Summary Check username on exist
 // @Description Status 200 if username not used or 403 if username already used
 // @Tags User Get
+// @Param username path string true "Name of the user"
 // @Success 200 "name isn't used"
 // @Failure 400 {object} exceptions.MyError
 // @Failure 403 "name already used"
 // @Failure 500 {object} exceptions.MyError
-// @Router /user/upd/:username [get]
+// @Router /user/check-name/{username} [get]
 func (h Handler) checkUsername(c *gin.Context) {
 	username := c.Param("username")
 
-	if err := Valid.Struct(&dto.UsernameDTO{Username: username}); err != nil {
+	if err := valid.Struct(&dto.NameDTO{Name: username}); err != nil {
 		c.Error(exceptions.ValidError.AddErr(err))
 		return
 	}

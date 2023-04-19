@@ -9,13 +9,13 @@ import (
 )
 
 type UserPostgres interface {
-	FindMe(ctx context.Context, id string) (dto.MyUserDTO, error)
-	FindUserByUsername(ctx context.Context, username string) (dto.UserDTO, error)
-	FindUserByID(ctx context.Context, id string) (*ent.User, error)
-	UpdateUser(ctx context.Context, customer dto.UpdateUserDTO, username string) error
-	UpdatePassword(ctx context.Context, password, username string) error
-	UpdateEmail(ctx context.Context, email, username string) error
-	UpdateUsername(ctx context.Context, newUsername, username string) error
+	FindMe(ctx context.Context, id int) (*dto.MyUserDTO, error)
+	FindUserByUsername(ctx context.Context, username string) (*dto.UserDTO, error)
+	FindUserByID(ctx context.Context, id int) (*ent.User, error)
+	UpdateUser(ctx context.Context, customer dto.UpdateUserDTO, id int) error
+	UpdatePassword(ctx context.Context, password string, id int) error
+	UpdateEmail(ctx context.Context, email string, id int) error
+	UpdateUsername(ctx context.Context, newUsername string, id int) error
 	UsernameExist(ctx context.Context, username string) bool
 }
 
@@ -29,37 +29,36 @@ func NewUserService(postgres UserPostgres, redis UserRedis) *UserService {
 }
 
 // FindUserByUsername returns the main information about user
-func (u UserService) FindUserByUsername(username string) (dto.UserDTO, error) {
+func (u UserService) FindUserByUsername(username string) (*dto.UserDTO, error) {
 	return u.postgres.FindUserByUsername(context.Background(), username)
 }
 
-func (u UserService) FindUserByID(id string) (*ent.User, error) {
+func (u UserService) FindUserByID(id int) (*ent.User, error) {
 	return u.postgres.FindUserByID(context.Background(), id)
 }
 
 // FindMe returns the detail information about user
-func (u UserService) FindMe(id string) (dto.MyUserDTO, error) {
+func (u UserService) FindMe(id int) (*dto.MyUserDTO, error) {
 	user, err := u.postgres.FindMe(context.Background(), id)
-	if err != nil {
-		return dto.MyUserDTO{}, err
+	if err == nil {
+		user.Email = user.Email[:1] + "**" + user.Email[strings.Index(user.Email, "@")-1:]
 	}
-	user.Email = user.Email[:1] + "**" + user.Email[strings.Index(user.Email, "@")-1:]
-	return user, nil
+	return user, err
 }
 
-func (u UserService) UpdateUser(customer dto.UpdateUserDTO, id string) error {
+func (u UserService) UpdateUser(customer dto.UpdateUserDTO, id int) error {
 	return u.postgres.UpdateUser(context.Background(), customer, id)
 }
 
-func (u UserService) UpdatePassword(password, id string) error {
-	return u.postgres.UpdatePassword(context.Background(), id, password)
+func (u UserService) UpdatePassword(password string, id int) error {
+	return u.postgres.UpdatePassword(context.Background(), password, id)
 }
 
-func (u UserService) UpdateEmail(email, id string) error {
+func (u UserService) UpdateEmail(email string, id int) error {
 	return u.postgres.UpdateEmail(context.Background(), email, id)
 }
 
-func (u UserService) UpdateUsername(username, id string) error {
+func (u UserService) UpdateUsername(username string, id int) error {
 	return u.postgres.UpdateUsername(context.Background(), username, id)
 }
 
