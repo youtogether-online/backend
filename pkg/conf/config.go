@@ -13,7 +13,7 @@ type Config struct {
 	Session struct {
 		Secret            string        `yaml:"secret" env-required:"true"`
 		CookieName        string        `yaml:"cookie_name" env-default:"session_id"`
-		CookiePath        string        `yaml:"cookie_path" env-default:"/you_together"`
+		CookiePath        string        `yaml:"cookie_path" env-default:"/api"`
 		DurationInSeconds int           `yaml:"refresh_duration_in_seconds" env-default:"2592000"`
 		Duration          time.Duration `yaml:"duration" env-default:"720h"`
 	} `yaml:"session"`
