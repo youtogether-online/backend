@@ -1,4 +1,4 @@
-module github.com/wtkeqrf0/you_together
+module github.com/wtkeqrf0/you-together
 
 go 1.20
 

@@ -2,8 +2,8 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/wtkeqrf0/you_together/internal/controller/dto"
-	"github.com/wtkeqrf0/you_together/internal/middleware/exceptions"
+	"github.com/wtkeqrf0/you-together/internal/controller/dto"
+	"github.com/wtkeqrf0/you-together/internal/middleware/exceptions"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/mail.v2"
 	"math/rand"

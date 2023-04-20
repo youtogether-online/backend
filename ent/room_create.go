@@ -10,8 +10,8 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/wtkeqrf0/you_together/ent/room"
-	"github.com/wtkeqrf0/you_together/ent/user"
+	"github.com/wtkeqrf0/you-together/ent/room"
+	"github.com/wtkeqrf0/you-together/ent/user"
 )
 
 // RoomCreate is the builder for creating a Room entity.

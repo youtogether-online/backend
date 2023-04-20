@@ -8,8 +8,8 @@ import (
 	"fmt"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/sirupsen/logrus"
-	"github.com/wtkeqrf0/you_together/ent"
-	"github.com/wtkeqrf0/you_together/ent/migrate"
+	"github.com/wtkeqrf0/you-together/ent"
+	"github.com/wtkeqrf0/you-together/ent/migrate"
 	"log"
 	"time"
 )

@@ -9,7 +9,7 @@ listen:
 db:
   postgres:
     username: "postgres"
-    db_name: "you_together"
+    db_name: "you-together"
     password: "Ubythfkbcbvec2"
   redis:
     username: "redis"

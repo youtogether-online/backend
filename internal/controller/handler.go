@@ -5,10 +5,10 @@ import (
 	"github.com/go-playground/validator/v10"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"github.com/wtkeqrf0/you_together/ent"
-	"github.com/wtkeqrf0/you_together/internal/controller/dto"
-	"github.com/wtkeqrf0/you_together/internal/middleware/exceptions"
-	"github.com/wtkeqrf0/you_together/pkg/conf"
+	"github.com/wtkeqrf0/you-together/ent"
+	"github.com/wtkeqrf0/you-together/internal/controller/dto"
+	"github.com/wtkeqrf0/you-together/internal/middleware/exceptions"
+	"github.com/wtkeqrf0/you-together/pkg/conf"
 	"time"
 )
 

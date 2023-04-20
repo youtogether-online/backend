@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
-	"github.com/wtkeqrf0/you_together/ent/room"
+	"github.com/wtkeqrf0/you-together/ent/room"
 )
 
 // Room is the model entity for the Room schema.

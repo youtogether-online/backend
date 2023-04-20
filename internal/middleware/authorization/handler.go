@@ -2,8 +2,8 @@ package authorization
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/wtkeqrf0/you_together/internal/middleware/exceptions"
-	"github.com/wtkeqrf0/you_together/pkg/conf"
+	"github.com/wtkeqrf0/you-together/internal/middleware/exceptions"
+	"github.com/wtkeqrf0/you-together/pkg/conf"
 	"net/http"
 )
 
@@ -19,7 +19,7 @@ func (a Auth) RequireSession(c *gin.Context) {
 	}
 
 	if ok {
-		c.SetSameSite(http.SameSiteStrictMode)
+		c.SetSameSite(http.SameSiteLaxMode)
 		c.SetCookie(cfg.Session.CookieName, session, cfg.Session.DurationInSeconds,
 			cfg.Session.CookiePath, cfg.Listen.Host, true, true)
 	}
@@ -38,7 +38,7 @@ func (a Auth) MaybeSession(c *gin.Context) {
 	}
 
 	if ok {
-		c.SetSameSite(http.SameSiteStrictMode)
+		c.SetSameSite(http.SameSiteLaxMode)
 		c.SetCookie(cfg.Session.CookieName, session, cfg.Session.DurationInSeconds,
 			cfg.Session.CookiePath, cfg.Listen.Host, true, true)
 	}

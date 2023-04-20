@@ -5,7 +5,7 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/mixin"
-	"github.com/wtkeqrf0/you_together/pkg/conf"
+	"github.com/wtkeqrf0/you-together/pkg/conf"
 	"math/rand"
 	"regexp"
 )

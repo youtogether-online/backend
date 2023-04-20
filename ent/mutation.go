@@ -11,9 +11,9 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/wtkeqrf0/you_together/ent/predicate"
-	"github.com/wtkeqrf0/you_together/ent/room"
-	"github.com/wtkeqrf0/you_together/ent/user"
+	"github.com/wtkeqrf0/you-together/ent/predicate"
+	"github.com/wtkeqrf0/you-together/ent/room"
+	"github.com/wtkeqrf0/you-together/ent/user"
 )
 
 const (

@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/wtkeqrf0/you_together/ent"
+	"github.com/wtkeqrf0/you-together/ent"
 )
 
 // The RoomFunc type is an adapter to allow the use of ordinary

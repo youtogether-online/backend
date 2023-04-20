@@ -5,9 +5,9 @@ package ent
 import (
 	"time"
 
-	"github.com/wtkeqrf0/you_together/ent/room"
-	"github.com/wtkeqrf0/you_together/ent/schema"
-	"github.com/wtkeqrf0/you_together/ent/user"
+	"github.com/wtkeqrf0/you-together/ent/room"
+	"github.com/wtkeqrf0/you-together/ent/schema"
+	"github.com/wtkeqrf0/you-together/ent/user"
 )
 
 // The init function reads all schema descriptors with runtime code

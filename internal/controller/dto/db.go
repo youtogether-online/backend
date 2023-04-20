@@ -1,14 +1,12 @@
 package dto
 
-import "time"
-
 // @Description User's session
 type Session struct {
-	ID      int       `json:"id" redis:"id"`
-	IP      string    `json:"ip" redis:"ip"`
-	Device  string    `json:"device" redis:"device"`
-	Browser string    `json:"browser" redis:"browser"`
-	Updated time.Time `json:"updated" redis:"updated"`
+	ID      int    `json:"id" redis:"ID"`
+	IP      string `json:"ip" redis:"IP"`
+	Device  string `json:"device" redis:"Device"`
+	Browser string `json:"browser" redis:"Browser"`
+	Updated int64  `json:"updated" redis:"Updated"`
 }
 
 // @Description User detail information

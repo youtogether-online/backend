@@ -3,9 +3,9 @@ package controller
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/wtkeqrf0/you_together/ent"
-	"github.com/wtkeqrf0/you_together/internal/controller/dto"
-	"github.com/wtkeqrf0/you_together/internal/middleware/exceptions"
+	"github.com/wtkeqrf0/you-together/ent"
+	"github.com/wtkeqrf0/you-together/internal/controller/dto"
+	"github.com/wtkeqrf0/you-together/internal/middleware/exceptions"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 )
