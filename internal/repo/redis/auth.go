@@ -3,8 +3,8 @@ package redis
 import (
 	"context"
 	"github.com/redis/go-redis/v9"
-	"github.com/wtkeqrf0/you_together/internal/controller/dto"
-	"github.com/wtkeqrf0/you_together/pkg/conf"
+	"github.com/wtkeqrf0/you-together/internal/controller/dto"
+	"github.com/wtkeqrf0/you-together/pkg/conf"
 	"reflect"
 	"time"
 )
@@ -40,8 +40,9 @@ func (r *RClient) SetSession(ctx context.Context, sessionId string, info dto.Ses
 }
 
 // GetSession and all its parameters
-func (r *RClient) GetSession(ctx context.Context, sessionId string) (info *dto.Session, err error) {
-	err = r.client.HGetAll(ctx, sessionId).Scan(&info)
+func (r *RClient) GetSession(ctx context.Context, sessionId string) (*dto.Session, error) {
+	info := new(dto.Session)
+	err := r.client.HGetAll(ctx, sessionId).Scan(info)
 	return info, err
 }
 

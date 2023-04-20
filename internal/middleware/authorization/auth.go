@@ -5,8 +5,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/mssola/useragent"
-	"github.com/wtkeqrf0/you_together/internal/controller/dto"
-	"github.com/wtkeqrf0/you_together/internal/middleware/exceptions"
+	"github.com/wtkeqrf0/you-together/internal/controller/dto"
+	"github.com/wtkeqrf0/you-together/internal/middleware/exceptions"
 	"net/http"
 	"regexp"
 	"time"
@@ -70,21 +70,21 @@ func (a Auth) GenerateSession(id int, ip, userAgent string) (string, error) {
 		IP:      ip,
 		Device:  ua.OS(),
 		Browser: name + ver,
-		Updated: time.Now(),
+		Updated: time.Now().Unix(),
 	})
 }
 
 func (a Auth) GetSession(c *gin.Context) (*dto.Session, error) {
 	get, ok := c.Get("user_info")
 	if !ok {
-		return nil, fmt.Errorf("the user is not logged in")
+		return nil, fmt.Errorf("session not found in context")
 	}
 
-	res, ok := get.(dto.Session)
+	res, ok := get.(*dto.Session)
 	if !ok {
-		return nil, fmt.Errorf("the user is not logged in")
+		return nil, fmt.Errorf("cannot parse session")
 	}
-	return &res, nil
+	return res, nil
 }
 
 func (a Auth) SetNewCookie(id int, c *gin.Context) {
@@ -99,7 +99,7 @@ func (a Auth) SetNewCookie(id int, c *gin.Context) {
 		return
 	}
 
-	c.SetSameSite(http.SameSiteStrictMode)
+	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie(cfg.Session.CookieName, session, cfg.Session.DurationInSeconds,
 		cfg.Session.CookiePath, cfg.Listen.Host, true, true)
 }

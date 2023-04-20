@@ -2,9 +2,9 @@ package postgres
 
 import (
 	"context"
-	"github.com/wtkeqrf0/you_together/ent"
-	"github.com/wtkeqrf0/you_together/ent/user"
-	"github.com/wtkeqrf0/you_together/internal/controller/dto"
+	"github.com/wtkeqrf0/you-together/ent"
+	"github.com/wtkeqrf0/you-together/ent/user"
+	"github.com/wtkeqrf0/you-together/internal/controller/dto"
 	"golang.org/x/crypto/bcrypt"
 )
 
