@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   backend:
-    platform: linux/amd64
+    platform: linux/amd64, linux/arm64
     image: wtkeqrf0/you-together-app:latest
     volumes:
       - ./:/server/http
@@ -15,7 +15,7 @@ services:
         condition: service_healthy
 
   postgres:
-    platform: linux/amd64
+    platform: linux/amd64, linux/arm64
     image: postgres:15-alpine3.17
     environment:
       POSTGRES_DB: you-together
@@ -26,6 +26,7 @@ services:
       test: pg_isready -U postgres
 
   redis:
+    platform: linux/amd64, linux/arm64
     image: redis:7.0.9-alpine3.17
     ports:
       - "6379:6379"
@@ -33,11 +34,13 @@ services:
       test: ["CMD", "redis-cli","ping"]
 
   frontend:
+    platform: linux/amd64, linux/arm64
     image: frkam/you-together-frontend
     ports:
       - "5173:80"
 
   proxy:
+    platform: linux/amd64, linux/arm64
     image: frkam/you-together-proxy
     ports:
       - "80:80"
