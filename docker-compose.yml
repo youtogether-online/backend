@@ -34,11 +34,13 @@ services:
       test: ["CMD", "redis-cli","ping"]
 
   frontend:
+    platform: linux/amd64, linux/arm64
     image: frkam/you-together-frontend
     ports:
       - "5173:80"
 
   proxy:
+    platform: linux/amd64, linux/arm64
     image: frkam/you-together-proxy
     ports:
       - "80:80"
