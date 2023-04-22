@@ -75,9 +75,9 @@ func CustomName(v string) predicate.Room {
 	return predicate.Room(sql.FieldEQ(FieldCustomName, v))
 }
 
-// Owner applies equality check predicate on the "owner" field. It's identical to OwnerEQ.
-func Owner(v string) predicate.Room {
-	return predicate.Room(sql.FieldEQ(FieldOwner, v))
+// OwnerID applies equality check predicate on the "owner_id" field. It's identical to OwnerIDEQ.
+func OwnerID(v int) predicate.Room {
+	return predicate.Room(sql.FieldEQ(FieldOwnerID, v))
 }
 
 // PasswordHash applies equality check predicate on the "password_hash" field. It's identical to PasswordHashEQ.
@@ -315,69 +315,44 @@ func CustomNameContainsFold(v string) predicate.Room {
 	return predicate.Room(sql.FieldContainsFold(FieldCustomName, v))
 }
 
-// OwnerEQ applies the EQ predicate on the "owner" field.
-func OwnerEQ(v string) predicate.Room {
-	return predicate.Room(sql.FieldEQ(FieldOwner, v))
+// OwnerIDEQ applies the EQ predicate on the "owner_id" field.
+func OwnerIDEQ(v int) predicate.Room {
+	return predicate.Room(sql.FieldEQ(FieldOwnerID, v))
 }
 
-// OwnerNEQ applies the NEQ predicate on the "owner" field.
-func OwnerNEQ(v string) predicate.Room {
-	return predicate.Room(sql.FieldNEQ(FieldOwner, v))
+// OwnerIDNEQ applies the NEQ predicate on the "owner_id" field.
+func OwnerIDNEQ(v int) predicate.Room {
+	return predicate.Room(sql.FieldNEQ(FieldOwnerID, v))
 }
 
-// OwnerIn applies the In predicate on the "owner" field.
-func OwnerIn(vs ...string) predicate.Room {
-	return predicate.Room(sql.FieldIn(FieldOwner, vs...))
+// OwnerIDIn applies the In predicate on the "owner_id" field.
+func OwnerIDIn(vs ...int) predicate.Room {
+	return predicate.Room(sql.FieldIn(FieldOwnerID, vs...))
 }
 
-// OwnerNotIn applies the NotIn predicate on the "owner" field.
-func OwnerNotIn(vs ...string) predicate.Room {
-	return predicate.Room(sql.FieldNotIn(FieldOwner, vs...))
+// OwnerIDNotIn applies the NotIn predicate on the "owner_id" field.
+func OwnerIDNotIn(vs ...int) predicate.Room {
+	return predicate.Room(sql.FieldNotIn(FieldOwnerID, vs...))
 }
 
-// OwnerGT applies the GT predicate on the "owner" field.
-func OwnerGT(v string) predicate.Room {
-	return predicate.Room(sql.FieldGT(FieldOwner, v))
+// OwnerIDGT applies the GT predicate on the "owner_id" field.
+func OwnerIDGT(v int) predicate.Room {
+	return predicate.Room(sql.FieldGT(FieldOwnerID, v))
 }
 
-// OwnerGTE applies the GTE predicate on the "owner" field.
-func OwnerGTE(v string) predicate.Room {
-	return predicate.Room(sql.FieldGTE(FieldOwner, v))
+// OwnerIDGTE applies the GTE predicate on the "owner_id" field.
+func OwnerIDGTE(v int) predicate.Room {
+	return predicate.Room(sql.FieldGTE(FieldOwnerID, v))
 }
 
-// OwnerLT applies the LT predicate on the "owner" field.
-func OwnerLT(v string) predicate.Room {
-	return predicate.Room(sql.FieldLT(FieldOwner, v))
+// OwnerIDLT applies the LT predicate on the "owner_id" field.
+func OwnerIDLT(v int) predicate.Room {
+	return predicate.Room(sql.FieldLT(FieldOwnerID, v))
 }
 
-// OwnerLTE applies the LTE predicate on the "owner" field.
-func OwnerLTE(v string) predicate.Room {
-	return predicate.Room(sql.FieldLTE(FieldOwner, v))
-}
-
-// OwnerContains applies the Contains predicate on the "owner" field.
-func OwnerContains(v string) predicate.Room {
-	return predicate.Room(sql.FieldContains(FieldOwner, v))
-}
-
-// OwnerHasPrefix applies the HasPrefix predicate on the "owner" field.
-func OwnerHasPrefix(v string) predicate.Room {
-	return predicate.Room(sql.FieldHasPrefix(FieldOwner, v))
-}
-
-// OwnerHasSuffix applies the HasSuffix predicate on the "owner" field.
-func OwnerHasSuffix(v string) predicate.Room {
-	return predicate.Room(sql.FieldHasSuffix(FieldOwner, v))
-}
-
-// OwnerEqualFold applies the EqualFold predicate on the "owner" field.
-func OwnerEqualFold(v string) predicate.Room {
-	return predicate.Room(sql.FieldEqualFold(FieldOwner, v))
-}
-
-// OwnerContainsFold applies the ContainsFold predicate on the "owner" field.
-func OwnerContainsFold(v string) predicate.Room {
-	return predicate.Room(sql.FieldContainsFold(FieldOwner, v))
+// OwnerIDLTE applies the LTE predicate on the "owner_id" field.
+func OwnerIDLTE(v int) predicate.Room {
+	return predicate.Room(sql.FieldLTE(FieldOwnerID, v))
 }
 
 // PrivacyEQ applies the EQ predicate on the "privacy" field.

@@ -39,7 +39,8 @@ type RoomMutation struct {
 	update_time   *time.Time
 	name          *string
 	custom_name   *string
-	owner         *string
+	owner_id      *int
+	addowner_id   *int
 	privacy       *room.Privacy
 	password_hash *string
 	has_chat      *bool
@@ -308,40 +309,60 @@ func (m *RoomMutation) ResetCustomName() {
 	delete(m.clearedFields, room.FieldCustomName)
 }
 
-// SetOwner sets the "owner" field.
-func (m *RoomMutation) SetOwner(s string) {
-	m.owner = &s
+// SetOwnerID sets the "owner_id" field.
+func (m *RoomMutation) SetOwnerID(i int) {
+	m.owner_id = &i
+	m.addowner_id = nil
 }
 
-// Owner returns the value of the "owner" field in the mutation.
-func (m *RoomMutation) Owner() (r string, exists bool) {
-	v := m.owner
+// OwnerID returns the value of the "owner_id" field in the mutation.
+func (m *RoomMutation) OwnerID() (r int, exists bool) {
+	v := m.owner_id
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldOwner returns the old "owner" field's value of the Room entity.
+// OldOwnerID returns the old "owner_id" field's value of the Room entity.
 // If the Room object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *RoomMutation) OldOwner(ctx context.Context) (v string, err error) {
+func (m *RoomMutation) OldOwnerID(ctx context.Context) (v int, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldOwner is only allowed on UpdateOne operations")
+		return v, errors.New("OldOwnerID is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldOwner requires an ID field in the mutation")
+		return v, errors.New("OldOwnerID requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldOwner: %w", err)
+		return v, fmt.Errorf("querying old value for OldOwnerID: %w", err)
 	}
-	return oldValue.Owner, nil
+	return oldValue.OwnerID, nil
 }
 
-// ResetOwner resets all changes to the "owner" field.
-func (m *RoomMutation) ResetOwner() {
-	m.owner = nil
+// AddOwnerID adds i to the "owner_id" field.
+func (m *RoomMutation) AddOwnerID(i int) {
+	if m.addowner_id != nil {
+		*m.addowner_id += i
+	} else {
+		m.addowner_id = &i
+	}
+}
+
+// AddedOwnerID returns the value that was added to the "owner_id" field in this mutation.
+func (m *RoomMutation) AddedOwnerID() (r int, exists bool) {
+	v := m.addowner_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetOwnerID resets all changes to the "owner_id" field.
+func (m *RoomMutation) ResetOwnerID() {
+	m.owner_id = nil
+	m.addowner_id = nil
 }
 
 // SetPrivacy sets the "privacy" field.
@@ -615,8 +636,8 @@ func (m *RoomMutation) Fields() []string {
 	if m.custom_name != nil {
 		fields = append(fields, room.FieldCustomName)
 	}
-	if m.owner != nil {
-		fields = append(fields, room.FieldOwner)
+	if m.owner_id != nil {
+		fields = append(fields, room.FieldOwnerID)
 	}
 	if m.privacy != nil {
 		fields = append(fields, room.FieldPrivacy)
@@ -646,8 +667,8 @@ func (m *RoomMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case room.FieldCustomName:
 		return m.CustomName()
-	case room.FieldOwner:
-		return m.Owner()
+	case room.FieldOwnerID:
+		return m.OwnerID()
 	case room.FieldPrivacy:
 		return m.Privacy()
 	case room.FieldPasswordHash:
@@ -673,8 +694,8 @@ func (m *RoomMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldName(ctx)
 	case room.FieldCustomName:
 		return m.OldCustomName(ctx)
-	case room.FieldOwner:
-		return m.OldOwner(ctx)
+	case room.FieldOwnerID:
+		return m.OldOwnerID(ctx)
 	case room.FieldPrivacy:
 		return m.OldPrivacy(ctx)
 	case room.FieldPasswordHash:
@@ -720,12 +741,12 @@ func (m *RoomMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetCustomName(v)
 		return nil
-	case room.FieldOwner:
-		v, ok := value.(string)
+	case room.FieldOwnerID:
+		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetOwner(v)
+		m.SetOwnerID(v)
 		return nil
 	case room.FieldPrivacy:
 		v, ok := value.(room.Privacy)
@@ -762,13 +783,21 @@ func (m *RoomMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *RoomMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addowner_id != nil {
+		fields = append(fields, room.FieldOwnerID)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *RoomMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case room.FieldOwnerID:
+		return m.AddedOwnerID()
+	}
 	return nil, false
 }
 
@@ -777,6 +806,13 @@ func (m *RoomMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *RoomMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case room.FieldOwnerID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddOwnerID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Room numeric field %s", name)
 }
@@ -837,8 +873,8 @@ func (m *RoomMutation) ResetField(name string) error {
 	case room.FieldCustomName:
 		m.ResetCustomName()
 		return nil
-	case room.FieldOwner:
-		m.ResetOwner()
+	case room.FieldOwnerID:
+		m.ResetOwnerID()
 		return nil
 	case room.FieldPrivacy:
 		m.ResetPrivacy()

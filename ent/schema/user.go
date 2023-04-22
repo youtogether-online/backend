@@ -5,7 +5,6 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/mixin"
-	"github.com/wtkeqrf0/you-together/pkg/conf"
 	"math/rand"
 	"regexp"
 )
@@ -16,21 +15,23 @@ type User struct {
 }
 
 var (
-	cfg     = conf.GetConfig().Regexp
-	idRunes = []rune("abcdefghijklmnopqrstuvwxyz")
+	NameRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
 )
 
 // Fields of the User.
 func (User) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("name").Unique().Match(regexp.MustCompile(cfg.Username)).DefaultFunc(func() string {
-			b := make([]rune, 6)
-			for i := range b {
-				b[i] = idRunes[rand.Intn(len(idRunes))]
+		field.String("name").Unique().Match(regexp.MustCompile(name)).DefaultFunc(func() string {
+			l := 6 + rand.Intn(4)
+			b := make([]rune, l)
+
+			b[0] = NameRunes[rand.Intn(52)]
+			for i := 1; i < l; i++ {
+				b[i] = NameRunes[rand.Intn(l)]
 			}
 			return string(b)
 		}),
-		field.String("email").Unique().Match(regexp.MustCompile(cfg.Email)),
+		field.String("email").Unique().Match(regexp.MustCompile(email)),
 		field.Bool("is_email_verified").Default(false),
 		field.Bytes("password_hash").Optional().Sensitive().Nillable(),
 		field.Text("biography").Optional().MaxLen(512).Nillable(),
@@ -38,8 +39,8 @@ func (User) Fields() []ent.Field {
 		field.Strings("friends_ids").Optional(),
 		field.String("language").Default("EN"),
 		field.String("theme").Default("SYSTEM"),
-		field.String("first_name").Optional().Match(regexp.MustCompile(cfg.Name)).MinLen(1).MaxLen(30).Nillable(),
-		field.String("last_name").Optional().Match(regexp.MustCompile(cfg.Name)).MinLen(1).MaxLen(30).Nillable(),
+		field.String("first_name").Optional().MinLen(2).MaxLen(30).Nillable(),
+		field.String("last_name").Optional().MinLen(2).MaxLen(30).Nillable(),
 		field.Strings("sessions").Optional(),
 	}
 }

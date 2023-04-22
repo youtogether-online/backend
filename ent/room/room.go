@@ -20,8 +20,8 @@ const (
 	FieldName = "name"
 	// FieldCustomName holds the string denoting the custom_name field in the database.
 	FieldCustomName = "custom_name"
-	// FieldOwner holds the string denoting the owner field in the database.
-	FieldOwner = "owner"
+	// FieldOwnerID holds the string denoting the owner_id field in the database.
+	FieldOwnerID = "owner_id"
 	// FieldPrivacy holds the string denoting the privacy field in the database.
 	FieldPrivacy = "privacy"
 	// FieldPasswordHash holds the string denoting the password_hash field in the database.
@@ -48,7 +48,7 @@ var Columns = []string{
 	FieldUpdateTime,
 	FieldName,
 	FieldCustomName,
-	FieldOwner,
+	FieldOwnerID,
 	FieldPrivacy,
 	FieldPasswordHash,
 	FieldHasChat,
@@ -84,8 +84,8 @@ var (
 	NameValidator func(string) error
 	// CustomNameValidator is a validator for the "custom_name" field. It is called by the builders before save.
 	CustomNameValidator func(string) error
-	// OwnerValidator is a validator for the "owner" field. It is called by the builders before save.
-	OwnerValidator func(string) error
+	// OwnerIDValidator is a validator for the "owner_id" field. It is called by the builders before save.
+	OwnerIDValidator func(int) error
 	// DefaultHasChat holds the default value on creation for the "has_chat" field.
 	DefaultHasChat bool
 	// DescriptionValidator is a validator for the "description" field. It is called by the builders before save.

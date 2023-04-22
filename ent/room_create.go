@@ -77,9 +77,9 @@ func (rc *RoomCreate) SetNillableCustomName(s *string) *RoomCreate {
 	return rc
 }
 
-// SetOwner sets the "owner" field.
-func (rc *RoomCreate) SetOwner(s string) *RoomCreate {
-	rc.mutation.SetOwner(s)
+// SetOwnerID sets the "owner_id" field.
+func (rc *RoomCreate) SetOwnerID(i int) *RoomCreate {
+	rc.mutation.SetOwnerID(i)
 	return rc
 }
 
@@ -232,12 +232,12 @@ func (rc *RoomCreate) check() error {
 			return &ValidationError{Name: "custom_name", err: fmt.Errorf(`ent: validator failed for field "Room.custom_name": %w`, err)}
 		}
 	}
-	if _, ok := rc.mutation.Owner(); !ok {
-		return &ValidationError{Name: "owner", err: errors.New(`ent: missing required field "Room.owner"`)}
+	if _, ok := rc.mutation.OwnerID(); !ok {
+		return &ValidationError{Name: "owner_id", err: errors.New(`ent: missing required field "Room.owner_id"`)}
 	}
-	if v, ok := rc.mutation.Owner(); ok {
-		if err := room.OwnerValidator(v); err != nil {
-			return &ValidationError{Name: "owner", err: fmt.Errorf(`ent: validator failed for field "Room.owner": %w`, err)}
+	if v, ok := rc.mutation.OwnerID(); ok {
+		if err := room.OwnerIDValidator(v); err != nil {
+			return &ValidationError{Name: "owner_id", err: fmt.Errorf(`ent: validator failed for field "Room.owner_id": %w`, err)}
 		}
 	}
 	if _, ok := rc.mutation.Privacy(); !ok {
@@ -298,9 +298,9 @@ func (rc *RoomCreate) createSpec() (*Room, *sqlgraph.CreateSpec) {
 		_spec.SetField(room.FieldCustomName, field.TypeString, value)
 		_node.CustomName = &value
 	}
-	if value, ok := rc.mutation.Owner(); ok {
-		_spec.SetField(room.FieldOwner, field.TypeString, value)
-		_node.Owner = value
+	if value, ok := rc.mutation.OwnerID(); ok {
+		_spec.SetField(room.FieldOwnerID, field.TypeInt, value)
+		_node.OwnerID = value
 	}
 	if value, ok := rc.mutation.Privacy(); ok {
 		_spec.SetField(room.FieldPrivacy, field.TypeEnum, value)

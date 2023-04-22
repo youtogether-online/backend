@@ -69,6 +69,19 @@ func (ru *RoomUpdate) ClearCustomName() *RoomUpdate {
 	return ru
 }
 
+// SetOwnerID sets the "owner_id" field.
+func (ru *RoomUpdate) SetOwnerID(i int) *RoomUpdate {
+	ru.mutation.ResetOwnerID()
+	ru.mutation.SetOwnerID(i)
+	return ru
+}
+
+// AddOwnerID adds i to the "owner_id" field.
+func (ru *RoomUpdate) AddOwnerID(i int) *RoomUpdate {
+	ru.mutation.AddOwnerID(i)
+	return ru
+}
+
 // SetPrivacy sets the "privacy" field.
 func (ru *RoomUpdate) SetPrivacy(r room.Privacy) *RoomUpdate {
 	ru.mutation.SetPrivacy(r)
@@ -226,6 +239,11 @@ func (ru *RoomUpdate) check() error {
 			return &ValidationError{Name: "custom_name", err: fmt.Errorf(`ent: validator failed for field "Room.custom_name": %w`, err)}
 		}
 	}
+	if v, ok := ru.mutation.OwnerID(); ok {
+		if err := room.OwnerIDValidator(v); err != nil {
+			return &ValidationError{Name: "owner_id", err: fmt.Errorf(`ent: validator failed for field "Room.owner_id": %w`, err)}
+		}
+	}
 	if v, ok := ru.mutation.Privacy(); ok {
 		if err := room.PrivacyValidator(v); err != nil {
 			return &ValidationError{Name: "privacy", err: fmt.Errorf(`ent: validator failed for field "Room.privacy": %w`, err)}
@@ -262,6 +280,12 @@ func (ru *RoomUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if ru.mutation.CustomNameCleared() {
 		_spec.ClearField(room.FieldCustomName, field.TypeString)
+	}
+	if value, ok := ru.mutation.OwnerID(); ok {
+		_spec.SetField(room.FieldOwnerID, field.TypeInt, value)
+	}
+	if value, ok := ru.mutation.AddedOwnerID(); ok {
+		_spec.AddField(room.FieldOwnerID, field.TypeInt, value)
 	}
 	if value, ok := ru.mutation.Privacy(); ok {
 		_spec.SetField(room.FieldPrivacy, field.TypeEnum, value)
@@ -392,6 +416,19 @@ func (ruo *RoomUpdateOne) SetNillableCustomName(s *string) *RoomUpdateOne {
 // ClearCustomName clears the value of the "custom_name" field.
 func (ruo *RoomUpdateOne) ClearCustomName() *RoomUpdateOne {
 	ruo.mutation.ClearCustomName()
+	return ruo
+}
+
+// SetOwnerID sets the "owner_id" field.
+func (ruo *RoomUpdateOne) SetOwnerID(i int) *RoomUpdateOne {
+	ruo.mutation.ResetOwnerID()
+	ruo.mutation.SetOwnerID(i)
+	return ruo
+}
+
+// AddOwnerID adds i to the "owner_id" field.
+func (ruo *RoomUpdateOne) AddOwnerID(i int) *RoomUpdateOne {
+	ruo.mutation.AddOwnerID(i)
 	return ruo
 }
 
@@ -565,6 +602,11 @@ func (ruo *RoomUpdateOne) check() error {
 			return &ValidationError{Name: "custom_name", err: fmt.Errorf(`ent: validator failed for field "Room.custom_name": %w`, err)}
 		}
 	}
+	if v, ok := ruo.mutation.OwnerID(); ok {
+		if err := room.OwnerIDValidator(v); err != nil {
+			return &ValidationError{Name: "owner_id", err: fmt.Errorf(`ent: validator failed for field "Room.owner_id": %w`, err)}
+		}
+	}
 	if v, ok := ruo.mutation.Privacy(); ok {
 		if err := room.PrivacyValidator(v); err != nil {
 			return &ValidationError{Name: "privacy", err: fmt.Errorf(`ent: validator failed for field "Room.privacy": %w`, err)}
@@ -618,6 +660,12 @@ func (ruo *RoomUpdateOne) sqlSave(ctx context.Context) (_node *Room, err error) 
 	}
 	if ruo.mutation.CustomNameCleared() {
 		_spec.ClearField(room.FieldCustomName, field.TypeString)
+	}
+	if value, ok := ruo.mutation.OwnerID(); ok {
+		_spec.SetField(room.FieldOwnerID, field.TypeInt, value)
+	}
+	if value, ok := ruo.mutation.AddedOwnerID(); ok {
+		_spec.AddField(room.FieldOwnerID, field.TypeInt, value)
 	}
 	if value, ok := ruo.mutation.Privacy(); ok {
 		_spec.SetField(room.FieldPrivacy, field.TypeEnum, value)

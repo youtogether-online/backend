@@ -68,10 +68,10 @@ func init() {
 			return nil
 		}
 	}()
-	// roomDescOwner is the schema descriptor for owner field.
-	roomDescOwner := roomFields[2].Descriptor()
-	// room.OwnerValidator is a validator for the "owner" field. It is called by the builders before save.
-	room.OwnerValidator = roomDescOwner.Validators[0].(func(string) error)
+	// roomDescOwnerID is the schema descriptor for owner_id field.
+	roomDescOwnerID := roomFields[2].Descriptor()
+	// room.OwnerIDValidator is a validator for the "owner_id" field. It is called by the builders before save.
+	room.OwnerIDValidator = roomDescOwnerID.Validators[0].(func(int) error)
 	// roomDescHasChat is the schema descriptor for has_chat field.
 	roomDescHasChat := roomFields[5].Descriptor()
 	// room.DefaultHasChat holds the default value on creation for the has_chat field.
@@ -133,7 +133,6 @@ func init() {
 		fns := [...]func(string) error{
 			validators[0].(func(string) error),
 			validators[1].(func(string) error),
-			validators[2].(func(string) error),
 		}
 		return func(first_name string) error {
 			for _, fn := range fns {
@@ -152,7 +151,6 @@ func init() {
 		fns := [...]func(string) error{
 			validators[0].(func(string) error),
 			validators[1].(func(string) error),
-			validators[2].(func(string) error),
 		}
 		return func(last_name string) error {
 			for _, fn := range fns {

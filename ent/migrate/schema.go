@@ -15,7 +15,7 @@ var (
 		{Name: "update_time", Type: field.TypeTime},
 		{Name: "name", Type: field.TypeString, Unique: true, Size: 20},
 		{Name: "custom_name", Type: field.TypeString, Nullable: true, Size: 20},
-		{Name: "owner", Type: field.TypeString, Unique: true},
+		{Name: "owner_id", Type: field.TypeInt, Unique: true},
 		{Name: "privacy", Type: field.TypeEnum, Enums: []string{"PRIVATE", "FRIENDS", "PUBLIC"}, Default: "PUBLIC"},
 		{Name: "password_hash", Type: field.TypeString, Nullable: true},
 		{Name: "has_chat", Type: field.TypeBool, Default: true},

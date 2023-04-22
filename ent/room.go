@@ -24,8 +24,8 @@ type Room struct {
 	Name string `json:"name,omitempty"`
 	// CustomName holds the value of the "custom_name" field.
 	CustomName *string `json:"custom_name,omitempty"`
-	// Owner holds the value of the "owner" field.
-	Owner string `json:"owner,omitempty"`
+	// OwnerID holds the value of the "owner_id" field.
+	OwnerID int `json:"owner_id,omitempty"`
 	// Privacy holds the value of the "privacy" field.
 	Privacy room.Privacy `json:"privacy,omitempty"`
 	// PasswordHash holds the value of the "password_hash" field.
@@ -64,9 +64,9 @@ func (*Room) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case room.FieldHasChat:
 			values[i] = new(sql.NullBool)
-		case room.FieldID:
+		case room.FieldID, room.FieldOwnerID:
 			values[i] = new(sql.NullInt64)
-		case room.FieldName, room.FieldCustomName, room.FieldOwner, room.FieldPrivacy, room.FieldPasswordHash, room.FieldDescription:
+		case room.FieldName, room.FieldCustomName, room.FieldPrivacy, room.FieldPasswordHash, room.FieldDescription:
 			values[i] = new(sql.NullString)
 		case room.FieldCreateTime, room.FieldUpdateTime:
 			values[i] = new(sql.NullTime)
@@ -116,11 +116,11 @@ func (r *Room) assignValues(columns []string, values []any) error {
 				r.CustomName = new(string)
 				*r.CustomName = value.String
 			}
-		case room.FieldOwner:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field owner", values[i])
+		case room.FieldOwnerID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field owner_id", values[i])
 			} else if value.Valid {
-				r.Owner = value.String
+				r.OwnerID = int(value.Int64)
 			}
 		case room.FieldPrivacy:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -195,8 +195,8 @@ func (r *Room) String() string {
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")
-	builder.WriteString("owner=")
-	builder.WriteString(r.Owner)
+	builder.WriteString("owner_id=")
+	builder.WriteString(fmt.Sprintf("%v", r.OwnerID))
 	builder.WriteString(", ")
 	builder.WriteString("privacy=")
 	builder.WriteString(fmt.Sprintf("%v", r.Privacy))

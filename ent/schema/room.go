@@ -14,18 +14,26 @@ type Room struct {
 	ent.Schema
 }
 
+const (
+	name  string = "."
+	email string = "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
+)
+
 // Fields of the Room.
 func (Room) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("name").Unique().Match(regexp.MustCompile(cfg.Username)).DefaultFunc(func() string {
-			b := make([]rune, 6)
-			for i := range b {
-				b[i] = idRunes[rand.Intn(len(idRunes))]
+		field.String("name").Unique().Match(regexp.MustCompile(name)).DefaultFunc(func() string {
+			l := 6 + rand.Intn(4)
+			b := make([]rune, l)
+
+			b[0] = NameRunes[rand.Intn(52)]
+			for i := 1; i < l; i++ {
+				b[i] = NameRunes[rand.Intn(l)]
 			}
 			return string(b)
 		}).MinLen(5).MaxLen(20),
-		field.String("custom_name").Optional().MinLen(3).MaxLen(20).Nillable(),
-		field.String("owner").Unique().Immutable().Match(regexp.MustCompile(cfg.Email)),
+		field.String("custom_name").Optional().MinLen(2).MaxLen(20).Nillable(),
+		field.Int("owner_id").Unique().Positive(),
 		field.Enum("privacy").Values("PRIVATE", "FRIENDS", "PUBLIC").Default("PUBLIC"),
 		field.String("password_hash").Optional().Sensitive().Nillable(),
 		field.Bool("has_chat").Default(true),
