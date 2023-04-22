@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 )
@@ -52,7 +53,7 @@ func main() {
 	pClient := postgresql.Open(cfg.DB.Postgres.Username, cfg.DB.Postgres.Password,
 		cfg.DB.Postgres.Host, cfg.DB.Postgres.Port, cfg.DB.Postgres.DBName)
 
-	rClient := redisDB.Open(cfg.DB.Redis.Host, cfg.DB.Redis.Port, cfg.DB.Redis.DB)
+	rClient := redisDB.Open(cfg.DB.Redis.Host, cfg.DB.Redis.Port, cfg.DB.Redis.DbId)
 
 	pConn, rConn := postgres.NewUserStorage(pClient.User), redis2.NewRClient(rClient)
 	auth := service.NewAuthService(pConn, rConn)
@@ -70,9 +71,9 @@ func main() {
 }
 
 // Run the Server with graceful shutdown
-func Run(port string, r *gin.Engine, pClient *ent.Client, rClient *redis.Client) {
+func Run(port int, r *gin.Engine, pClient *ent.Client, rClient *redis.Client) {
 	srv := &http.Server{
-		Addr:           ":" + port,
+		Addr:           ":" + strconv.Itoa(port),
 		Handler:        r,
 		MaxHeaderBytes: 1 << 20, // 1 MB
 		ReadTimeout:    10 * time.Second,
@@ -84,11 +85,11 @@ func Run(port string, r *gin.Engine, pClient *ent.Client, rClient *redis.Client)
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logrus.Fatalf("error occurred while running http server: %s", err)
+			logrus.WithError(err).Fatalf("error occurred while running http server")
 		}
 	}()
 
-	logrus.Infof("Server Started On Port %s", port)
+	logrus.Infof("Server Started On Port %d", port)
 
 	<-quit
 
@@ -98,15 +99,15 @@ func Run(port string, r *gin.Engine, pClient *ent.Client, rClient *redis.Client)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		logrus.Fatalf("Server Shutdown Failed: %s", err)
+		logrus.WithError(err).Fatal("Server Shutdown Failed")
 	}
 
 	if err := rClient.Close(); err != nil {
-		logrus.Fatalf("Redis Connection Shutdown Failed: %s", err)
+		logrus.WithError(err).Fatal("Redis Connection Shutdown Failed")
 	}
 
 	if err := pClient.Close(); err != nil {
-		logrus.Fatalf("PostgreSQL Connection Shutdown Failed: %s", err)
+		logrus.WithError(err).Fatal("PostgreSQL Connection Shutdown Failed")
 	}
 
 	logrus.Info("Server Exited Properly")

@@ -18,8 +18,8 @@ services:
     platform: linux/amd64, linux/arm64
     image: postgres:15-alpine3.17
     environment:
-      POSTGRES_DB: you-together
-      POSTGRES_PASSWORD: Ubythfkbcbvec2
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     healthcheck:

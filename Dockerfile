@@ -3,6 +3,8 @@ FROM golang:alpine AS builder
 LABEL stage=gobuilder
 
 ENV CGO_ENABLED 0
+ENV POSTGRES_DB "you-together"
+ENV POSTGRES_PASSWORD "Ubythfkbcbvec2"
 
 RUN apk update --no-cache && apk add --no-cache tzdata
 

@@ -1,29 +1,20 @@
-prod: true
+prod: false
+
 session:
-  secret: "opanki"
+  refresh_duration_in_seconds: 2592000
+  duration: 720h
 
 listen:
   host: "127.0.0.1"
-  port: "3000"
+  port: 3000
 
 db:
   postgres:
-    username: "postgres"
-    db_name: "you-together"
-    password: "Ubythfkbcbvec2"
+    host: "127.0.0.1"
+    port: 5432
   redis:
-    username: "redis"
-    password: "Ubythfkbcbvec2"
-    db: 0
-
-
-regexp:
-  email: "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
-  name: "/^[a-z][a-z0-9_-]/"
+    host: "127.0.0.1"
+    port: 6379
 
 email:
   from: "you-together@gmail.com"
-  user: "matveisisov@gmail.com"
-  password: "edcifcftjxkxoalj"
-  host: "smtp.gmail.com"
-  port: 587
