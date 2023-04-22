@@ -75,7 +75,11 @@ func (h Handler) sendEmailCode(c *gin.Context) {
 		return
 	}
 
-	go sendEmail(to.Email, code)
+	go func() {
+		if err := sendEmail(to.Email, code); err != nil {
+			c.Error(exceptions.EmailError.AddErr(err))
+		}
+	}()
 
 	c.Status(http.StatusOK)
 }
@@ -149,7 +153,7 @@ func generateSecretCode() string {
 }
 
 // sendEmail to user with a secret code
-func sendEmail(ToEmail string, code string) {
+func sendEmail(ToEmail string, code string) error {
 	d := mail.NewDialer(cfg.Email.Host, cfg.Email.Port, cfg.Email.User, cfg.Email.Password)
 	m := mail.NewMessage()
 	m.SetHeader("From", cfg.Email.From)
@@ -157,7 +161,7 @@ func sendEmail(ToEmail string, code string) {
 	m.SetHeader("Subject", "Подтвердите ваш email")
 	m.SetBody("text/plain", code)
 
-	d.DialAndSend(m)
+	return d.DialAndSend(m)
 }
 
 func validLanguage(language string) string {

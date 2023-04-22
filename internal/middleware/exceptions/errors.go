@@ -29,9 +29,10 @@ var (
 	AlreadyExist = newError(http.StatusBadRequest, "Already exist", "Try to enter another data")
 )
 
-// ServerError err
+// Server errors
 var (
 	ServerError = newError(http.StatusInternalServerError, "Server exception was occurred", "Try to restart the page")
+	EmailError  = newError(http.StatusInternalServerError, "Can't send message to your email", "Try to send it later")
 )
 
 // ErrorHandler used for error handling. Handles only MyError type errors
