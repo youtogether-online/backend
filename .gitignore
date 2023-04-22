@@ -3,6 +3,3 @@
 
 # configs of the server
 .env
-
-# app builder
-Dockerfile
