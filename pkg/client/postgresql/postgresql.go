@@ -15,24 +15,24 @@ import (
 )
 
 // Open postgres connection, check it and create tables (if not exist). Returns the client of defined postgres database
-func Open(username, password, host, port, DBName string) *ent.Client {
-	dbURL := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=disable",
+func Open(username, password, host string, port int, DBName string) *ent.Client {
+	dbURL := fmt.Sprintf("postgresql://%s:%s@%s:%d/%s?sslmode=disable",
 		username, password, host, port, DBName)
 
 	db, err := sql.Open("pgx", dbURL)
 	if err != nil {
-		logrus.Fatalf("error occured while opening PostgreSQL connection: %v", err)
+		logrus.WithError(err).Fatal("error occured while opening PostgreSQL connection")
 	}
 
 	if err = db.Ping(); err != nil {
-		logrus.Fatalf("Unable to connect to the postgres database: %v", err)
+		logrus.WithError(err).Fatal("Unable to connect to the postgres database")
 	}
 
 	drv := entsql.OpenDB(dialect.Postgres, db)
 	client := ent.NewClient(ent.Driver(drv))
 
 	if err = client.Schema.Create(context.Background(), migrate.WithGlobalUniqueID(true)); err != nil {
-		logrus.Fatalf("Tables Initialization Failed: %v\n", err)
+		logrus.WithError(err).Fatal("Tables Initialization Failed")
 	}
 
 	client.Use(logger)
