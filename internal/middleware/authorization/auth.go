@@ -29,9 +29,12 @@ func NewAuth(auth AuthService) *Auth {
 	return &Auth{auth: auth}
 }
 
-const userAgent string = "User-Agent"
+const (
+	userAgent string = "User-Agent"
+	uuid4     string = "/^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i"
+)
 
-// ValidateSession validates the session and identifies the user in DB. Returns an error in case of unsuccessful validation
+// ValidateSession validates the session and identifies the user in DbId. Returns an error in case of unsuccessful validation
 func (a Auth) ValidateSession(sessionId string) (*dto.Session, bool, error) {
 	if sessionId == "" {
 		return nil, false, fmt.Errorf("session id is not found")
@@ -106,7 +109,7 @@ func (a Auth) SetNewCookie(id int, c *gin.Context) {
 
 func (a Auth) PopCookie(c *gin.Context) {
 	session, _ := c.Cookie(cfg.Session.CookieName)
-	if ok, _ := regexp.MatchString(cfg.Regexp.UUID4, session); ok {
+	if ok, _ := regexp.MatchString(uuid4, session); ok {
 		a.auth.DelKeys(session)
 	}
 }
