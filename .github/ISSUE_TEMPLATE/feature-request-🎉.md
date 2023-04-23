@@ -13,7 +13,7 @@ assignees: wtkeqrf0
 
 <!-- Checked checkbox should look like this: [x] -->
 
-- [ ] I have searched the [issues](https://github.com/ent/ent/issues) of this repository and believe that this is not a duplicate.
+- [ ] I have searched the [issues](https://github.com/youtogether-online/backend/issues) of this repository and believe that this is not a duplicate.
 
 ## Summary 💡
 
