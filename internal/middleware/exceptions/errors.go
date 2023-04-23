@@ -11,7 +11,7 @@ import (
 // Sign-in errors
 var (
 	NoSuchUser       = newError(http.StatusNotFound, "There is no such user", "But you can still find another existing user!")
-	CodeError        = newError(http.StatusBadRequest, "Status is not correct", "Try to request a new one")
+	CodeError        = newError(http.StatusBadRequest, "Code is not correct", "Try to request a new one")
 	PasswordError    = newError(http.StatusBadRequest, "Wrong password", "You can still sign in by your email!")
 	PasswordNotFound = newError(http.StatusNotFound, "You have not registered a password for you account", "Try change the password in your profile")
 )
