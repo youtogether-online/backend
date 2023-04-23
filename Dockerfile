@@ -5,6 +5,7 @@ LABEL stage=gobuilder
 ENV CGO_ENABLED 0
 ENV POSTGRES_DB "you-together"
 ENV POSTGRES_PASSWORD "1234"
+ENV PROD 1
 
 RUN apk update --no-cache && apk add --no-cache tzdata
 
