@@ -9,7 +9,7 @@ import (
 )
 
 type Config struct {
-	Prod *bool `yaml:"prod" env-required:"true"`
+	Prod int `yaml:"prod" env:"PROD" env-default:"0"`
 
 	Session struct {
 		CookieName        string        `yaml:"cookie_name" env:"COOKIE_NAME" env-default:"session_id"`
@@ -65,7 +65,7 @@ func GetConfig() *Config {
 			logrus.Exit(0)
 		}
 
-		if *inst.Prod {
+		if inst.Prod == 1 {
 			inst.DB.Postgres.Host = "postgres"
 			inst.DB.Redis.Host = "redis"
 		}

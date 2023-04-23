@@ -1,5 +1,3 @@
-prod: false
-
 session:
   refresh_duration_in_seconds: 2592000
   duration: 720h
