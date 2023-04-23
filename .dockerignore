@@ -1,0 +1,11 @@
+# project directory
+.idea
+
+# configs of the server
+.env
+
+#swagger files
+docs/swagger.json
+docs/swagger.yaml
+
+.github
