@@ -4,6 +4,7 @@ import (
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
+	"os"
 	"sync"
 	"time"
 )
@@ -43,8 +44,8 @@ type Config struct {
 		From     string `yaml:"from" env-required:"true"`
 		User     string `yaml:"user" env:"EMAIL_USER" env-required:"true"`
 		Password string `yaml:"password" env:"EMAIL_PASSWORD" env-required:"true"`
-		Host     string `yaml:"host" env:"EMAIL_HOST" env-required:"true"`
-		Port     int    `yaml:"port" env:"EMAIL_PORT" env-required:"true"`
+		Host     string `yaml:"host" env:"EMAIL_HOST" env-default:"smtp.gmail.com"`
+		Port     int    `yaml:"port" env:"EMAIL_PORT" env-default:"587"`
 	} `yaml:"email"`
 }
 
@@ -57,6 +58,7 @@ var (
 func GetConfig() *Config {
 	once.Do(func() {
 		godotenv.Load()
+		logrus.Println(os.Environ())
 
 		if err := cleanenv.ReadConfig("configs/config.yml", &inst); err != nil {
 			logrus.WithError(err).Error("error occurred while reading config file")
