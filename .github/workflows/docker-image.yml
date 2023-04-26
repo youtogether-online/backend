@@ -50,15 +50,6 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          secrets: |
-            COOKIE_NAME=${{ secrets.COOKIE_NAME }}
-            COOKIE_PATH=${{ secrets.COOKIE_PATH }}
-            
-            POSTGRES_USERNAME=${{ secrets.POSTGRES_USERNAME }}
-            POSTGRES_DB=${{ secrets.POSTGRES_DB }}
-            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-            
-            EMAIL_USER=${{ secrets.EMAIL_USER }}
-            EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}
-            EMAIL_HOST=${{ secrets.EMAIL_HOST }}
-            EMAIL_PORT=${{ secrets.EMAIL_PORT }}
+          build-args: |
+            A_POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+            A_POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
