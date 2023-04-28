@@ -9,10 +9,22 @@ import (
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
 	"github.com/wtkeqrf0/you-together/internal/middleware/exceptions"
 	"github.com/wtkeqrf0/you-together/pkg/conf"
+	"net/smtp"
+	"strconv"
 	"time"
 )
 
-var cfg = conf.GetConfig()
+const (
+	acceptLanguage string = "Accept-Language"
+)
+
+var (
+	emailAuth = smtp.PlainAuth("", cfg.Email.User, cfg.Email.Password, cfg.Email.Host)
+	addr      = cfg.Email.Host + ":" + strconv.Itoa(cfg.Email.Port)
+	chars     = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+	cfg       = conf.GetConfig()
+	valid     = validator.New()
+)
 
 // UserService interacts with the users table
 type UserService interface {
@@ -104,11 +116,9 @@ func (h Handler) InitRoutes(r *gin.Engine) {
 
 	email := api.Group("/email")
 	{
-		email.POST("/send-code", h.sendEmailCode)
+		email.POST("/send-code", h.sendCodeToEmail)
 	}
 }
-
-var valid = validator.New()
 
 func fillStruct[T dto.DTO](c *gin.Context) (t T, ok bool) {
 	c.ShouldBindJSON(&t)
