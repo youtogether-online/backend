@@ -1,12 +1,6 @@
-# project directory
-.idea
-
-# configs of the server
-.env
-env_file_backend
-
-#swagger files
+# swagger files
 docs/swagger.json
 docs/swagger.yaml
 
+# git
 .github
