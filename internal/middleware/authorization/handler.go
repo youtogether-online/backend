@@ -20,7 +20,7 @@ func (a Auth) RequireSession(c *gin.Context) {
 
 	if ok {
 		c.SetSameSite(http.SameSiteLaxMode)
-		c.SetCookie(cfg.Session.CookieName, session, cfg.Session.DurationInSeconds,
+		c.SetCookie(cfg.Session.CookieName, session, int(cfg.Session.Duration.Seconds()),
 			cfg.Session.CookiePath, cfg.Listen.Host, true, true)
 	}
 
@@ -39,7 +39,7 @@ func (a Auth) MaybeSession(c *gin.Context) {
 
 	if ok {
 		c.SetSameSite(http.SameSiteLaxMode)
-		c.SetCookie(cfg.Session.CookieName, session, cfg.Session.DurationInSeconds,
+		c.SetCookie(cfg.Session.CookieName, session, int(cfg.Session.Duration.Seconds()),
 			cfg.Session.CookiePath, cfg.Listen.Host, true, true)
 	}
 
