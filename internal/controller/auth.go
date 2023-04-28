@@ -5,12 +5,10 @@ import (
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
 	"github.com/wtkeqrf0/you-together/internal/middleware/exceptions"
 	"golang.org/x/crypto/bcrypt"
-	"gopkg.in/mail.v2"
 	"math/rand"
 	"net/http"
+	"net/smtp"
 )
-
-const acceptLanguage string = "Accept-Language"
 
 // SignInWithPassword godoc
 // @Summary Sign in by password
@@ -63,7 +61,7 @@ func (h Handler) signInByPassword(c *gin.Context) {
 // @Failure 400 {object} exceptions.MyError
 // @Failure 500 {object} exceptions.MyError
 // @Router /email/send-code [post]
-func (h Handler) sendEmailCode(c *gin.Context) {
+func (h Handler) sendCodeToEmail(c *gin.Context) {
 	to, ok := fillStruct[dto.EmailDTO](c)
 	if !ok {
 		return
@@ -75,11 +73,9 @@ func (h Handler) sendEmailCode(c *gin.Context) {
 		return
 	}
 
-	go func() {
-		if err := sendEmail(to.Email, code); err != nil {
-			c.Error(exceptions.EmailError.AddErr(err))
-		}
-	}()
+	if err := sendEmailMsg(to.Email, "Verify email for you-together account", code); err != nil {
+		c.Error(exceptions.EmailError.AddErr(err))
+	}
 
 	c.Status(http.StatusOK)
 }
@@ -141,8 +137,6 @@ func (h Handler) signOut(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-var chars = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-
 // generateSecretCode for email auth
 func generateSecretCode() string {
 	b := make([]rune, 5)
@@ -152,16 +146,13 @@ func generateSecretCode() string {
 	return string(b)
 }
 
-// sendEmail to user with a secret code
-func sendEmail(ToEmail string, code string) error {
-	d := mail.NewDialer(cfg.Email.Host, cfg.Email.Port, cfg.Email.User, cfg.Email.Password)
-	m := mail.NewMessage()
-	m.SetHeader("From", cfg.Email.From)
-	m.SetHeader("To", ToEmail)
-	m.SetHeader("Subject", "Подтвердите ваш email")
-	m.SetBody("text/plain", code)
-
-	return d.DialAndSend(m)
+func sendEmailMsg(to, subj, body string) error {
+	return smtp.SendMail(addr, emailAuth, cfg.Email.From,
+		[]string{to}, []byte(
+			"To: "+to+"\r\n"+
+				"Subject: "+subj+"\r\n"+
+				body,
+		))
 }
 
 func validLanguage(language string) string {
