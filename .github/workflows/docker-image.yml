@@ -50,6 +50,3 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            A_POSTGRES_DB=${{ secrets.POSTGRES_DB }}
-            A_POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
