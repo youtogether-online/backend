@@ -42,13 +42,13 @@ type Config struct {
 		From     string `yaml:"from" env:"EMAIL_FROM" env-required:"true"`
 		User     string `yaml:"user" env:"EMAIL_USER"`
 		Password string `yaml:"password" env:"EMAIL_PASSWORD"`
-		Host     string `yaml:"host" env:"EMAIL_HOST"`
+		Host     string `yaml:"host" env:"EMAIL_STMP_HOST"`
 		Port     int    `yaml:"port" env:"EMAIL_PORT"`
 	} `yaml:"email"`
 }
 
 var (
-	inst Config
+	inst = new(Config)
 	once sync.Once
 )
 
@@ -57,7 +57,7 @@ func GetConfig() *Config {
 	once.Do(func() {
 		godotenv.Load()
 
-		if err := cleanenv.ReadConfig("configs/config.yml", &inst); err != nil {
+		if err := cleanenv.ReadConfig("configs/config.yml", inst); err != nil {
 			logrus.WithError(err).Error("error occurred while reading config file")
 			help, _ := cleanenv.GetDescription(&inst, nil)
 			logrus.Info(help)
@@ -70,5 +70,5 @@ func GetConfig() *Config {
 		}
 	})
 
-	return &inst
+	return inst
 }
