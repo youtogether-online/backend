@@ -12,10 +12,12 @@ import (
 	"github.com/wtkeqrf0/you-together/internal/repo/postgres"
 	redis2 "github.com/wtkeqrf0/you-together/internal/repo/redis"
 	"github.com/wtkeqrf0/you-together/internal/service"
+	"github.com/wtkeqrf0/you-together/pkg/client/email"
 	"github.com/wtkeqrf0/you-together/pkg/client/postgresql"
 	redisDB "github.com/wtkeqrf0/you-together/pkg/client/redis"
 	"github.com/wtkeqrf0/you-together/pkg/conf"
 	"net/http"
+	"net/smtp"
 	"os"
 	"os/signal"
 	"strconv"
@@ -58,20 +60,25 @@ func main() {
 	pConn, rConn := postgres.NewUserStorage(pClient.User), redis2.NewRClient(rClient)
 	auth := service.NewAuthService(pConn, rConn)
 
+	emailAuth := smtp.PlainAuth("", cfg.Email.User, cfg.Email.Password, cfg.Email.Host)
+	addr := cfg.Email.Host + ":" + strconv.Itoa(cfg.Email.Port)
+	mailClient := email.Open(addr, emailAuth)
+
 	h := controller.NewHandler(
 		service.NewUserService(pConn, rConn),
 		authorization.NewAuth(auth),
 		auth,
+		service.NewEmailSender(mailClient),
 	)
 
 	r := gin.New()
 	h.InitRoutes(r)
 
-	Run(cfg.Listen.Port, r, pClient, rClient)
+	Run(cfg.Listen.Port, r, pClient, rClient, mailClient)
 }
 
 // Run the Server with graceful shutdown
-func Run(port int, r *gin.Engine, pClient *ent.Client, rClient *redis.Client) {
+func Run(port int, r *gin.Engine, pClient *ent.Client, rClient *redis.Client, mailClient *smtp.Client) {
 	srv := &http.Server{
 		Addr:           ":" + strconv.Itoa(port),
 		Handler:        r,
@@ -108,6 +115,14 @@ func Run(port int, r *gin.Engine, pClient *ent.Client, rClient *redis.Client) {
 
 	if err := pClient.Close(); err != nil {
 		logrus.WithError(err).Fatal("PostgreSQL Connection Shutdown Failed")
+	}
+
+	if err := mailClient.Quit(); err != nil {
+		logrus.WithError(err).Fatal("Email QUIT Failed")
+	}
+
+	if err := mailClient.Close(); err != nil {
+		logrus.WithError(err).Fatal("Email Connection Shutdown Failed")
 	}
 
 	logrus.Info("Server Exited Properly")

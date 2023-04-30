@@ -9,8 +9,6 @@ import (
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
 	"github.com/wtkeqrf0/you-together/internal/middleware/exceptions"
 	"github.com/wtkeqrf0/you-together/pkg/conf"
-	"net/smtp"
-	"strconv"
 	"time"
 )
 
@@ -19,11 +17,9 @@ const (
 )
 
 var (
-	emailAuth = smtp.PlainAuth("", cfg.Email.User, cfg.Email.Password, cfg.Email.Host)
-	addr      = cfg.Email.Host + ":" + strconv.Itoa(cfg.Email.Port)
-	chars     = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-	cfg       = conf.GetConfig()
-	valid     = validator.New()
+	chars = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+	cfg   = conf.GetConfig()
+	valid = validator.New()
 )
 
 // UserService interacts with the users table
@@ -64,14 +60,19 @@ type AuthMiddleware interface {
 	PopCookie(c *gin.Context)
 }
 
+type MailSender interface {
+	SendEmail(subj, body, from string, to ...string) error
+}
+
 type Handler struct {
 	users    UserService
 	sessions AuthMiddleware
 	auth     AuthService
+	mail     MailSender
 }
 
-func NewHandler(users UserService, sessions AuthMiddleware, auth AuthService) *Handler {
-	return &Handler{users: users, sessions: sessions, auth: auth}
+func NewHandler(users UserService, sessions AuthMiddleware, auth AuthService, mail MailSender) *Handler {
+	return &Handler{users: users, sessions: sessions, auth: auth, mail: mail}
 }
 
 func (h Handler) InitRoutes(r *gin.Engine) {

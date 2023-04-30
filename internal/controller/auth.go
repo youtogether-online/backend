@@ -7,7 +7,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"math/rand"
 	"net/http"
-	"net/smtp"
 )
 
 // SignInWithPassword godoc
@@ -72,8 +71,7 @@ func (h Handler) sendCodeToEmail(c *gin.Context) {
 		c.Error(exceptions.ServerError.AddErr(err))
 		return
 	}
-
-	if err := sendEmailMsg(to.Email, "Verify email for you-together account", code); err != nil {
+	if err := h.mail.SendEmail("Verify email for you-together account", code, cfg.Email.From, to.Email); err != nil {
 		c.Error(exceptions.EmailError.AddErr(err))
 	}
 
@@ -144,15 +142,6 @@ func generateSecretCode() string {
 		b[i] = chars[rand.Intn(len(chars))]
 	}
 	return string(b)
-}
-
-func sendEmailMsg(to, subj, body string) error {
-	return smtp.SendMail(addr, emailAuth, cfg.Email.From,
-		[]string{to}, []byte(
-			"To: "+to+"\r\n"+
-				"Subject: "+subj+"\r\n"+
-				body,
-		))
 }
 
 func validLanguage(language string) string {
