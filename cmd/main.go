@@ -70,7 +70,7 @@ func main() {
 	)
 
 	r := gin.New()
-	h.InitRoutes(r)
+	h.InitRoutes(r, mailClient != nil)
 
 	Run(cfg.Listen.Port, r, pClient, rClient, mailClient)
 }

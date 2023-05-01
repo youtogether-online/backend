@@ -75,7 +75,7 @@ func NewHandler(users UserService, sessions AuthMiddleware, auth AuthService, ma
 	return &Handler{users: users, sessions: sessions, auth: auth, mail: mail}
 }
 
-func (h Handler) InitRoutes(r *gin.Engine) {
+func (h Handler) InitRoutes(r *gin.Engine, mailSet bool) {
 	r.Use(gin.Logger(), gin.Recovery(), exceptions.ErrorHandler)
 	api := r.Group("/api")
 
@@ -115,9 +115,11 @@ func (h Handler) InitRoutes(r *gin.Engine) {
 		user.GET("/check-name/:username", h.checkUsername)
 	}
 
-	email := api.Group("/email")
-	{
-		email.POST("/send-code", h.sendCodeToEmail)
+	if mailSet {
+		email := api.Group("/email")
+		{
+			email.POST("/send-code", h.sendCodeToEmail)
+		}
 	}
 }
 
