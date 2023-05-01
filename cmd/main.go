@@ -60,9 +60,7 @@ func main() {
 	pConn, rConn := postgres.NewUserStorage(pClient.User), redis2.NewRClient(rClient)
 	auth := service.NewAuthService(pConn, rConn)
 
-	emailAuth := smtp.PlainAuth("", cfg.Email.User, cfg.Email.Password, cfg.Email.Host)
-	addr := cfg.Email.Host + ":" + strconv.Itoa(cfg.Email.Port)
-	mailClient := email.Open(addr, emailAuth)
+	mailClient := email.Open(cfg.Email.User, cfg.Email.Password, cfg.Email.Host, cfg.Email.Port)
 
 	h := controller.NewHandler(
 		service.NewUserService(pConn, rConn),
