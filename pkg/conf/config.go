@@ -27,13 +27,13 @@ type Config struct {
 			Username string `yaml:"username" env:"POSTGRES_USERNAME" env-default:"postgres"`
 			DBName   string `yaml:"db_name" env:"POSTGRES_DB" env-default:"you-together"`
 			Password string `yaml:"password" env:"POSTGRES_PASSWORD" env-default:"postgres"`
-			Host     string `yaml:"host" env:"HOST" env-default:"127.0.0.1"`
+			Host     string `yaml:"host" env:"POSTGRES_HOST" env-default:"127.0.0.1"`
 			Port     int    `yaml:"port" env:"POSTGRES_PORT" env-required:"true"`
 		} `yaml:"postgres"`
 
 		Redis struct {
 			DbId int    `yaml:"db_id" env:"REDIS_DB" env-default:"0"`
-			Host string `yaml:"host" env:"HOST" env-default:"127.0.0.1"`
+			Host string `yaml:"host" env:"REDIS_HOST" env-default:"127.0.0.1"`
 			Port int    `yaml:"port" env:"REDIS_POST" env-required:"true"`
 		} `yaml:"redis"`
 	} `yaml:"db"`
