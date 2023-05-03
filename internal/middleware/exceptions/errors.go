@@ -81,6 +81,8 @@ func ErrorHandler(c *gin.Context) {
 					case "required_without_all":
 						fields[field] = fmt.Sprintf("%s should not be empty", field)
 						break
+					case "name":
+						fields[field] = fmt.Sprintf("name is not valid")
 					}
 				}
 				res["fields"] = fields

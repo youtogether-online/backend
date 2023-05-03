@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
 	"github.com/wtkeqrf0/you-together/internal/middleware/exceptions"
+	"github.com/wtkeqrf0/you-together/pkg/bind"
 	"golang.org/x/crypto/bcrypt"
 	"math/rand"
 	"net/http"
@@ -21,7 +22,7 @@ import (
 // @Failure 500 {object} exceptions.MyError
 // @Router /auth/password/sign-in [post]
 func (h Handler) signInByPassword(c *gin.Context) {
-	auth, ok := fillStruct[dto.EmailWithPasswordDTO](c)
+	auth, ok := bind.FillStruct[dto.EmailWithPasswordDTO](c)
 	if !ok {
 		return
 	}
@@ -61,7 +62,7 @@ func (h Handler) signInByPassword(c *gin.Context) {
 // @Failure 500 {object} exceptions.MyError
 // @Router /email/send-code [post]
 func (h Handler) sendCodeToEmail(c *gin.Context) {
-	to, ok := fillStruct[dto.EmailDTO](c)
+	to, ok := bind.FillStruct[dto.EmailDTO](c)
 	if !ok {
 		return
 	}
@@ -89,7 +90,7 @@ func (h Handler) sendCodeToEmail(c *gin.Context) {
 // @Failure 500 {object} exceptions.MyError
 // @Router /auth/email/sign-in [post]
 func (h Handler) signInByEmail(c *gin.Context) {
-	auth, ok := fillStruct[dto.EmailWithCodeDTO](c)
+	auth, ok := bind.FillStruct[dto.EmailWithCodeDTO](c)
 	if !ok {
 		return
 	}

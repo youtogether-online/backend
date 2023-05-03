@@ -3,37 +3,14 @@ package controller
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/wtkeqrf0/you-together/ent"
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
 	"github.com/wtkeqrf0/you-together/internal/middleware/exceptions"
+	"github.com/wtkeqrf0/you-together/pkg/bind"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 )
-
-// GetUserByUsername godoc
-// @Summary Get type of the user (NOT WORKING)
-// @Description Returns type of object (NOT WORKING)
-// @Tags Get
-// @Param name path string true "Name of something"
-// @Success 200 {object} dto.UserDTO "string type with object"
-// @Failure 400 {object} exceptions.MyError
-// @Failure 404 {object} exceptions.MyError "User doesn't exist"
-// @Failure 500 {object} exceptions.MyError
-// @Router /{name} [get]
-func (h Handler) getTypeByName(c *gin.Context) {
-	name := c.Param("name")
-	if err := valid.Struct(&dto.NameDTO{Name: name}); err != nil {
-		c.Error(exceptions.ValidError.AddErr(err))
-		return
-	}
-
-	if user, err := h.users.FindUserByUsername(name); err == nil {
-		c.JSON(http.StatusOK, dto.TypeDTO{
-			Type:   "user",
-			Object: user,
-		})
-	} // else if room, err := h.rooms
-}
 
 // GetMe godoc
 // @Summary Get detail information about user by session
@@ -76,7 +53,7 @@ func (h Handler) getMe(c *gin.Context) {
 // @Router /user/{username} [get]
 func (h Handler) getUserByUsername(c *gin.Context) {
 	username := c.Param("username")
-	if err := valid.Struct(&dto.NameDTO{Name: username}); err != nil {
+	if err := binding.Validator.ValidateStruct(&dto.NameDTO{Name: username}); err != nil {
 		c.Error(exceptions.ValidError.AddErr(err))
 		return
 	}
@@ -127,7 +104,7 @@ func (h Handler) getUserByUsername(c *gin.Context) {
 // @Failure 500 {object} exceptions.MyError
 // @Router /user [patch]
 func (h Handler) updateUser(c *gin.Context) {
-	upd, ok := fillStruct[dto.UpdateUserDTO](c)
+	upd, ok := bind.FillStruct[dto.UpdateUserDTO](c)
 	if !ok {
 		return
 	}
@@ -161,7 +138,7 @@ func (h Handler) updateUser(c *gin.Context) {
 // @Failure 500 {object} exceptions.MyError
 // @Router /user/email [patch]
 func (h Handler) updateEmail(c *gin.Context) {
-	upd, ok := fillStruct[dto.UpdateEmailDTO](c)
+	upd, ok := bind.FillStruct[dto.UpdateEmailDTO](c)
 	if !ok {
 		return
 	}
@@ -214,7 +191,7 @@ func (h Handler) updateEmail(c *gin.Context) {
 // @Failure 500 {object} exceptions.MyError
 // @Router /user/password [patch]
 func (h Handler) updatePassword(c *gin.Context) {
-	upd, ok := fillStruct[dto.UpdatePasswordDTO](c)
+	upd, ok := bind.FillStruct[dto.UpdatePasswordDTO](c)
 	if !ok {
 		return
 	}
@@ -254,7 +231,7 @@ func (h Handler) updatePassword(c *gin.Context) {
 // @Failure 500 {object} exceptions.MyError
 // @Router /user/name [patch]
 func (h Handler) updateUsername(c *gin.Context) {
-	upd, ok := fillStruct[dto.UpdateNameDTO](c)
+	upd, ok := bind.FillStruct[dto.UpdateNameDTO](c)
 	if !ok {
 		return
 	}
@@ -264,7 +241,7 @@ func (h Handler) updateUsername(c *gin.Context) {
 		return
 	}
 
-	if err = h.users.UpdateUsername(upd.NewUsername, info.ID); err != nil {
+	if err = h.users.UpdateUsername(upd.NewName, info.ID); err != nil {
 		switch {
 		case ent.IsNotFound(err):
 			c.Error(exceptions.NoSuchUser.AddErr(err))
@@ -291,8 +268,7 @@ func (h Handler) updateUsername(c *gin.Context) {
 // @Router /user/check-name/{username} [get]
 func (h Handler) checkUsername(c *gin.Context) {
 	username := c.Param("username")
-
-	if err := valid.Struct(&dto.NameDTO{Name: username}); err != nil {
+	if err := binding.Validator.ValidateStruct(&dto.NameDTO{Name: username}); err != nil {
 		c.Error(exceptions.ValidError.AddErr(err))
 		return
 	}

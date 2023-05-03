@@ -1,16 +1,13 @@
 package dto
 
-type DTO interface {
-	MyUserDTO |
-		UserDTO |
-		UpdateUserDTO |
+type FilledDTO interface {
+	UpdateUserDTO |
 		UpdateEmailDTO |
 		UpdatePasswordDTO |
 		UpdateNameDTO |
 		EmailWithPasswordDTO |
 		EmailDTO |
-		EmailWithCodeDTO |
-		NameDTO
+		EmailWithCodeDTO
 }
 
 type UpdateEmailDTO struct {
@@ -25,7 +22,11 @@ type UpdatePasswordDTO struct {
 }
 
 type UpdateNameDTO struct {
-	NewUsername string `json:"newName,omitempty" validate:"required,gte=5,lte=20"`
+	NewName string `json:"newName,omitempty" validate:"required,gte=5,lte=20,name"`
+}
+
+type NameDTO struct {
+	Name string `json:"newName,omitempty" validate:"required,gte=5,lte=20,name"`
 }
 
 type EmailWithPasswordDTO struct {
@@ -44,13 +45,4 @@ type EmailWithCodeDTO struct {
 	Code     string `json:"code,omitempty" validate:"required,len=5" length:"5" example:"I1ELB"`
 	Language string `json:"-" enum:"EN,RU" default:"EN"`
 	Theme    string `json:"theme,omitempty" example:"DARK" enum:"SYSTEM,DARK,WHITE" default:"SYSTEM"`
-}
-
-type NameDTO struct {
-	Name string `json:"name,omitempty" validate:"required,gte=5,lte=20"`
-}
-
-type TypeDTO struct {
-	Type   string `json:"type,omitempty" example:"user"`
-	Object any    `json:"object,omitempty" example:"dto.UserDTO"`
 }
