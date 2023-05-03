@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	_ "github.com/wtkeqrf0/you-together/docs"
@@ -12,6 +14,7 @@ import (
 	"github.com/wtkeqrf0/you-together/internal/repo/postgres"
 	redis2 "github.com/wtkeqrf0/you-together/internal/repo/redis"
 	"github.com/wtkeqrf0/you-together/internal/service"
+	"github.com/wtkeqrf0/you-together/pkg/bind"
 	"github.com/wtkeqrf0/you-together/pkg/client/email"
 	"github.com/wtkeqrf0/you-together/pkg/client/postgresql"
 	redisDB "github.com/wtkeqrf0/you-together/pkg/client/redis"
@@ -36,6 +39,8 @@ func init() {
 	})
 
 	logrus.SetReportCaller(true)
+
+	binding.Validator = bind.NewValid(validator.New())
 }
 
 // @title You Together API

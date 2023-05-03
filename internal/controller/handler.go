@@ -2,7 +2,6 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/wtkeqrf0/you-together/ent"
@@ -19,7 +18,6 @@ const (
 var (
 	chars = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 	cfg   = conf.GetConfig()
-	valid = validator.New()
 )
 
 // UserService interacts with the users table
@@ -79,8 +77,6 @@ func (h Handler) InitRoutes(r *gin.Engine, mailSet bool) {
 	r.Use(gin.Logger(), gin.Recovery(), exceptions.ErrorHandler)
 	api := r.Group("/api")
 
-	//api.GET("/:name", h.getTypeByName)
-
 	docs := api.Group("/docs")
 	{
 		docs.GET("/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -121,15 +117,4 @@ func (h Handler) InitRoutes(r *gin.Engine, mailSet bool) {
 			email.POST("/send-code", h.sendCodeToEmail)
 		}
 	}
-}
-
-func fillStruct[T dto.DTO](c *gin.Context) (t T, ok bool) {
-	c.ShouldBindJSON(&t)
-
-	if err := valid.Struct(&t); err != nil {
-		c.Error(exceptions.ValidError.AddErr(err))
-		return
-	}
-	ok = true
-	return
 }
