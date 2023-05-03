@@ -67,6 +67,7 @@ func GetConfig() *Config {
 		if inst.Prod == 1 {
 			inst.DB.Postgres.Host = "postgres"
 			inst.DB.Redis.Host = "redis"
+			logrus.SetLevel(logrus.InfoLevel)
 		}
 	})
 
