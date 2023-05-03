@@ -81,7 +81,7 @@ func OwnerID(v int) predicate.Room {
 }
 
 // PasswordHash applies equality check predicate on the "password_hash" field. It's identical to PasswordHashEQ.
-func PasswordHash(v string) predicate.Room {
+func PasswordHash(v []byte) predicate.Room {
 	return predicate.Room(sql.FieldEQ(FieldPasswordHash, v))
 }
 
@@ -376,58 +376,43 @@ func PrivacyNotIn(vs ...Privacy) predicate.Room {
 }
 
 // PasswordHashEQ applies the EQ predicate on the "password_hash" field.
-func PasswordHashEQ(v string) predicate.Room {
+func PasswordHashEQ(v []byte) predicate.Room {
 	return predicate.Room(sql.FieldEQ(FieldPasswordHash, v))
 }
 
 // PasswordHashNEQ applies the NEQ predicate on the "password_hash" field.
-func PasswordHashNEQ(v string) predicate.Room {
+func PasswordHashNEQ(v []byte) predicate.Room {
 	return predicate.Room(sql.FieldNEQ(FieldPasswordHash, v))
 }
 
 // PasswordHashIn applies the In predicate on the "password_hash" field.
-func PasswordHashIn(vs ...string) predicate.Room {
+func PasswordHashIn(vs ...[]byte) predicate.Room {
 	return predicate.Room(sql.FieldIn(FieldPasswordHash, vs...))
 }
 
 // PasswordHashNotIn applies the NotIn predicate on the "password_hash" field.
-func PasswordHashNotIn(vs ...string) predicate.Room {
+func PasswordHashNotIn(vs ...[]byte) predicate.Room {
 	return predicate.Room(sql.FieldNotIn(FieldPasswordHash, vs...))
 }
 
 // PasswordHashGT applies the GT predicate on the "password_hash" field.
-func PasswordHashGT(v string) predicate.Room {
+func PasswordHashGT(v []byte) predicate.Room {
 	return predicate.Room(sql.FieldGT(FieldPasswordHash, v))
 }
 
 // PasswordHashGTE applies the GTE predicate on the "password_hash" field.
-func PasswordHashGTE(v string) predicate.Room {
+func PasswordHashGTE(v []byte) predicate.Room {
 	return predicate.Room(sql.FieldGTE(FieldPasswordHash, v))
 }
 
 // PasswordHashLT applies the LT predicate on the "password_hash" field.
-func PasswordHashLT(v string) predicate.Room {
+func PasswordHashLT(v []byte) predicate.Room {
 	return predicate.Room(sql.FieldLT(FieldPasswordHash, v))
 }
 
 // PasswordHashLTE applies the LTE predicate on the "password_hash" field.
-func PasswordHashLTE(v string) predicate.Room {
+func PasswordHashLTE(v []byte) predicate.Room {
 	return predicate.Room(sql.FieldLTE(FieldPasswordHash, v))
-}
-
-// PasswordHashContains applies the Contains predicate on the "password_hash" field.
-func PasswordHashContains(v string) predicate.Room {
-	return predicate.Room(sql.FieldContains(FieldPasswordHash, v))
-}
-
-// PasswordHashHasPrefix applies the HasPrefix predicate on the "password_hash" field.
-func PasswordHashHasPrefix(v string) predicate.Room {
-	return predicate.Room(sql.FieldHasPrefix(FieldPasswordHash, v))
-}
-
-// PasswordHashHasSuffix applies the HasSuffix predicate on the "password_hash" field.
-func PasswordHashHasSuffix(v string) predicate.Room {
-	return predicate.Room(sql.FieldHasSuffix(FieldPasswordHash, v))
 }
 
 // PasswordHashIsNil applies the IsNil predicate on the "password_hash" field.
@@ -438,16 +423,6 @@ func PasswordHashIsNil() predicate.Room {
 // PasswordHashNotNil applies the NotNil predicate on the "password_hash" field.
 func PasswordHashNotNil() predicate.Room {
 	return predicate.Room(sql.FieldNotNull(FieldPasswordHash))
-}
-
-// PasswordHashEqualFold applies the EqualFold predicate on the "password_hash" field.
-func PasswordHashEqualFold(v string) predicate.Room {
-	return predicate.Room(sql.FieldEqualFold(FieldPasswordHash, v))
-}
-
-// PasswordHashContainsFold applies the ContainsFold predicate on the "password_hash" field.
-func PasswordHashContainsFold(v string) predicate.Room {
-	return predicate.Room(sql.FieldContainsFold(FieldPasswordHash, v))
 }
 
 // HasChatEQ applies the EQ predicate on the "has_chat" field.

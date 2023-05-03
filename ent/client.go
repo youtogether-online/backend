@@ -309,7 +309,8 @@ func (c *RoomClient) QueryUsers(r *Room) *UserQuery {
 
 // Hooks returns the client hooks.
 func (c *RoomClient) Hooks() []Hook {
-	return c.hooks.Room
+	hooks := c.hooks.Room
+	return append(hooks[:len(hooks):len(hooks)], room.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.
@@ -443,7 +444,8 @@ func (c *UserClient) QueryRooms(u *User) *RoomQuery {
 
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
-	return c.hooks.User
+	hooks := c.hooks.User
+	return append(hooks[:len(hooks):len(hooks)], user.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.

@@ -29,7 +29,7 @@ type Room struct {
 	// Privacy holds the value of the "privacy" field.
 	Privacy room.Privacy `json:"privacy,omitempty"`
 	// PasswordHash holds the value of the "password_hash" field.
-	PasswordHash *string `json:"-"`
+	PasswordHash *[]byte `json:"-"`
 	// HasChat holds the value of the "has_chat" field.
 	HasChat bool `json:"has_chat,omitempty"`
 	// Description holds the value of the "description" field.
@@ -62,11 +62,13 @@ func (*Room) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case room.FieldPasswordHash:
+			values[i] = new([]byte)
 		case room.FieldHasChat:
 			values[i] = new(sql.NullBool)
 		case room.FieldID, room.FieldOwnerID:
 			values[i] = new(sql.NullInt64)
-		case room.FieldName, room.FieldCustomName, room.FieldPrivacy, room.FieldPasswordHash, room.FieldDescription:
+		case room.FieldName, room.FieldCustomName, room.FieldPrivacy, room.FieldDescription:
 			values[i] = new(sql.NullString)
 		case room.FieldCreateTime, room.FieldUpdateTime:
 			values[i] = new(sql.NullTime)
@@ -129,11 +131,10 @@ func (r *Room) assignValues(columns []string, values []any) error {
 				r.Privacy = room.Privacy(value.String)
 			}
 		case room.FieldPasswordHash:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field password_hash", values[i])
-			} else if value.Valid {
-				r.PasswordHash = new(string)
-				*r.PasswordHash = value.String
+			} else if value != nil {
+				r.PasswordHash = value
 			}
 		case room.FieldHasChat:
 			if value, ok := values[i].(*sql.NullBool); !ok {

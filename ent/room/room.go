@@ -5,6 +5,8 @@ package room
 import (
 	"fmt"
 	"time"
+
+	"entgo.io/ent"
 )
 
 const (
@@ -71,15 +73,19 @@ func ValidColumn(column string) bool {
 	return false
 }
 
+// Note that the variables below are initialized by the runtime
+// package on the initialization of the application. Therefore,
+// it should be imported in the main as follows:
+//
+//	import _ "github.com/wtkeqrf0/you-together/ent/runtime"
 var (
+	Hooks [2]ent.Hook
 	// DefaultCreateTime holds the default value on creation for the "create_time" field.
 	DefaultCreateTime func() time.Time
 	// DefaultUpdateTime holds the default value on creation for the "update_time" field.
 	DefaultUpdateTime func() time.Time
 	// UpdateDefaultUpdateTime holds the default value on update for the "update_time" field.
 	UpdateDefaultUpdateTime func() time.Time
-	// DefaultName holds the default value on creation for the "name" field.
-	DefaultName func() string
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
 	// CustomNameValidator is a validator for the "custom_name" field. It is called by the builders before save.

@@ -55,14 +55,6 @@ func (rc *RoomCreate) SetName(s string) *RoomCreate {
 	return rc
 }
 
-// SetNillableName sets the "name" field if the given value is not nil.
-func (rc *RoomCreate) SetNillableName(s *string) *RoomCreate {
-	if s != nil {
-		rc.SetName(*s)
-	}
-	return rc
-}
-
 // SetCustomName sets the "custom_name" field.
 func (rc *RoomCreate) SetCustomName(s string) *RoomCreate {
 	rc.mutation.SetCustomName(s)
@@ -98,16 +90,8 @@ func (rc *RoomCreate) SetNillablePrivacy(r *room.Privacy) *RoomCreate {
 }
 
 // SetPasswordHash sets the "password_hash" field.
-func (rc *RoomCreate) SetPasswordHash(s string) *RoomCreate {
-	rc.mutation.SetPasswordHash(s)
-	return rc
-}
-
-// SetNillablePasswordHash sets the "password_hash" field if the given value is not nil.
-func (rc *RoomCreate) SetNillablePasswordHash(s *string) *RoomCreate {
-	if s != nil {
-		rc.SetPasswordHash(*s)
-	}
+func (rc *RoomCreate) SetPasswordHash(b []byte) *RoomCreate {
+	rc.mutation.SetPasswordHash(b)
 	return rc
 }
 
@@ -161,7 +145,9 @@ func (rc *RoomCreate) Mutation() *RoomMutation {
 
 // Save creates the Room in the database.
 func (rc *RoomCreate) Save(ctx context.Context) (*Room, error) {
-	rc.defaults()
+	if err := rc.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks[*Room, RoomMutation](ctx, rc.sqlSave, rc.mutation, rc.hooks)
 }
 
@@ -188,18 +174,20 @@ func (rc *RoomCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (rc *RoomCreate) defaults() {
+func (rc *RoomCreate) defaults() error {
 	if _, ok := rc.mutation.CreateTime(); !ok {
+		if room.DefaultCreateTime == nil {
+			return fmt.Errorf("ent: uninitialized room.DefaultCreateTime (forgotten import ent/runtime?)")
+		}
 		v := room.DefaultCreateTime()
 		rc.mutation.SetCreateTime(v)
 	}
 	if _, ok := rc.mutation.UpdateTime(); !ok {
+		if room.DefaultUpdateTime == nil {
+			return fmt.Errorf("ent: uninitialized room.DefaultUpdateTime (forgotten import ent/runtime?)")
+		}
 		v := room.DefaultUpdateTime()
 		rc.mutation.SetUpdateTime(v)
-	}
-	if _, ok := rc.mutation.Name(); !ok {
-		v := room.DefaultName()
-		rc.mutation.SetName(v)
 	}
 	if _, ok := rc.mutation.Privacy(); !ok {
 		v := room.DefaultPrivacy
@@ -209,6 +197,7 @@ func (rc *RoomCreate) defaults() {
 		v := room.DefaultHasChat
 		rc.mutation.SetHasChat(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -218,9 +207,6 @@ func (rc *RoomCreate) check() error {
 	}
 	if _, ok := rc.mutation.UpdateTime(); !ok {
 		return &ValidationError{Name: "update_time", err: errors.New(`ent: missing required field "Room.update_time"`)}
-	}
-	if _, ok := rc.mutation.Name(); !ok {
-		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Room.name"`)}
 	}
 	if v, ok := rc.mutation.Name(); ok {
 		if err := room.NameValidator(v); err != nil {
@@ -307,7 +293,7 @@ func (rc *RoomCreate) createSpec() (*Room, *sqlgraph.CreateSpec) {
 		_node.Privacy = value
 	}
 	if value, ok := rc.mutation.PasswordHash(); ok {
-		_spec.SetField(room.FieldPasswordHash, field.TypeString, value)
+		_spec.SetField(room.FieldPasswordHash, field.TypeBytes, value)
 		_node.PasswordHash = &value
 	}
 	if value, ok := rc.mutation.HasChat(); ok {

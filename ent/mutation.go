@@ -42,7 +42,7 @@ type RoomMutation struct {
 	owner_id      *int
 	addowner_id   *int
 	privacy       *room.Privacy
-	password_hash *string
+	password_hash *[]byte
 	has_chat      *bool
 	description   *string
 	clearedFields map[string]struct{}
@@ -402,12 +402,12 @@ func (m *RoomMutation) ResetPrivacy() {
 }
 
 // SetPasswordHash sets the "password_hash" field.
-func (m *RoomMutation) SetPasswordHash(s string) {
-	m.password_hash = &s
+func (m *RoomMutation) SetPasswordHash(b []byte) {
+	m.password_hash = &b
 }
 
 // PasswordHash returns the value of the "password_hash" field in the mutation.
-func (m *RoomMutation) PasswordHash() (r string, exists bool) {
+func (m *RoomMutation) PasswordHash() (r []byte, exists bool) {
 	v := m.password_hash
 	if v == nil {
 		return
@@ -418,7 +418,7 @@ func (m *RoomMutation) PasswordHash() (r string, exists bool) {
 // OldPasswordHash returns the old "password_hash" field's value of the Room entity.
 // If the Room object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *RoomMutation) OldPasswordHash(ctx context.Context) (v *string, err error) {
+func (m *RoomMutation) OldPasswordHash(ctx context.Context) (v *[]byte, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPasswordHash is only allowed on UpdateOne operations")
 	}
@@ -756,7 +756,7 @@ func (m *RoomMutation) SetField(name string, value ent.Value) error {
 		m.SetPrivacy(v)
 		return nil
 	case room.FieldPasswordHash:
-		v, ok := value.(string)
+		v, ok := value.([]byte)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}

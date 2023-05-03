@@ -1,12 +1,18 @@
 package schema
 
 import (
+	"context"
 	"entgo.io/ent"
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/mixin"
-	"math/rand"
-	"regexp"
+	"fmt"
+	gen "github.com/wtkeqrf0/you-together/ent"
+	"github.com/wtkeqrf0/you-together/ent/hook"
+	"github.com/wtkeqrf0/you-together/ent/room"
+	"github.com/wtkeqrf0/you-together/pkg/bind"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Room holds the schema definition for the Room entity.
@@ -14,28 +20,15 @@ type Room struct {
 	ent.Schema
 }
 
-const (
-	name  string = "."
-	email string = "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
-)
-
 // Fields of the Room.
 func (Room) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("name").Unique().Match(regexp.MustCompile(name)).DefaultFunc(func() string {
-			l := 6 + rand.Intn(4)
-			b := make([]rune, l)
-
-			b[0] = NameRunes[rand.Intn(52)]
-			for i := 1; i < l; i++ {
-				b[i] = NameRunes[rand.Intn(l)]
-			}
-			return string(b)
-		}).MinLen(5).MaxLen(20),
+		field.String("name").Unique().Match(bind.NameRegexp).Annotations(
+			entsql.DefaultExpr("'room' || currval(pg_get_serial_sequence('rooms','id'))")),
 		field.String("custom_name").Optional().MinLen(2).MaxLen(20).Nillable(),
 		field.Int("owner_id").Unique().Positive(),
 		field.Enum("privacy").Values("PRIVATE", "FRIENDS", "PUBLIC").Default("PUBLIC"),
-		field.String("password_hash").Optional().Sensitive().Nillable(),
+		field.Bytes("password_hash").Optional().Sensitive().Nillable(),
 		field.Bool("has_chat").Default(true),
 		field.String("description").Optional().MaxLen(140).Nillable(),
 	}
@@ -52,4 +45,57 @@ func (Room) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		mixin.Time{},
 	}
+}
+
+func (Room) Hooks() []ent.Hook {
+	return []ent.Hook{
+		hook.If(bcryptRoomPassword,
+			hook.And(
+				hook.HasFields("password_hash"),
+				hook.HasOp(ent.OpUpdate|ent.OpUpdateOne|ent.OpCreate),
+			),
+		),
+
+		hook.If(userNameCheck,
+			hook.And(
+				hook.HasFields("name"),
+				hook.HasOp(ent.OpUpdateOne|ent.OpUpdate|ent.OpCreate),
+			),
+		),
+	}
+}
+
+func bcryptRoomPassword(next ent.Mutator) ent.Mutator {
+	return hook.RoomFunc(func(ctx context.Context, m *gen.RoomMutation) (ent.Value, error) {
+		password, ok := m.PasswordHash()
+		if !ok {
+			return nil, fmt.Errorf("password_hash is not set")
+		}
+
+		hashedPassword, err := bcrypt.GenerateFromPassword(password, 12)
+		if err != nil {
+			return nil, err
+		}
+
+		m.SetPasswordHash(hashedPassword)
+
+		return next.Mutate(ctx, m)
+	})
+}
+
+func userNameCheck(next ent.Mutator) ent.Mutator {
+	return hook.UserFunc(func(ctx context.Context, m *gen.UserMutation) (ent.Value, error) {
+		username, ok := m.Name()
+		if !ok {
+			return nil, fmt.Errorf("roomname is not set")
+		}
+
+		if exist, err := m.Client().Room.Query().Where(room.Name(username)).Exist(ctx); err != nil {
+			return nil, err
+
+		} else if exist {
+			return nil, fmt.Errorf("name already exist")
+		}
+		return next.Mutate(ctx, m)
+	})
 }

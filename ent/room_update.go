@@ -41,14 +41,6 @@ func (ru *RoomUpdate) SetName(s string) *RoomUpdate {
 	return ru
 }
 
-// SetNillableName sets the "name" field if the given value is not nil.
-func (ru *RoomUpdate) SetNillableName(s *string) *RoomUpdate {
-	if s != nil {
-		ru.SetName(*s)
-	}
-	return ru
-}
-
 // SetCustomName sets the "custom_name" field.
 func (ru *RoomUpdate) SetCustomName(s string) *RoomUpdate {
 	ru.mutation.SetCustomName(s)
@@ -97,16 +89,8 @@ func (ru *RoomUpdate) SetNillablePrivacy(r *room.Privacy) *RoomUpdate {
 }
 
 // SetPasswordHash sets the "password_hash" field.
-func (ru *RoomUpdate) SetPasswordHash(s string) *RoomUpdate {
-	ru.mutation.SetPasswordHash(s)
-	return ru
-}
-
-// SetNillablePasswordHash sets the "password_hash" field if the given value is not nil.
-func (ru *RoomUpdate) SetNillablePasswordHash(s *string) *RoomUpdate {
-	if s != nil {
-		ru.SetPasswordHash(*s)
-	}
+func (ru *RoomUpdate) SetPasswordHash(b []byte) *RoomUpdate {
+	ru.mutation.SetPasswordHash(b)
 	return ru
 }
 
@@ -193,7 +177,9 @@ func (ru *RoomUpdate) RemoveUsers(u ...*User) *RoomUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (ru *RoomUpdate) Save(ctx context.Context) (int, error) {
-	ru.defaults()
+	if err := ru.defaults(); err != nil {
+		return 0, err
+	}
 	return withHooks[int, RoomMutation](ctx, ru.sqlSave, ru.mutation, ru.hooks)
 }
 
@@ -220,11 +206,15 @@ func (ru *RoomUpdate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (ru *RoomUpdate) defaults() {
+func (ru *RoomUpdate) defaults() error {
 	if _, ok := ru.mutation.UpdateTime(); !ok {
+		if room.UpdateDefaultUpdateTime == nil {
+			return fmt.Errorf("ent: uninitialized room.UpdateDefaultUpdateTime (forgotten import ent/runtime?)")
+		}
 		v := room.UpdateDefaultUpdateTime()
 		ru.mutation.SetUpdateTime(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -291,10 +281,10 @@ func (ru *RoomUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.SetField(room.FieldPrivacy, field.TypeEnum, value)
 	}
 	if value, ok := ru.mutation.PasswordHash(); ok {
-		_spec.SetField(room.FieldPasswordHash, field.TypeString, value)
+		_spec.SetField(room.FieldPasswordHash, field.TypeBytes, value)
 	}
 	if ru.mutation.PasswordHashCleared() {
-		_spec.ClearField(room.FieldPasswordHash, field.TypeString)
+		_spec.ClearField(room.FieldPasswordHash, field.TypeBytes)
 	}
 	if value, ok := ru.mutation.HasChat(); ok {
 		_spec.SetField(room.FieldHasChat, field.TypeBool, value)
@@ -391,14 +381,6 @@ func (ruo *RoomUpdateOne) SetName(s string) *RoomUpdateOne {
 	return ruo
 }
 
-// SetNillableName sets the "name" field if the given value is not nil.
-func (ruo *RoomUpdateOne) SetNillableName(s *string) *RoomUpdateOne {
-	if s != nil {
-		ruo.SetName(*s)
-	}
-	return ruo
-}
-
 // SetCustomName sets the "custom_name" field.
 func (ruo *RoomUpdateOne) SetCustomName(s string) *RoomUpdateOne {
 	ruo.mutation.SetCustomName(s)
@@ -447,16 +429,8 @@ func (ruo *RoomUpdateOne) SetNillablePrivacy(r *room.Privacy) *RoomUpdateOne {
 }
 
 // SetPasswordHash sets the "password_hash" field.
-func (ruo *RoomUpdateOne) SetPasswordHash(s string) *RoomUpdateOne {
-	ruo.mutation.SetPasswordHash(s)
-	return ruo
-}
-
-// SetNillablePasswordHash sets the "password_hash" field if the given value is not nil.
-func (ruo *RoomUpdateOne) SetNillablePasswordHash(s *string) *RoomUpdateOne {
-	if s != nil {
-		ruo.SetPasswordHash(*s)
-	}
+func (ruo *RoomUpdateOne) SetPasswordHash(b []byte) *RoomUpdateOne {
+	ruo.mutation.SetPasswordHash(b)
 	return ruo
 }
 
@@ -556,7 +530,9 @@ func (ruo *RoomUpdateOne) Select(field string, fields ...string) *RoomUpdateOne 
 
 // Save executes the query and returns the updated Room entity.
 func (ruo *RoomUpdateOne) Save(ctx context.Context) (*Room, error) {
-	ruo.defaults()
+	if err := ruo.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks[*Room, RoomMutation](ctx, ruo.sqlSave, ruo.mutation, ruo.hooks)
 }
 
@@ -583,11 +559,15 @@ func (ruo *RoomUpdateOne) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (ruo *RoomUpdateOne) defaults() {
+func (ruo *RoomUpdateOne) defaults() error {
 	if _, ok := ruo.mutation.UpdateTime(); !ok {
+		if room.UpdateDefaultUpdateTime == nil {
+			return fmt.Errorf("ent: uninitialized room.UpdateDefaultUpdateTime (forgotten import ent/runtime?)")
+		}
 		v := room.UpdateDefaultUpdateTime()
 		ruo.mutation.SetUpdateTime(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -671,10 +651,10 @@ func (ruo *RoomUpdateOne) sqlSave(ctx context.Context) (_node *Room, err error) 
 		_spec.SetField(room.FieldPrivacy, field.TypeEnum, value)
 	}
 	if value, ok := ruo.mutation.PasswordHash(); ok {
-		_spec.SetField(room.FieldPasswordHash, field.TypeString, value)
+		_spec.SetField(room.FieldPasswordHash, field.TypeBytes, value)
 	}
 	if ruo.mutation.PasswordHashCleared() {
-		_spec.ClearField(room.FieldPasswordHash, field.TypeString)
+		_spec.ClearField(room.FieldPasswordHash, field.TypeBytes)
 	}
 	if value, ok := ruo.mutation.HasChat(); ok {
 		_spec.SetField(room.FieldHasChat, field.TypeBool, value)

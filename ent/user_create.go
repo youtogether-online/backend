@@ -55,14 +55,6 @@ func (uc *UserCreate) SetName(s string) *UserCreate {
 	return uc
 }
 
-// SetNillableName sets the "name" field if the given value is not nil.
-func (uc *UserCreate) SetNillableName(s *string) *UserCreate {
-	if s != nil {
-		uc.SetName(*s)
-	}
-	return uc
-}
-
 // SetEmail sets the "email" field.
 func (uc *UserCreate) SetEmail(s string) *UserCreate {
 	uc.mutation.SetEmail(s)
@@ -207,7 +199,9 @@ func (uc *UserCreate) Mutation() *UserMutation {
 
 // Save creates the User in the database.
 func (uc *UserCreate) Save(ctx context.Context) (*User, error) {
-	uc.defaults()
+	if err := uc.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks[*User, UserMutation](ctx, uc.sqlSave, uc.mutation, uc.hooks)
 }
 
@@ -234,18 +228,20 @@ func (uc *UserCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (uc *UserCreate) defaults() {
+func (uc *UserCreate) defaults() error {
 	if _, ok := uc.mutation.CreateTime(); !ok {
+		if user.DefaultCreateTime == nil {
+			return fmt.Errorf("ent: uninitialized user.DefaultCreateTime (forgotten import ent/runtime?)")
+		}
 		v := user.DefaultCreateTime()
 		uc.mutation.SetCreateTime(v)
 	}
 	if _, ok := uc.mutation.UpdateTime(); !ok {
+		if user.DefaultUpdateTime == nil {
+			return fmt.Errorf("ent: uninitialized user.DefaultUpdateTime (forgotten import ent/runtime?)")
+		}
 		v := user.DefaultUpdateTime()
 		uc.mutation.SetUpdateTime(v)
-	}
-	if _, ok := uc.mutation.Name(); !ok {
-		v := user.DefaultName()
-		uc.mutation.SetName(v)
 	}
 	if _, ok := uc.mutation.IsEmailVerified(); !ok {
 		v := user.DefaultIsEmailVerified
@@ -263,6 +259,7 @@ func (uc *UserCreate) defaults() {
 		v := user.DefaultTheme
 		uc.mutation.SetTheme(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -272,9 +269,6 @@ func (uc *UserCreate) check() error {
 	}
 	if _, ok := uc.mutation.UpdateTime(); !ok {
 		return &ValidationError{Name: "update_time", err: errors.New(`ent: missing required field "User.update_time"`)}
-	}
-	if _, ok := uc.mutation.Name(); !ok {
-		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "User.name"`)}
 	}
 	if v, ok := uc.mutation.Name(); ok {
 		if err := user.NameValidator(v); err != nil {
