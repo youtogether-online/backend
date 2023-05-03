@@ -5,7 +5,6 @@ import (
 	"github.com/wtkeqrf0/you-together/ent"
 	"github.com/wtkeqrf0/you-together/ent/user"
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // IDExist returns true if username exists. Panics if error occurred
@@ -20,14 +19,9 @@ func (r *UserStorage) UserExistsByEmail(ctx context.Context, email string) bool 
 
 // CreateUserWithPassword without verified email and returns it (only on registration)
 func (r *UserStorage) CreateUserWithPassword(ctx context.Context, auth dto.EmailWithPasswordDTO) (*ent.User, error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(auth.Password), 12)
-	if err != nil {
-		return nil, err
-	}
-
 	return r.userClient.Create().SetEmail(auth.Email).
 		SetTheme(auth.Theme).SetLanguage(auth.Language).
-		SetPasswordHash(hashedPassword).Save(ctx)
+		SetPasswordHash([]byte(auth.Password)).Save(ctx)
 }
 
 // CreateUserByEmail without password and returns it (only on registration)

@@ -7,7 +7,6 @@ import (
 	"github.com/wtkeqrf0/you-together/ent/user"
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
 	"github.com/wtkeqrf0/you-together/internal/middleware/exceptions"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type UserStorage struct {
@@ -69,27 +68,23 @@ func (r *UserStorage) UpdateUser(ctx context.Context, customer dto.UpdateUserDTO
 		SetNillableFirstName(customer.FirstName).
 		SetNillableLastName(customer.LastName).Where(user.ID(id)).Save(ctx)
 
-	logrus.WithError(err).Info(updCustomer)
+	logrus.WithError(err).Debug(updCustomer)
 	return err
 }
 
 func (r *UserStorage) UpdateEmail(ctx context.Context, email string, id int) error {
 	res, err := r.userClient.Update().SetEmail(email).
 		SetIsEmailVerified(false).Where(user.ID(id)).Save(ctx)
-	logrus.WithError(err).Info(res)
+
+	logrus.WithError(err).Debug(res)
 	return err
 }
 
 func (r *UserStorage) UpdatePassword(ctx context.Context, password string, id int) error {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
-	if err != nil {
-		return err
-	}
-
-	customer, err := r.userClient.Update().SetPasswordHash(hashedPassword).
+	customer, err := r.userClient.Update().SetPasswordHash([]byte(password)).
 		SetIsEmailVerified(true).Where(user.ID(id)).Save(ctx)
 
-	logrus.WithError(err).Info(customer)
+	logrus.WithError(err).Debug(customer)
 	return err
 }
 
