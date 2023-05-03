@@ -448,50 +448,6 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/{name}": {
-            "get": {
-                "description": "Returns type of object (NOT WORKING)",
-                "tags": [
-                    "Get"
-                ],
-                "summary": "Get type of the user (NOT WORKING)",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Name of something",
-                        "name": "name",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "string type with object",
-                        "schema": {
-                            "$ref": "#/definitions/dto.UserDTO"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/exceptions.MyError"
-                        }
-                    },
-                    "404": {
-                        "description": "User doesn't exist",
-                        "schema": {
-                            "$ref": "#/definitions/exceptions.MyError"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/exceptions.MyError"
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
