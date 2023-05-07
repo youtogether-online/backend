@@ -1,7 +1,7 @@
 ---
 name: Question ❔
 about: Support
-title: Title
+title: ''
 labels: question
 assignees: frkam, wtkeqrf0
 
