@@ -2,7 +2,71 @@ basePath: /api
 consumes:
 - application/json
 definitions:
-  dto.EmailDTO:
+  dao.Me:
+    description: Detail information about the user
+    properties:
+      biography:
+        example: I'd like to relax
+        type: string
+      email:
+        example: myemail@gmail.com
+        type: string
+      firstName:
+        example: Tele
+        type: string
+      friendsIds:
+        example:
+        - bobba
+        - ' imaxied'
+        items:
+          type: string
+        type: array
+      isEmailVerified:
+        example: true
+        type: boolean
+      language:
+        example: RU
+        type: string
+      lastName:
+        example: phone
+        type: string
+      name:
+        example: bobbas
+        type: string
+      role:
+        example: USER
+        type: string
+      theme:
+        example: DARK
+        type: string
+    type: object
+  dao.User:
+    description: Main information about the user
+    properties:
+      biography:
+        example: I'd like to relax
+        type: string
+      firstName:
+        example: Tele
+        type: string
+      friendsIds:
+        example:
+        - tldtb
+        - kigfv
+        items:
+          type: string
+        type: array
+      lastName:
+        example: phone
+        type: string
+      name:
+        example: bobbas
+        type: string
+      role:
+        example: USER
+        type: string
+    type: object
+  dto.Email:
     properties:
       email:
         example: myemail@gmail.com
@@ -10,7 +74,7 @@ definitions:
     required:
     - email
     type: object
-  dto.EmailWithCodeDTO:
+  dto.EmailWithCode:
     properties:
       code:
         example: I1ELB
@@ -26,7 +90,7 @@ definitions:
     - code
     - email
     type: object
-  dto.EmailWithPasswordDTO:
+  dto.EmailWithPassword:
     properties:
       email:
         example: myemail@gmail.com
@@ -44,41 +108,7 @@ definitions:
     - email
     - password
     type: object
-  dto.MyUserDTO:
-    description: User detail information
-    properties:
-      biography:
-        example: I'd like to relax
-        type: string
-      email:
-        example: myemail@gmail.com
-        type: string
-      firstName:
-        example: Tele
-        type: string
-      friendsIds:
-        example:
-        - tldtb
-        - kigfv
-        items:
-          type: string
-        type: array
-      isEmailVerified:
-        type: boolean
-      language:
-        type: string
-      lastName:
-        example: phone
-        type: string
-      name:
-        example: bobbas
-        type: string
-      role:
-        type: string
-      theme:
-        type: string
-    type: object
-  dto.UpdateEmailDTO:
+  dto.UpdateEmail:
     properties:
       newEmail:
         example: myemail@gmail.com
@@ -92,7 +122,7 @@ definitions:
     - newEmail
     - password
     type: object
-  dto.UpdatePasswordDTO:
+  dto.UpdatePassword:
     properties:
       code:
         example: I1ELB
@@ -110,7 +140,7 @@ definitions:
     - email
     - newPassword
     type: object
-  dto.UpdateUserDTO:
+  dto.UpdateUser:
     properties:
       biography:
         example: I'd like to relax
@@ -128,32 +158,7 @@ definitions:
       theme:
         type: string
     type: object
-  dto.UserDTO:
-    description: User's main information
-    properties:
-      biography:
-        example: I'd like to relax
-        type: string
-      firstName:
-        example: Tele
-        type: string
-      friendsIds:
-        example:
-        - tldtb
-        - kigfv
-        items:
-          type: string
-        type: array
-      lastName:
-        example: phone
-        type: string
-      name:
-        example: bobbas
-        type: string
-      role:
-        type: string
-    type: object
-  exceptions.MyError:
+  errs.MyError:
     description: All native errors must be this type
     properties:
       advice:
@@ -181,7 +186,7 @@ paths:
         name: user_info
         required: true
         schema:
-          $ref: '#/definitions/dto.EmailWithCodeDTO'
+          $ref: '#/definitions/dto.EmailWithCode'
       - description: User's language
         enum:
         - EN
@@ -193,13 +198,13 @@ paths:
         "200":
           description: user's session
         "400":
-          description: Bad Request
+          description: Data is not valid
           schema:
-            $ref: '#/definitions/exceptions.MyError'
+            $ref: '#/definitions/errs.MyError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/exceptions.MyError'
+            $ref: '#/definitions/errs.MyError'
       summary: Sign in by email
       tags:
       - Authorization
@@ -207,14 +212,14 @@ paths:
     post:
       description: Compare the user's password with an existing user's password. If
         it matches, create session of the user. If the user does not exist, create
-        a new user
+        new user
       parameters:
       - description: User's email, password
         in: body
-        name: EmailWithPasswordDTO
+        name: EmailWithPassword
         required: true
         schema:
-          $ref: '#/definitions/dto.EmailWithPasswordDTO'
+          $ref: '#/definitions/dto.EmailWithPassword'
       - description: User's language
         enum:
         - EN
@@ -226,17 +231,17 @@ paths:
         "200":
           description: user's session
         "400":
-          description: Bad Request
+          description: Data is not valid
           schema:
-            $ref: '#/definitions/exceptions.MyError'
+            $ref: '#/definitions/errs.MyError'
         "404":
           description: Password is not registered for this account
           schema:
-            $ref: '#/definitions/exceptions.MyError'
+            $ref: '#/definitions/errs.MyError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/exceptions.MyError'
+            $ref: '#/definitions/errs.MyError'
       summary: Sign in by password
       tags:
       - Authorization
@@ -249,18 +254,22 @@ paths:
         name: email
         required: true
         schema:
-          $ref: '#/definitions/dto.EmailDTO'
+          $ref: '#/definitions/dto.Email'
       responses:
         "200":
           description: OK
         "400":
-          description: Bad Request
+          description: Data is not valid
           schema:
-            $ref: '#/definitions/exceptions.MyError'
+            $ref: '#/definitions/errs.MyError'
+        "403":
+          description: Unable to connect to the specified email
+          schema:
+            $ref: '#/definitions/errs.MyError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/exceptions.MyError'
+            $ref: '#/definitions/errs.MyError'
       summary: Send code to the user's email
       tags:
       - Email
@@ -274,60 +283,58 @@ paths:
       tags:
       - Sessions
     get:
-      description: Return detail information about the user (cookie required)
+      description: Returns detail information about me (session required)
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.MyUserDTO'
+            $ref: '#/definitions/dao.Me'
         "401":
           description: User isn't logged in
           schema:
-            $ref: '#/definitions/exceptions.MyError'
+            $ref: '#/definitions/errs.MyError'
         "404":
           description: User doesn't exist
           schema:
-            $ref: '#/definitions/exceptions.MyError'
+            $ref: '#/definitions/errs.MyError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/exceptions.MyError'
-      summary: Get detail information about user by session
+            $ref: '#/definitions/errs.MyError'
+      summary: Get detail data about the user by session
       tags:
       - Sessions
   /user:
     patch:
-      description: Change user's main information (cookie required)
+      description: Change user's main information (session required)
       parameters:
-      - description: New user Information
+      - description: New user data
         in: body
-        name: UpdateUserDTO
+        name: UpdateUser
         required: true
         schema:
-          $ref: '#/definitions/dto.UpdateUserDTO'
+          $ref: '#/definitions/dto.UpdateUser'
       responses:
         "200":
           description: OK
         "400":
-          description: Bad Request
+          description: Data is not valid
           schema:
-            $ref: '#/definitions/exceptions.MyError'
+            $ref: '#/definitions/errs.MyError'
         "401":
           description: User isn't logged in
           schema:
-            $ref: '#/definitions/exceptions.MyError'
+            $ref: '#/definitions/errs.MyError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/exceptions.MyError'
-      summary: Update user's information
+            $ref: '#/definitions/errs.MyError'
+      summary: Update user's data
       tags:
       - User Update
   /user/{username}:
     get:
-      description: Return main information about the user. If the user tries to find
-        out information about himself, return detailed information about the user
-        (can accept cookie)
+      description: Returns main information about the user
       parameters:
       - description: Name of the user
         in: path
@@ -336,27 +343,27 @@ paths:
         type: string
       responses:
         "200":
-          description: main info, without cookie or dto.MyUserDTO
+          description: main info
           schema:
-            $ref: '#/definitions/dto.UserDTO'
+            $ref: '#/definitions/dao.User'
         "400":
-          description: Bad Request
+          description: Param is not valid
           schema:
-            $ref: '#/definitions/exceptions.MyError'
+            $ref: '#/definitions/errs.MyError'
         "404":
           description: User doesn't exist
           schema:
-            $ref: '#/definitions/exceptions.MyError'
+            $ref: '#/definitions/errs.MyError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/exceptions.MyError'
-      summary: Get main information about the user
+            $ref: '#/definitions/errs.MyError'
+      summary: Get main data about the user
       tags:
       - User Get
   /user/check-name/{username}:
     get:
-      description: Status 200 if username not used or 403 if username already used
+      description: Status 200 if username not used or 403 if username is already used
       parameters:
       - description: Name of the user
         in: path
@@ -367,92 +374,92 @@ paths:
         "200":
           description: name isn't used
         "400":
-          description: Bad Request
+          description: Username is not valid
           schema:
-            $ref: '#/definitions/exceptions.MyError'
+            $ref: '#/definitions/errs.MyError'
         "403":
           description: name already used
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/exceptions.MyError'
+            $ref: '#/definitions/errs.MyError'
       summary: Check username on exist
       tags:
       - User Get
   /user/email:
     patch:
-      description: Change user's email by password (cookie required)
+      description: Change user's email by password (session required)
       parameters:
       - description: user's password and new email
         in: body
-        name: UpdateEmailDTO
+        name: UpdateEmail
         required: true
         schema:
-          $ref: '#/definitions/dto.UpdateEmailDTO'
+          $ref: '#/definitions/dto.UpdateEmail'
       responses:
         "200":
           description: OK
         "400":
-          description: Bad Request
+          description: Data is not valid
           schema:
-            $ref: '#/definitions/exceptions.MyError'
+            $ref: '#/definitions/errs.MyError'
         "401":
           description: User isn't logged in
           schema:
-            $ref: '#/definitions/exceptions.MyError'
+            $ref: '#/definitions/errs.MyError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/exceptions.MyError'
+            $ref: '#/definitions/errs.MyError'
       summary: Update user's email
       tags:
       - User Update
   /user/name:
     patch:
-      description: Change user's username (cookie required)
+      description: Change user's name (session required)
       responses:
         "200":
           description: OK
         "400":
-          description: Bad Request
+          description: Data is not valid
           schema:
-            $ref: '#/definitions/exceptions.MyError'
+            $ref: '#/definitions/errs.MyError'
         "401":
           description: User isn't logged in
           schema:
-            $ref: '#/definitions/exceptions.MyError'
+            $ref: '#/definitions/errs.MyError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/exceptions.MyError'
-      summary: Update user's username
+            $ref: '#/definitions/errs.MyError'
+      summary: Update user's name
       tags:
       - User Update
   /user/password:
     patch:
-      description: Change user's password by email (cookie required)
+      description: Change user's password by email (session required)
       parameters:
       - description: user's email, code and new password
         in: body
-        name: UpdatePasswordDTO
+        name: UpdatePassword
         required: true
         schema:
-          $ref: '#/definitions/dto.UpdatePasswordDTO'
+          $ref: '#/definitions/dto.UpdatePassword'
       responses:
         "200":
           description: OK
         "400":
-          description: Bad Request
+          description: Data is not valid
           schema:
-            $ref: '#/definitions/exceptions.MyError'
+            $ref: '#/definitions/errs.MyError'
         "401":
           description: User isn't logged in
           schema:
-            $ref: '#/definitions/exceptions.MyError'
+            $ref: '#/definitions/errs.MyError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/exceptions.MyError'
+            $ref: '#/definitions/errs.MyError'
       summary: Update user's password
       tags:
       - User Update
