@@ -1,20 +1,20 @@
-package authorization
+package sessions
 
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/mssola/useragent"
-	"github.com/wtkeqrf0/you-together/internal/controller/dto"
-	"github.com/wtkeqrf0/you-together/internal/middleware/exceptions"
+	"github.com/wtkeqrf0/you-together/internal/controller/dao"
+	"github.com/wtkeqrf0/you-together/pkg/middleware/errs"
 	"net/http"
 	"regexp"
 	"time"
 )
 
 type AuthService interface {
-	SetSession(sessionId string, info dto.Session) error
-	GetSession(sessionId string) (*dto.Session, error)
+	SetSession(sessionId string, info dao.Session) error
+	GetSession(sessionId string) (*dao.Session, error)
 	ExpandExpireSession(sessionId string) (bool, error)
 	IDExist(id int) bool
 	DelKeys(keys ...string)
@@ -34,8 +34,8 @@ const (
 	uuid4     string = "/^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i"
 )
 
-// ValidateSession validates the session and identifies the user in DbId. Returns an error in case of unsuccessful validation
-func (a Auth) ValidateSession(sessionId string) (*dto.Session, bool, error) {
+// ValidateSession and identify the user in redis. Returns true, if session was expanded.
+func (a Auth) ValidateSession(sessionId string) (*dao.Session, bool, error) {
 	if sessionId == "" {
 		return nil, false, fmt.Errorf("session id is not found")
 	}
@@ -57,7 +57,7 @@ func (a Auth) ValidateSession(sessionId string) (*dto.Session, bool, error) {
 	return info, ok, nil
 }
 
-// GenerateSession generates a new session
+// GenerateSession and save it to redis
 func (a Auth) GenerateSession(id int, ip, userAgent string) (string, error) {
 	ua := useragent.New(userAgent)
 	name, ver := ua.Browser()
@@ -68,7 +68,7 @@ func (a Auth) GenerateSession(id int, ip, userAgent string) (string, error) {
 		return "", err
 	}
 
-	return sessionId, a.auth.SetSession(sessionId, dto.Session{
+	return sessionId, a.auth.SetSession(sessionId, dao.Session{
 		ID:      id,
 		IP:      ip,
 		Device:  ua.OS(),
@@ -77,13 +77,13 @@ func (a Auth) GenerateSession(id int, ip, userAgent string) (string, error) {
 	})
 }
 
-func (a Auth) GetSession(c *gin.Context) (*dto.Session, error) {
+func (a Auth) GetSession(c *gin.Context) (*dao.Session, error) {
 	get, ok := c.Get("user_info")
 	if !ok {
 		return nil, fmt.Errorf("session not found in context")
 	}
 
-	res, ok := get.(*dto.Session)
+	res, ok := get.(*dao.Session)
 	if !ok {
 		return nil, fmt.Errorf("cannot parse session")
 	}
@@ -98,7 +98,7 @@ func (a Auth) SetNewCookie(id int, c *gin.Context) {
 	)
 
 	if err != nil {
-		c.Error(exceptions.ServerError.AddErr(err))
+		c.Error(errs.ServerError.AddErr(err))
 		return
 	}
 
@@ -107,6 +107,7 @@ func (a Auth) SetNewCookie(id int, c *gin.Context) {
 		cfg.Session.CookiePath, cfg.Listen.Host, true, true)
 }
 
+// PopCookie from cookie storage only if equals to uuid4
 func (a Auth) PopCookie(c *gin.Context) {
 	session, _ := c.Cookie(cfg.Session.CookieName)
 	if ok, _ := regexp.MatchString(uuid4, session); ok {

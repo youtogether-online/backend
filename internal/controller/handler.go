@@ -5,9 +5,11 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/wtkeqrf0/you-together/ent"
+	"github.com/wtkeqrf0/you-together/internal/controller/dao"
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
-	"github.com/wtkeqrf0/you-together/internal/middleware/exceptions"
 	"github.com/wtkeqrf0/you-together/pkg/conf"
+	"github.com/wtkeqrf0/you-together/pkg/middleware/errs"
+	"github.com/wtkeqrf0/you-together/pkg/middleware/logger"
 	"time"
 )
 
@@ -22,10 +24,10 @@ var (
 
 // UserService interacts with the users table
 type UserService interface {
-	FindUserByUsername(username string) (*dto.UserDTO, error)
+	FindUserByUsername(username string) (*dao.User, error)
 	FindUserByID(id int) (*ent.User, error)
-	FindMe(id int) (*dto.MyUserDTO, error)
-	UpdateUser(customer dto.UpdateUserDTO, id int) error
+	FindMe(id int) (*dao.Me, error)
+	UpdateUser(customer dto.UpdateUser, id int) error
 	UpdatePassword(password string, id int) error
 	UpdateEmail(email string, id int) error
 	UpdateUsername(username string, id int) error
@@ -38,13 +40,13 @@ type UserService interface {
 type AuthService interface {
 	SetCodes(key string, value ...any) error
 	EqualsPopCode(email string, code string) (bool, error)
-	GetSession(sessionId string) (*dto.Session, error)
-	SetSession(sessionId string, info dto.Session) error
+	GetSession(sessionId string) (*dao.Session, error)
+	SetSession(sessionId string, info dao.Session) error
 	DelKeys(keys ...string)
 
-	CreateUserWithPassword(auth dto.EmailWithPasswordDTO) (*ent.User, error)
+	CreateUserWithPassword(auth dto.EmailWithPassword) (*ent.User, error)
 	UserExistsByEmail(email string) bool
-	CreateUserByEmail(auth dto.EmailWithCodeDTO) (*ent.User, error)
+	CreateUserByEmail(auth dto.EmailWithCode) (*ent.User, error)
 	AuthUserByEmail(email string) (*ent.User, error)
 	SetEmailVerified(email string) error
 }
@@ -54,7 +56,7 @@ type AuthMiddleware interface {
 	MaybeSession(c *gin.Context)
 	GenerateSession(id int, ip, userAgent string) (string, error)
 	SetNewCookie(id int, c *gin.Context)
-	GetSession(c *gin.Context) (*dto.Session, error)
+	GetSession(c *gin.Context) (*dao.Session, error)
 	PopCookie(c *gin.Context)
 }
 
@@ -74,7 +76,7 @@ func NewHandler(users UserService, sessions AuthMiddleware, auth AuthService, ma
 }
 
 func (h Handler) InitRoutes(r *gin.Engine, mailSet bool) {
-	r.Use(gin.Logger(), gin.Recovery(), exceptions.ErrorHandler)
+	r.Use(logger.QueryLogging, gin.Recovery(), errs.ErrorHandler)
 	api := r.Group("/api")
 
 	docs := api.Group("/docs")
@@ -103,7 +105,7 @@ func (h Handler) InitRoutes(r *gin.Engine, mailSet bool) {
 
 	user := api.Group("/user")
 	{
-		user.GET("/:username", h.sessions.MaybeSession, h.getUserByUsername)
+		user.GET("/:username", h.getUserByUsername)
 		user.PATCH("", h.sessions.RequireSession, h.updateUser)
 		user.PATCH("/email", h.sessions.RequireSession, h.updateEmail)
 		user.PATCH("/password", h.sessions.RequireSession, h.updatePassword)

@@ -3,7 +3,7 @@ package redis
 import (
 	"context"
 	"github.com/redis/go-redis/v9"
-	"github.com/wtkeqrf0/you-together/internal/controller/dto"
+	"github.com/wtkeqrf0/you-together/internal/controller/dao"
 	"github.com/wtkeqrf0/you-together/pkg/conf"
 	"reflect"
 	"time"
@@ -22,7 +22,7 @@ func NewRClient(client *redis.Client) *RClient {
 }
 
 // SetSession and all its parameters
-func (r *RClient) SetSession(ctx context.Context, sessionId string, info dto.Session) error {
+func (r *RClient) SetSession(ctx context.Context, sessionId string, info dao.Session) error {
 	return r.client.Watch(ctx, func(tx *redis.Tx) error {
 
 		v := reflect.ValueOf(info)
@@ -40,30 +40,31 @@ func (r *RClient) SetSession(ctx context.Context, sessionId string, info dto.Ses
 }
 
 // GetSession and all its parameters
-func (r *RClient) GetSession(ctx context.Context, sessionId string) (*dto.Session, error) {
-	info := new(dto.Session)
+func (r *RClient) GetSession(ctx context.Context, sessionId string) (*dao.Session, error) {
+	info := new(dao.Session)
 	err := r.client.HGetAll(ctx, sessionId).Scan(info)
 	return info, err
 }
 
-// ExpandExpireSession if key exists and have lesser than 15 days of expire
+// ExpandExpireSession if key exists and have lesser than 15 days of expire.
+// Returns true if session was expired
 func (r *RClient) ExpandExpireSession(ctx context.Context, sessionId string) (bool, error) {
 	v, err := r.client.TTL(ctx, sessionId).Result()
-	if v <= cfg.Session.Duration/2 {
+	if err == nil && v <= cfg.Session.Duration/2 {
 		return r.client.Expire(ctx, sessionId, month).Result()
 	}
 	return false, err
 }
 
-// DelKeys fully deletes session id
 func (r *RClient) DelKeys(ctx context.Context, keys ...string) {
 	r.client.Del(ctx, keys...)
 }
 
-// EqualsPopCode returns true if code is involved in email and deletes it
+// EqualsPopCode returns true if code is saved earlier in email and deletes it
 func (r *RClient) EqualsPopCode(ctx context.Context, email string, code string) (exist bool, err error) {
 	err = r.client.Watch(ctx, func(tx *redis.Tx) error {
 		exist, err = tx.SIsMember(ctx, email, code).Result()
+
 		if err != nil {
 			return err
 		}
