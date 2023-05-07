@@ -26,19 +26,40 @@ const emailRegexp string = "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-z
 // Fields of the User.
 func (User) Fields() []ent.Field {
 	return []ent.Field{
+		field.Int("id").StructTag(`json:"-"`),
 		field.String("name").Unique().Match(bind.NameRegexp).Annotations(
-			entsql.DefaultExpr("'user' || currval(pg_get_serial_sequence('users','id'))")),
-		field.String("email").Unique().Match(regexp.MustCompile(emailRegexp)),
-		field.Bool("is_email_verified").Default(false),
+			entsql.DefaultExpr("'user' || currval(pg_get_serial_sequence('users', 'id'))")).
+			StructTag(`json:"name,omitempty" example:"bobbas"`),
+
+		field.String("email").Unique().Match(regexp.MustCompile(emailRegexp)).
+			StructTag(`json:"email,omitempty" example:"myemail@gmail.com"`),
+
+		field.Bool("is_email_verified").Default(false).
+			StructTag(`json:"isEmailVerified" example:"true"`),
+
 		field.Bytes("password_hash").Optional().Sensitive().Nillable(),
-		field.Text("biography").Optional().MaxLen(512).Nillable(),
-		field.String("role").Default("USER"),
-		field.Strings("friends_ids").Optional(),
-		field.String("language").Default("EN"),
-		field.String("theme").Default("SYSTEM"),
-		field.String("first_name").Optional().MinLen(2).MaxLen(30).Nillable(),
-		field.String("last_name").Optional().MinLen(2).MaxLen(30).Nillable(),
-		field.Strings("sessions").Optional(),
+
+		field.Text("biography").Optional().MaxLen(512).Nillable().
+			StructTag(`json:"biography,omitempty" example:"I'd like to relax"`),
+
+		field.String("role").Default("USER").StructTag(`json:"role,omitempty" example:"USER"`),
+
+		field.Strings("friends_ids").Optional().
+			StructTag(`json:"friendsIds,omitempty" example:"bobba, imaxied"`),
+
+		field.String("language").Default("EN").
+			StructTag(`json:"language,omitempty" example:"RU"`),
+
+		field.String("theme").Default("SYSTEM").
+			StructTag(`json:"theme,omitempty" example:"DARK"`),
+
+		field.String("first_name").Optional().MinLen(2).MaxLen(30).Nillable().
+			StructTag(`json:"firstName,omitempty" example:"Tele"`),
+
+		field.String("last_name").Optional().MinLen(2).MaxLen(30).Nillable().
+			StructTag(`json:"lastName,omitempty" example:"phone"`),
+
+		field.Strings("sessions").Optional().StructTag(`json:"-"`),
 	}
 }
 

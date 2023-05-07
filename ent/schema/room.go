@@ -23,14 +23,28 @@ type Room struct {
 // Fields of the Room.
 func (Room) Fields() []ent.Field {
 	return []ent.Field{
+		field.Int("id").StructTag(`json:"-"`).Annotations(
+			entsql.DefaultExpr("nextval(pg_get_serial_sequence('users', 'id'))")),
+
 		field.String("name").Unique().Match(bind.NameRegexp).Annotations(
-			entsql.DefaultExpr("'room' || currval(pg_get_serial_sequence('rooms','id'))")),
-		field.String("custom_name").Optional().MinLen(2).MaxLen(20).Nillable(),
-		field.Int("owner_id").Unique().Positive(),
-		field.Enum("privacy").Values("PRIVATE", "FRIENDS", "PUBLIC").Default("PUBLIC"),
+			entsql.DefaultExpr("'room' || currval(pg_get_serial_sequence('users', 'id'))")).
+			StructTag(`json:"name,omitempty" example:"room5883"`),
+
+		field.String("custom_name").Optional().MinLen(2).MaxLen(20).Nillable().
+			StructTag(`json:"customName,omitempty" example:"Gym"`),
+
+		field.Int("owner_id").Unique().Positive().StructTag(`json:"-"`),
+
+		field.Enum("privacy").Values("PRIVATE", "FRIENDS", "PUBLIC").
+			Default("PUBLIC").StructTag(`json:"privacy,omitempty" example:"PRIVATE"`),
+
 		field.Bytes("password_hash").Optional().Sensitive().Nillable(),
-		field.Bool("has_chat").Default(true),
-		field.String("description").Optional().MaxLen(140).Nillable(),
+
+		field.Bool("has_chat").Default(true).
+			StructTag(`json:"has_chat,omitempty" example:"true"`),
+
+		field.String("description").Optional().MaxLen(140).Nillable().
+			StructTag(`json:"description,omitempty" example:"I'd like to relax"`),
 	}
 }
 

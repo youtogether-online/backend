@@ -10,10 +10,10 @@ import (
 var (
 	// RoomsColumns holds the columns for the "rooms" table.
 	RoomsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "id", Type: field.TypeInt, Increment: true, Default: schema.Expr("nextval(pg_get_serial_sequence('users', 'id'))")},
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
-		{Name: "name", Type: field.TypeString, Unique: true, Default: schema.Expr("'room' || currval(pg_get_serial_sequence('rooms','id'))")},
+		{Name: "name", Type: field.TypeString, Unique: true, Default: schema.Expr("'room' || currval(pg_get_serial_sequence('users', 'id'))")},
 		{Name: "custom_name", Type: field.TypeString, Nullable: true, Size: 20},
 		{Name: "owner_id", Type: field.TypeInt, Unique: true},
 		{Name: "privacy", Type: field.TypeEnum, Enums: []string{"PRIVATE", "FRIENDS", "PUBLIC"}, Default: "PUBLIC"},
@@ -32,7 +32,7 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
-		{Name: "name", Type: field.TypeString, Unique: true, Default: schema.Expr("'user' || currval(pg_get_serial_sequence('users','id'))")},
+		{Name: "name", Type: field.TypeString, Unique: true, Default: schema.Expr("'user' || currval(pg_get_serial_sequence('users', 'id'))")},
 		{Name: "email", Type: field.TypeString, Unique: true},
 		{Name: "is_email_verified", Type: field.TypeBool, Default: false},
 		{Name: "password_hash", Type: field.TypeBytes, Nullable: true},
