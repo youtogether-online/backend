@@ -14,10 +14,6 @@ func NewValid(v *validator.Validate) *Valid {
 	return &Valid{v: v}
 }
 
-func validateName(fl validator.FieldLevel) bool {
-	return NameRegexp.MatchString(fl.Field().String())
-}
-
 func (v *Valid) Engine() any {
 	return v.v
 }
