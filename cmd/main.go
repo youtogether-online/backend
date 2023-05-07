@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
@@ -10,7 +11,6 @@ import (
 	_ "github.com/wtkeqrf0/you-together/docs"
 	"github.com/wtkeqrf0/you-together/ent"
 	"github.com/wtkeqrf0/you-together/internal/controller"
-	"github.com/wtkeqrf0/you-together/internal/middleware/authorization"
 	"github.com/wtkeqrf0/you-together/internal/repo/postgres"
 	redis2 "github.com/wtkeqrf0/you-together/internal/repo/redis"
 	"github.com/wtkeqrf0/you-together/internal/service"
@@ -19,27 +19,29 @@ import (
 	"github.com/wtkeqrf0/you-together/pkg/client/postgresql"
 	redisDB "github.com/wtkeqrf0/you-together/pkg/client/redis"
 	"github.com/wtkeqrf0/you-together/pkg/conf"
+	"github.com/wtkeqrf0/you-together/pkg/middleware/sessions"
 	"net/http"
 	"net/smtp"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 	"time"
 )
 
 func init() {
 	logrus.SetFormatter(&logrus.JSONFormatter{
-		TimestampFormat: "2006-01-02 15:32:05",
+		TimestampFormat: "2006/01/02 15:32:05",
 		FieldMap: logrus.FieldMap{
 			logrus.FieldKeyLevel: "status",
 			logrus.FieldKeyFunc:  "caller",
 			logrus.FieldKeyMsg:   "message",
 		},
 	})
+	logrus.SetReportCaller(true)
 
 	logrus.SetReportCaller(true)
 
+	// global validator of incoming values
 	binding.Validator = bind.NewValid(validator.New())
 }
 
@@ -53,23 +55,18 @@ func init() {
 // @host localhost:3000
 // @BasePath /api
 
-// @authorization.docs.description Authorization, registration and authentication
+// @sessions.docs.description Authorization, registration and authentication
 func main() {
 	cfg := conf.GetConfig()
 
-	pClient := postgresql.Open(cfg.DB.Postgres.Username, cfg.DB.Postgres.Password,
-		cfg.DB.Postgres.Host, cfg.DB.Postgres.Port, cfg.DB.Postgres.DBName)
-
-	rClient := redisDB.Open(cfg.DB.Redis.Host, cfg.DB.Redis.Port, cfg.DB.Redis.DbId)
+	pClient, rClient, mailClient := getClients(cfg)
 
 	pConn, rConn := postgres.NewUserStorage(pClient.User), redis2.NewRClient(rClient)
 	auth := service.NewAuthService(pConn, rConn)
 
-	mailClient := email.Open(cfg.Email.User, cfg.Email.Password, cfg.Email.Host, cfg.Email.Port)
-
 	h := controller.NewHandler(
 		service.NewUserService(pConn, rConn),
-		authorization.NewAuth(auth),
+		sessions.NewAuth(auth),
 		auth,
 		service.NewEmailSender(mailClient),
 	)
@@ -77,13 +74,13 @@ func main() {
 	r := gin.New()
 	h.InitRoutes(r, mailClient != nil)
 
-	Run(cfg.Listen.Port, r, pClient, rClient, mailClient)
+	Run(cfg.Listen.Host, cfg.Listen.Port, r, pClient, rClient, mailClient)
 }
 
 // Run the Server with graceful shutdown
-func Run(port int, r *gin.Engine, pClient *ent.Client, rClient *redis.Client, mailClient *smtp.Client) {
+func Run(host string, port int, r *gin.Engine, pClient *ent.Client, rClient *redis.Client, mailClient *smtp.Client) {
 	srv := &http.Server{
-		Addr:           ":" + strconv.Itoa(port),
+		Addr:           fmt.Sprintf("%s:%d", host, port),
 		Handler:        r,
 		MaxHeaderBytes: 1 << 20, // 1 MB
 		ReadTimeout:    10 * time.Second,
@@ -98,8 +95,7 @@ func Run(port int, r *gin.Engine, pClient *ent.Client, rClient *redis.Client, ma
 			logrus.WithError(err).Fatalf("error occurred while running http server")
 		}
 	}()
-
-	logrus.Infof("Server Started On Port %d", port)
+	logrus.Infof("Server Started On %s:%d", host, port)
 
 	<-quit
 
@@ -121,12 +117,19 @@ func Run(port int, r *gin.Engine, pClient *ent.Client, rClient *redis.Client, ma
 	}
 
 	if err := mailClient.Quit(); err != nil {
-		logrus.WithError(err).Fatal("Email QUIT Failed")
-	}
-
-	if err := mailClient.Close(); err != nil {
 		logrus.WithError(err).Fatal("Email Connection Shutdown Failed")
 	}
 
 	logrus.Info("Server Exited Properly")
+}
+
+func getClients(cfg *conf.Config) (*ent.Client, *redis.Client, *smtp.Client) {
+	pClient := postgresql.Open(cfg.DB.Postgres.Username, cfg.DB.Postgres.Password,
+		cfg.DB.Postgres.Host, cfg.DB.Postgres.Port, cfg.DB.Postgres.DBName)
+
+	rClient := redisDB.Open(cfg.DB.Redis.Host, cfg.DB.Redis.Port, cfg.DB.Redis.DbId)
+
+	mailClient := email.Open(cfg.Email.User, cfg.Email.Password, cfg.Email.Host, cfg.Email.Port)
+
+	return pClient, rClient, mailClient
 }
