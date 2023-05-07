@@ -9,6 +9,8 @@ import (
 )
 
 type Config struct {
+	// in docker image is always 1
+	// can be specified by environment variable
 	Prod int `yaml:"prod" env:"PROD" env-default:"0"`
 
 	Session struct {
@@ -27,12 +29,14 @@ type Config struct {
 			Username string `yaml:"username" env:"POSTGRES_USERNAME" env-default:"postgres"`
 			DBName   string `yaml:"db_name" env:"POSTGRES_DB" env-default:"you-together"`
 			Password string `yaml:"password" env:"POSTGRES_PASSWORD" env-default:"postgres"`
-			Host     string `yaml:"host" env:"POSTGRES_HOST" env-default:"127.0.0.1"`
-			Port     int    `yaml:"port" env:"POSTGRES_PORT" env-required:"true"`
+			// if prod=1, host will always be "postgres" (docker constant)
+			Host string `yaml:"host" env:"POSTGRES_HOST" env-default:"127.0.0.1"`
+			Port int    `yaml:"port" env:"POSTGRES_PORT" env-required:"true"`
 		} `yaml:"postgres"`
 
 		Redis struct {
-			DbId int    `yaml:"db_id" env:"REDIS_DB" env-default:"0"`
+			DbId int `yaml:"db_id" env:"REDIS_DB" env-default:"0"`
+			// if prod=1, host will always be "redis" (docker constant)
 			Host string `yaml:"host" env:"REDIS_HOST" env-default:"127.0.0.1"`
 			Port int    `yaml:"port" env:"REDIS_POST" env-required:"true"`
 		} `yaml:"redis"`
@@ -52,14 +56,15 @@ var (
 	once sync.Once
 )
 
-// GetConfig builds the configuration file in golang type and returns it
+// GetConfig builds the golang type by environment variables
+// or (if not specified) configuration file and returns it
 func GetConfig() *Config {
 	once.Do(func() {
 		godotenv.Load()
 
 		if err := cleanenv.ReadConfig("configs/config.yml", inst); err != nil {
 			logrus.WithError(err).Error("error occurred while reading config file")
-			help, _ := cleanenv.GetDescription(&inst, nil)
+			help, _ := cleanenv.GetDescription(inst, nil)
 			logrus.Info(help)
 			logrus.Exit(0)
 		}
@@ -67,7 +72,8 @@ func GetConfig() *Config {
 		if inst.Prod == 1 {
 			inst.DB.Postgres.Host = "postgres"
 			inst.DB.Redis.Host = "redis"
-			logrus.SetLevel(logrus.InfoLevel)
+		} else {
+			logrus.SetLevel(logrus.DebugLevel)
 		}
 	})
 

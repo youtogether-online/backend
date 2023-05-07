@@ -9,7 +9,6 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/sirupsen/logrus"
 	"github.com/wtkeqrf0/you-together/ent"
-	"github.com/wtkeqrf0/you-together/ent/migrate"
 	_ "github.com/wtkeqrf0/you-together/ent/runtime"
 	"log"
 	"time"
@@ -32,7 +31,7 @@ func Open(username, password, host string, port int, DBName string) *ent.Client 
 	drv := entsql.OpenDB(dialect.Postgres, db)
 	client := ent.NewClient(ent.Driver(drv))
 
-	if err = client.Schema.Create(context.Background(), migrate.WithGlobalUniqueID(true)); err != nil {
+	if err = client.Schema.Create(context.Background()); err != nil {
 		logrus.WithError(err).Fatal("tables initialization failed")
 	}
 

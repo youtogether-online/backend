@@ -3,8 +3,8 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
-	"github.com/wtkeqrf0/you-together/internal/middleware/exceptions"
 	"github.com/wtkeqrf0/you-together/pkg/bind"
+	"github.com/wtkeqrf0/you-together/pkg/middleware/errs"
 	"golang.org/x/crypto/bcrypt"
 	"math/rand"
 	"net/http"
@@ -12,17 +12,17 @@ import (
 
 // SignInWithPassword godoc
 // @Summary Sign in by password
-// @Description Compare the user's password with an existing user's password. If it matches, create session of the user. If the user does not exist, create a new user
-// @Param EmailWithPasswordDTO body dto.EmailWithPasswordDTO true "User's email, password"
+// @Description Compare the user's password with an existing user's password. If it matches, create session of the user. If the user does not exist, create new user
+// @Param EmailWithPassword body dto.EmailWithPassword true "User's email, password"
 // @Param Accept-Language header string false "User's language" Enums(EN,RU)
 // @Tags Authorization
 // @Success 200 "user's session"
-// @Failure 400 {object} exceptions.MyError
-// @Failure 404 {object} exceptions.MyError "Password is not registered for this account"
-// @Failure 500 {object} exceptions.MyError
+// @Failure 400 {object} errs.MyError "Data is not valid"
+// @Failure 404 {object} errs.MyError "Password is not registered for this account"
+// @Failure 500 {object} errs.MyError
 // @Router /auth/password/sign-in [post]
 func (h Handler) signInByPassword(c *gin.Context) {
-	auth, ok := bind.FillStruct[dto.EmailWithPasswordDTO](c)
+	auth, ok := bind.FillStruct[dto.EmailWithPassword](c)
 	if !ok {
 		return
 	}
@@ -35,16 +35,16 @@ func (h Handler) signInByPassword(c *gin.Context) {
 		customer, err = h.auth.CreateUserWithPassword(auth)
 
 		if err != nil {
-			c.Error(exceptions.ServerError.AddErr(err))
+			c.Error(errs.ServerError.AddErr(err))
 			return
 		}
 	} else if customer.PasswordHash == nil {
-		c.Error(exceptions.PasswordNotFound)
+		c.Error(errs.PasswordNotFound)
 		return
 	}
 
 	if err = bcrypt.CompareHashAndPassword(*customer.PasswordHash, []byte(auth.Password)); err != nil {
-		c.Error(exceptions.PasswordError.AddErr(err))
+		c.Error(errs.PasswordError.AddErr(err))
 		return
 	}
 	h.sessions.SetNewCookie(customer.ID, c)
@@ -55,25 +55,26 @@ func (h Handler) signInByPassword(c *gin.Context) {
 // SignInSendCode godoc
 // @Summary Send code to the user's email
 // @Description Send a secret 5-digit code to the specified email
-// @Param email body dto.EmailDTO true "User's email"
+// @Param email body dto.Email true "User's email"
 // @Tags Email
 // @Success 200
-// @Failure 400 {object} exceptions.MyError
-// @Failure 500 {object} exceptions.MyError
+// @Failure 400 {object} errs.MyError "Data is not valid"
+// @Failure 403 {object} errs.MyError "Unable to connect to the specified email"
+// @Failure 500 {object} errs.MyError
 // @Router /email/send-code [post]
 func (h Handler) sendCodeToEmail(c *gin.Context) {
-	to, ok := bind.FillStruct[dto.EmailDTO](c)
+	to, ok := bind.FillStruct[dto.Email](c)
 	if !ok {
 		return
 	}
 
 	code := generateSecretCode()
 	if err := h.auth.SetCodes(to.Email, code); err != nil {
-		c.Error(exceptions.ServerError.AddErr(err))
+		c.Error(errs.ServerError.AddErr(err))
 		return
 	}
 	if err := h.mail.SendEmail("Verify email for you-together account", code, cfg.Email.From, to.Email); err != nil {
-		c.Error(exceptions.EmailError.AddErr(err))
+		c.Error(errs.EmailError.AddErr(err))
 	}
 
 	c.Status(http.StatusOK)
@@ -82,15 +83,15 @@ func (h Handler) sendCodeToEmail(c *gin.Context) {
 // SignInCheckCode godoc
 // @Summary Sign in by email
 // @Description Compare the secret code with the previously sent codes. If at least one matches, create session of the user. If the user does not exist, create a new user
-// @Param user_info body dto.EmailWithCodeDTO true "User's email, secret code and device"
+// @Param user_info body dto.EmailWithCode true "User's email, secret code and device"
 // @Param Accept-Language header string false "User's language" Enums(EN,RU)
 // @Tags Authorization
 // @Success 200 "user's session"
-// @Failure 400 {object} exceptions.MyError
-// @Failure 500 {object} exceptions.MyError
+// @Failure 400 {object} errs.MyError "Data is not valid"
+// @Failure 500 {object} errs.MyError
 // @Router /auth/email/sign-in [post]
 func (h Handler) signInByEmail(c *gin.Context) {
-	auth, ok := bind.FillStruct[dto.EmailWithCodeDTO](c)
+	auth, ok := bind.FillStruct[dto.EmailWithCode](c)
 	if !ok {
 		return
 	}
@@ -98,7 +99,7 @@ func (h Handler) signInByEmail(c *gin.Context) {
 	auth.Language = validLanguage(c.GetHeader(acceptLanguage))
 
 	if ok, err := h.auth.EqualsPopCode(auth.Email, auth.Code); !ok || err != nil {
-		c.Error(exceptions.CodeError.AddErr(err))
+		c.Error(errs.CodeError.AddErr(err))
 		return
 	}
 
@@ -108,7 +109,7 @@ func (h Handler) signInByEmail(c *gin.Context) {
 		customer, err = h.auth.CreateUserByEmail(auth)
 
 		if err != nil {
-			c.Error(exceptions.ServerError.AddErr(err))
+			c.Error(errs.ServerError.AddErr(err))
 			return
 		}
 
@@ -116,7 +117,7 @@ func (h Handler) signInByEmail(c *gin.Context) {
 		err = h.auth.SetEmailVerified(auth.Email)
 
 		if err != nil {
-			c.Error(exceptions.ServerError.AddErr(err))
+			c.Error(errs.ServerError.AddErr(err))
 			return
 		}
 	}

@@ -5,8 +5,9 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/wtkeqrf0/you-together/ent"
 	"github.com/wtkeqrf0/you-together/ent/user"
+	"github.com/wtkeqrf0/you-together/internal/controller/dao"
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
-	"github.com/wtkeqrf0/you-together/internal/middleware/exceptions"
+	"github.com/wtkeqrf0/you-together/pkg/middleware/errs"
 )
 
 type UserStorage struct {
@@ -18,8 +19,8 @@ func NewUserStorage(userClient *ent.UserClient) *UserStorage {
 }
 
 // FindMe returns the detail information about user
-func (r *UserStorage) FindMe(ctx context.Context, id int) (*dto.MyUserDTO, error) {
-	userDTO := new([]dto.MyUserDTO)
+func (r *UserStorage) FindMe(ctx context.Context, id int) (*dao.Me, error) {
+	userDTO := new([]dao.Me)
 
 	err := r.userClient.Query().Where(user.ID(id)).
 		Select(user.FieldName, user.FieldEmail, user.FieldIsEmailVerified,
@@ -28,7 +29,7 @@ func (r *UserStorage) FindMe(ctx context.Context, id int) (*dto.MyUserDTO, error
 			user.FieldLastName).Scan(ctx, userDTO)
 
 	if len(*userDTO) < 1 {
-		return nil, exceptions.NoSuchUser
+		return nil, errs.NoSuchUser
 
 	} else if err != nil {
 		return nil, err
@@ -38,8 +39,8 @@ func (r *UserStorage) FindMe(ctx context.Context, id int) (*dto.MyUserDTO, error
 }
 
 // FindUserByUsername returns the main information about user
-func (r *UserStorage) FindUserByUsername(ctx context.Context, username string) (*dto.UserDTO, error) {
-	userDTO := new([]dto.UserDTO)
+func (r *UserStorage) FindUserByUsername(ctx context.Context, username string) (*dao.User, error) {
+	userDTO := new([]dao.User)
 
 	err := r.userClient.Query().Where(user.Name(username)).
 		Select(user.FieldName, user.FieldBiography, user.FieldRole,
@@ -47,7 +48,7 @@ func (r *UserStorage) FindUserByUsername(ctx context.Context, username string) (
 		Scan(ctx, userDTO)
 
 	if len(*userDTO) < 1 {
-		return nil, exceptions.NoSuchUser
+		return nil, errs.NoSuchUser
 
 	} else if err != nil {
 		return nil, err
@@ -60,7 +61,7 @@ func (r *UserStorage) FindUserByID(ctx context.Context, id int) (*ent.User, erro
 	return r.userClient.Get(ctx, id)
 }
 
-func (r *UserStorage) UpdateUser(ctx context.Context, customer dto.UpdateUserDTO, id int) error {
+func (r *UserStorage) UpdateUser(ctx context.Context, customer dto.UpdateUser, id int) error {
 	updCustomer, err := r.userClient.Update().
 		SetNillableBiography(customer.Biography).
 		SetNillableLanguage(customer.Language).

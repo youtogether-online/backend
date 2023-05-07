@@ -20,11 +20,10 @@ ADD /configs /app/configs
 FROM scratch
 
 MAINTAINER matvey-sizov@mail.ru
-ENV CGO_ENABLED 0
+
 ENV PROD 1
-
+ENV GIN_MODE "release"
 ENV POSTGRES_DB "you-together"
-
 ENV POSTGRES_PASSWORD "postgres"
 
 WORKDIR /app

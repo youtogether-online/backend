@@ -123,6 +123,12 @@ func (rc *RoomCreate) SetNillableDescription(s *string) *RoomCreate {
 	return rc
 }
 
+// SetID sets the "id" field.
+func (rc *RoomCreate) SetID(i int) *RoomCreate {
+	rc.mutation.SetID(i)
+	return rc
+}
+
 // AddUserIDs adds the "users" edge to the User entity by IDs.
 func (rc *RoomCreate) AddUserIDs(ids ...int) *RoomCreate {
 	rc.mutation.AddUserIDs(ids...)
@@ -256,8 +262,10 @@ func (rc *RoomCreate) sqlSave(ctx context.Context) (*Room, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != _node.ID {
+		id := _spec.ID.Value.(int64)
+		_node.ID = int(id)
+	}
 	rc.mutation.id = &_node.ID
 	rc.mutation.done = true
 	return _node, nil
@@ -268,6 +276,10 @@ func (rc *RoomCreate) createSpec() (*Room, *sqlgraph.CreateSpec) {
 		_node = &Room{config: rc.config}
 		_spec = sqlgraph.NewCreateSpec(room.Table, sqlgraph.NewFieldSpec(room.FieldID, field.TypeInt))
 	)
+	if id, ok := rc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = id
+	}
 	if value, ok := rc.mutation.CreateTime(); ok {
 		_spec.SetField(room.FieldCreateTime, field.TypeTime, value)
 		_node.CreateTime = value
@@ -367,7 +379,7 @@ func (rcb *RoomCreateBulk) Save(ctx context.Context) ([]*Room, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
+				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
 					id := specs[i].ID.Value.(int64)
 					nodes[i].ID = int(id)
 				}

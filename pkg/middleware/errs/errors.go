@@ -1,4 +1,4 @@
-package exceptions
+package errs
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/sirupsen/logrus"
 	"net/http"
+	"os"
 )
 
 // Sign-in errors
@@ -35,6 +36,20 @@ var (
 	EmailError  = newError(http.StatusInternalServerError, "Can't send message to your email", "Try to send it later")
 )
 
+var logger = logrus.Logger{
+	Level:        logrus.ErrorLevel,
+	Out:          os.Stderr,
+	ReportCaller: true,
+	Formatter: &logrus.JSONFormatter{
+		TimestampFormat: "2006/01/02 15:32:05",
+		FieldMap: logrus.FieldMap{
+			logrus.FieldKeyLevel: "status",
+			logrus.FieldKeyFunc:  "caller",
+			logrus.FieldKeyMsg:   "message",
+		},
+	},
+}
+
 // ErrorHandler used for error handling. Handles only MyError type errors
 func ErrorHandler(c *gin.Context) {
 	c.Next()
@@ -47,8 +62,7 @@ func ErrorHandler(c *gin.Context) {
 
 	for i, err := range errs {
 		if my, ok := err.Err.(MyError); ok {
-
-			logrus.WithError(my.Err).Errorf("%02d# %s", i+1, my.Msg)
+			logger.WithError(my.Err).Errorf("%02d# %s", i+1, my.Msg)
 			res := gin.H{"error": my.Msg, "advice": my.Advice}
 
 			if vErrs, ok := my.Err.(validator.ValidationErrors); ok {
@@ -92,11 +106,10 @@ func ErrorHandler(c *gin.Context) {
 				c.JSON(my.Status, res)
 			}
 		} else {
-			logrus.WithError(err.Err).Error("UNEXPECTED ERROR")
+			logger.WithError(err.Err).Error("UNEXPECTED ERROR")
 			if i == 0 {
 				c.JSON(ServerError.Status, ServerError.Msg)
 			}
 		}
 	}
-	c.Errors = nil
 }

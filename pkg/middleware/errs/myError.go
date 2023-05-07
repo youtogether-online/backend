@@ -1,4 +1,4 @@
-package exceptions
+package errs
 
 // @Description All native errors must be this type
 type MyError struct {

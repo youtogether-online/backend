@@ -18,20 +18,20 @@ func (r *UserStorage) UserExistsByEmail(ctx context.Context, email string) bool 
 }
 
 // CreateUserWithPassword without verified email and returns it (only on registration)
-func (r *UserStorage) CreateUserWithPassword(ctx context.Context, auth dto.EmailWithPasswordDTO) (*ent.User, error) {
+func (r *UserStorage) CreateUserWithPassword(ctx context.Context, auth dto.EmailWithPassword) (*ent.User, error) {
 	return r.userClient.Create().SetEmail(auth.Email).
 		SetTheme(auth.Theme).SetLanguage(auth.Language).
 		SetPasswordHash([]byte(auth.Password)).Save(ctx)
 }
 
 // CreateUserByEmail without password and returns it (only on registration)
-func (r *UserStorage) CreateUserByEmail(ctx context.Context, auth dto.EmailWithCodeDTO) (*ent.User, error) {
+func (r *UserStorage) CreateUserByEmail(ctx context.Context, auth dto.EmailWithCode) (*ent.User, error) {
 	return r.userClient.Create().SetEmail(auth.Email).
 		SetNillableTheme(&auth.Theme).SetNillableLanguage(&auth.Language).
 		SetIsEmailVerified(true).Save(ctx)
 }
 
-// AuthUserByEmail returns the user's password hash and username with given email (only on authorization)
+// AuthUserByEmail returns the user's password hash and username with given email (only on sessions)
 func (r *UserStorage) AuthUserByEmail(ctx context.Context, email string) (*ent.User, error) {
 	return r.userClient.Query().Where(
 		user.EmailEQ(email),

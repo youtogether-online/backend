@@ -3,14 +3,15 @@ package service
 import (
 	"context"
 	"github.com/wtkeqrf0/you-together/ent"
+	"github.com/wtkeqrf0/you-together/internal/controller/dao"
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
 )
 
 type AuthPostgres interface {
 	IDExist(ctx context.Context, id int) bool
 	UserExistsByEmail(ctx context.Context, email string) bool
-	CreateUserWithPassword(ctx context.Context, auth dto.EmailWithPasswordDTO) (*ent.User, error)
-	CreateUserByEmail(ctx context.Context, auth dto.EmailWithCodeDTO) (*ent.User, error)
+	CreateUserWithPassword(ctx context.Context, auth dto.EmailWithPassword) (*ent.User, error)
+	CreateUserByEmail(ctx context.Context, auth dto.EmailWithCode) (*ent.User, error)
 	AuthUserByEmail(ctx context.Context, email string) (*ent.User, error)
 	SetEmailVerified(ctx context.Context, email string) error
 	AddSession(ctx context.Context, id int, sessions ...string) error
@@ -36,16 +37,16 @@ func (a AuthService) UserExistsByEmail(email string) bool {
 }
 
 // CreateUserWithPassword without verified email and returns it (only on registration)
-func (a AuthService) CreateUserWithPassword(auth dto.EmailWithPasswordDTO) (*ent.User, error) {
+func (a AuthService) CreateUserWithPassword(auth dto.EmailWithPassword) (*ent.User, error) {
 	return a.postgres.CreateUserWithPassword(context.Background(), auth)
 }
 
 // CreateUserByEmail without password and returns it (only on registration)
-func (a AuthService) CreateUserByEmail(auth dto.EmailWithCodeDTO) (*ent.User, error) {
+func (a AuthService) CreateUserByEmail(auth dto.EmailWithCode) (*ent.User, error) {
 	return a.postgres.CreateUserByEmail(context.Background(), auth)
 }
 
-// AuthUserByEmail returns the user's password hash and username with given email (only on authorization)
+// AuthUserByEmail returns the user's password hash and username with given email (only on sessions)
 func (a AuthService) AuthUserByEmail(email string) (*ent.User, error) {
 	return a.postgres.AuthUserByEmail(context.Background(), email)
 }
@@ -60,8 +61,8 @@ func (a AuthService) AddSession(id int, sessions ...string) error {
 }
 
 type AuthRedis interface {
-	SetSession(ctx context.Context, sessionId string, info dto.Session) error
-	GetSession(ctx context.Context, sessionId string) (*dto.Session, error)
+	SetSession(ctx context.Context, sessionId string, info dao.Session) error
+	GetSession(ctx context.Context, sessionId string) (*dao.Session, error)
 	ExpandExpireSession(ctx context.Context, sessionId string) (bool, error)
 	DelKeys(ctx context.Context, keys ...string)
 	EqualsPopCode(ctx context.Context, email string, code string) (bool, error)
@@ -69,12 +70,12 @@ type AuthRedis interface {
 }
 
 // GetSession and all its parameters
-func (a AuthService) GetSession(sessionId string) (*dto.Session, error) {
+func (a AuthService) GetSession(sessionId string) (*dao.Session, error) {
 	return a.redis.GetSession(context.Background(), sessionId)
 }
 
 // SetSession and all its parameters
-func (a AuthService) SetSession(sessionId string, info dto.Session) error {
+func (a AuthService) SetSession(sessionId string, info dao.Session) error {
 	return a.redis.SetSession(context.Background(), sessionId, info)
 }
 
