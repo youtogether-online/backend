@@ -22,7 +22,7 @@ type PlainFormatter struct {
 }
 
 func (f *PlainFormatter) Format(entry *logrus.Entry) ([]byte, error) {
-	return []byte(fmt.Sprintf("%s | %s\n", entry.Time.Format(
+	return []byte(fmt.Sprintf("%s |%s\n", entry.Time.Format(
 		f.TimestampFormat), entry.Message)), nil
 }
 
@@ -67,7 +67,7 @@ func QueryLogging(c *gin.Context) {
 		method = setColor(method, white)
 	}
 
-	logger.Infof("%s | %12v | %6s | %s\n", status, l, method, c.Request.RequestURI)
+	logger.Infof("%s| %12v |%6s| %s\n", status, l, method, c.Request.RequestURI)
 }
 
 func setColor(text any, color string) string {
