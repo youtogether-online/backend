@@ -74,13 +74,13 @@ func main() {
 	r := gin.New()
 	h.InitRoutes(r, mailClient != nil)
 
-	Run(cfg.Listen.Host, cfg.Listen.Port, r, pClient, rClient, mailClient)
+	Run(cfg.Listen.Port, r, pClient, rClient, mailClient)
 }
 
 // Run the Server with graceful shutdown
-func Run(host string, port int, r *gin.Engine, pClient *ent.Client, rClient *redis.Client, mailClient *smtp.Client) {
+func Run(port int, r *gin.Engine, pClient *ent.Client, rClient *redis.Client, mailClient *smtp.Client) {
 	srv := &http.Server{
-		Addr:           fmt.Sprintf("%s:%d", host, port),
+		Addr:           fmt.Sprintf(":%d", port),
 		Handler:        r,
 		MaxHeaderBytes: 1 << 20, // 1 MB
 		ReadTimeout:    10 * time.Second,
@@ -95,7 +95,7 @@ func Run(host string, port int, r *gin.Engine, pClient *ent.Client, rClient *red
 			logrus.WithError(err).Fatalf("error occurred while running http server")
 		}
 	}()
-	logrus.Infof("Server Started On %s:%d", host, port)
+	logrus.Infof("Server Started On Port %d", port)
 
 	<-quit
 
