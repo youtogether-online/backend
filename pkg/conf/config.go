@@ -16,12 +16,13 @@ type Config struct {
 	Session struct {
 		CookieName string        `yaml:"cookie_name" env:"COOKIE_NAME" env-default:"session_id"`
 		CookiePath string        `yaml:"cookie_path" env:"COOKIE_PATH" env-default:"/api"`
-		Duration   time.Duration `yaml:"duration" env:"COOKIE_DURATION" env-required:"true"`
+		Duration   time.Duration `yaml:"duration" env:"COOKIE_DURATION" env-default:"720h"`
 	} `yaml:"session"`
 
 	Listen struct {
-		Host string `yaml:"host" env:"HOST" env-default:"127.0.0.1"`
-		Port int    `yaml:"port" env:"PORT" env-required:"true"`
+		MainPath string `yaml:"main_path" env:"MAIN_PATH" env-default:"/api"`
+		Port     int    `yaml:"port" env:"PORT" env-default:"3000"`
+		Host     string `yaml:"host" env:"HOST" env-default:"127.0.0.1"`
 	} `yaml:"listen"`
 
 	DB struct {
@@ -31,19 +32,19 @@ type Config struct {
 			Password string `yaml:"password" env:"POSTGRES_PASSWORD" env-default:"postgres"`
 			// if prod=1, host will always be "postgres" (docker constant)
 			Host string `yaml:"host" env:"POSTGRES_HOST" env-default:"127.0.0.1"`
-			Port int    `yaml:"port" env:"POSTGRES_PORT" env-required:"true"`
+			Port int    `yaml:"port" env:"POSTGRES_PORT" env-default:"5432"`
 		} `yaml:"postgres"`
 
 		Redis struct {
 			DbId int `yaml:"db_id" env:"REDIS_DB" env-default:"0"`
 			// if prod=1, host will always be "redis" (docker constant)
 			Host string `yaml:"host" env:"REDIS_HOST" env-default:"127.0.0.1"`
-			Port int    `yaml:"port" env:"REDIS_POST" env-required:"true"`
+			Port int    `yaml:"port" env:"REDIS_POST" env-default:"6379"`
 		} `yaml:"redis"`
 	} `yaml:"db"`
 
 	Email struct {
-		From     string `yaml:"from" env:"EMAIL_FROM" env-required:"true"`
+		From     string `yaml:"from" env:"EMAIL_FROM" env-default:"you-together@gmail.com"`
 		User     string `yaml:"user" env:"EMAIL_USER"`
 		Password string `yaml:"password" env:"EMAIL_PASSWORD"`
 		Host     string `yaml:"host" env:"EMAIL_STMP_HOST"`
