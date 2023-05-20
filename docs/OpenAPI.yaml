@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: You-together API
+  title: YouTogether API
   description: |-
     This is CRUD API documentation for you-together-online project.
     You can get more info about that project [here](https://github.com/youtogether-online)
