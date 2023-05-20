@@ -1,10 +1,10 @@
 package errs
 
-// @Description All native errors must be this type
+// MyError describes all server-known errors
 type MyError struct {
 	Status int    `json:"-"`
-	Msg    string `json:"message,omitempty" example:"Exception was occurred"`
-	Advice string `json:"advice,omitempty" example:"Try to send request later"`
+	Msg    string `json:"message,omitempty"`
+	Advice string `json:"advice,omitempty"`
 	Err    error  `json:"-"`
 }
 

@@ -11,17 +11,8 @@ import (
 	"net/http"
 )
 
-// GetMe godoc
-// @Summary Get detail data about the user by session
-// @Description Returns detail information about me (session required)
-// @Tags Sessions
-// @Success 200 {object} dao.Me
-// @Failure 401 {object} errs.MyError "User isn't logged in"
-// @Failure 404 {object} errs.MyError "User doesn't exist"
-// @Failure 500 {object} errs.MyError
-// @Router /session [get]
-func (h Handler) getMe(c *gin.Context) {
-	info, err := h.sessions.GetSession(c)
+func (h *Handler) getMe(c *gin.Context) {
+	info, err := h.sess.GetSession(c)
 	if err != nil {
 		c.Error(errs.ServerError.AddErr(err))
 		return
@@ -40,17 +31,7 @@ func (h Handler) getMe(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-// GetUserByUsername godoc
-// @Summary Get main data about the user
-// @Description Returns main information about the user
-// @Tags User Get
-// @Param username path string true "Name of the user"
-// @Success 200 {object} dao.User "main info"
-// @Failure 400 {object} errs.MyError "Param is not valid"
-// @Failure 404 {object} errs.MyError "User doesn't exist"
-// @Failure 500 {object} errs.MyError
-// @Router /user/{username} [get]
-func (h Handler) getUserByUsername(c *gin.Context) {
+func (h *Handler) getUserByUsername(c *gin.Context) {
 	username := c.Param("username")
 	if err := binding.Validator.ValidateStruct(&dto.Name{Name: username}); err != nil {
 		c.Error(errs.ValidError.AddErr(err))
@@ -71,23 +52,13 @@ func (h Handler) getUserByUsername(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-// UpdateUser godoc
-// @Summary Update user's data
-// @Description Change user's main information (session required)
-// @Param UpdateUser body dto.UpdateUser true "New user data"
-// @Tags User Update
-// @Success 200
-// @Failure 400 {object} errs.MyError "Data is not valid"
-// @Failure 401 {object} errs.MyError "User isn't logged in"
-// @Failure 500 {object} errs.MyError
-// @Router /user [patch]
-func (h Handler) updateUser(c *gin.Context) {
+func (h *Handler) updateUser(c *gin.Context) {
 	upd, ok := bind.FillStruct[dto.UpdateUser](c)
 	if !ok {
 		return
 	}
 
-	info, err := h.sessions.GetSession(c)
+	info, err := h.sess.GetSession(c)
 	if err != nil {
 		c.Error(errs.ServerError.AddErr(err))
 		return
@@ -105,23 +76,13 @@ func (h Handler) updateUser(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-// UpdateEmail godoc
-// @Summary Update user's email
-// @Description Change user's email by password (session required)
-// @Param UpdateEmail body dto.UpdateEmail true "user's password and new email"
-// @Tags User Update
-// @Success 200
-// @Failure 400 {object} errs.MyError "Data is not valid"
-// @Failure 401 {object} errs.MyError "User isn't logged in"
-// @Failure 500 {object} errs.MyError
-// @Router /user/email [patch]
-func (h Handler) updateEmail(c *gin.Context) {
+func (h *Handler) updateEmail(c *gin.Context) {
 	upd, ok := bind.FillStruct[dto.UpdateEmail](c)
 	if !ok {
 		return
 	}
 
-	info, err := h.sessions.GetSession(c)
+	info, err := h.sess.GetSession(c)
 	if err != nil {
 		c.Error(errs.ServerError.AddErr(err))
 		return
@@ -158,22 +119,12 @@ func (h Handler) updateEmail(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-// UpdatePassword godoc
-// @Summary Update user's password
-// @Description Change user's password by email (session required)
-// @Param UpdatePassword body dto.UpdatePassword true "user's email, code and new password"
-// @Tags User Update
-// @Success 200
-// @Failure 400 {object} errs.MyError "Data is not valid"
-// @Failure 401 {object} errs.MyError "User isn't logged in"
-// @Failure 500 {object} errs.MyError
-// @Router /user/password [patch]
-func (h Handler) updatePassword(c *gin.Context) {
+func (h *Handler) updatePassword(c *gin.Context) {
 	upd, ok := bind.FillStruct[dto.UpdatePassword](c)
 	if !ok {
 		return
 	}
-	info, err := h.sessions.GetSession(c)
+	info, err := h.sess.GetSession(c)
 	if err != nil {
 		c.Error(errs.ServerError.AddErr(err))
 		return
@@ -199,21 +150,12 @@ func (h Handler) updatePassword(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-// UpdateUsername godoc
-// @Summary Update user's name
-// @Description Change user's name (session required)
-// @Tags User Update
-// @Success 200
-// @Failure 400 {object} errs.MyError "Data is not valid"
-// @Failure 401 {object} errs.MyError "User isn't logged in"
-// @Failure 500 {object} errs.MyError
-// @Router /user/name [patch]
-func (h Handler) updateUsername(c *gin.Context) {
+func (h *Handler) updateUsername(c *gin.Context) {
 	upd, ok := bind.FillStruct[dto.UpdateName](c)
 	if !ok {
 		return
 	}
-	info, err := h.sessions.GetSession(c)
+	info, err := h.sess.GetSession(c)
 	if err != nil {
 		c.Error(errs.ServerError.AddErr(err))
 		return
@@ -243,15 +185,15 @@ func (h Handler) updateUsername(c *gin.Context) {
 // @Failure 400 {object} errs.MyError "Username is not valid"
 // @Failure 403 "name already used"
 // @Failure 500 {object} errs.MyError
-// @Router /user/check-name/{username} [get]
-func (h Handler) checkUsername(c *gin.Context) {
-	username := c.Param("username")
-	if err := binding.Validator.ValidateStruct(&dto.Name{Name: username}); err != nil {
+// @Router /user/check-name/{name} [get]
+func (h *Handler) checkUsername(c *gin.Context) {
+	name := c.Param("name")
+	if err := binding.Validator.ValidateStruct(&dto.Name{Name: name}); err != nil {
 		c.Error(errs.ValidError.AddErr(err))
 		return
 	}
 
-	if h.users.UsernameExist(username) {
+	if h.users.UsernameExist(name) {
 		c.Status(http.StatusForbidden)
 	} else {
 		c.Status(http.StatusOK)

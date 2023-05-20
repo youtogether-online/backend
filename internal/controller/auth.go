@@ -10,24 +10,11 @@ import (
 	"net/http"
 )
 
-// SignInWithPassword godoc
-// @Summary Sign in by password
-// @Description Compare the user's password with an existing user's password. If it matches, create session of the user. If the user does not exist, create new user
-// @Param EmailWithPassword body dto.EmailWithPassword true "User's email, password"
-// @Param Accept-Language header string false "User's language" Enums(EN,RU)
-// @Tags Authorization
-// @Success 200 "user's session"
-// @Failure 400 {object} errs.MyError "Data is not valid"
-// @Failure 404 {object} errs.MyError "Password is not registered for this account"
-// @Failure 500 {object} errs.MyError
-// @Router /auth/password/sign-in [post]
-func (h Handler) signInByPassword(c *gin.Context) {
+func (h *Handler) signInByPassword(c *gin.Context) {
 	auth, ok := bind.FillStruct[dto.EmailWithPassword](c)
 	if !ok {
 		return
 	}
-
-	auth.Language = validLanguage(c.GetHeader(acceptLanguage))
 
 	customer, err := h.auth.AuthUserByEmail(auth.Email)
 
@@ -47,22 +34,13 @@ func (h Handler) signInByPassword(c *gin.Context) {
 		c.Error(errs.PasswordError.AddErr(err))
 		return
 	}
-	h.sessions.SetNewCookie(customer.ID, c)
+
+	h.sess.SetNewCookie(customer.ID, auth.UserAgent, c)
 
 	c.Status(http.StatusOK)
 }
 
-// SignInSendCode godoc
-// @Summary Send code to the user's email
-// @Description Send a secret 5-digit code to the specified email
-// @Param email body dto.Email true "User's email"
-// @Tags Email
-// @Success 200
-// @Failure 400 {object} errs.MyError "Data is not valid"
-// @Failure 403 {object} errs.MyError "Unable to connect to the specified email"
-// @Failure 500 {object} errs.MyError
-// @Router /email/send-code [post]
-func (h Handler) sendCodeToEmail(c *gin.Context) {
+func (h *Handler) sendCodeToEmail(c *gin.Context) {
 	to, ok := bind.FillStruct[dto.Email](c)
 	if !ok {
 		return
@@ -73,6 +51,7 @@ func (h Handler) sendCodeToEmail(c *gin.Context) {
 		c.Error(errs.ServerError.AddErr(err))
 		return
 	}
+
 	if err := h.mail.SendEmail("Verify email for you-together account", code, cfg.Email.From, to.Email); err != nil {
 		c.Error(errs.EmailError.AddErr(err))
 	}
@@ -80,23 +59,11 @@ func (h Handler) sendCodeToEmail(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-// SignInCheckCode godoc
-// @Summary Sign in by email
-// @Description Compare the secret code with the previously sent codes. If at least one matches, create session of the user. If the user does not exist, create a new user
-// @Param user_info body dto.EmailWithCode true "User's email, secret code and device"
-// @Param Accept-Language header string false "User's language" Enums(EN,RU)
-// @Tags Authorization
-// @Success 200 "user's session"
-// @Failure 400 {object} errs.MyError "Data is not valid"
-// @Failure 500 {object} errs.MyError
-// @Router /auth/email/sign-in [post]
-func (h Handler) signInByEmail(c *gin.Context) {
+func (h *Handler) signInByEmail(c *gin.Context) {
 	auth, ok := bind.FillStruct[dto.EmailWithCode](c)
 	if !ok {
 		return
 	}
-
-	auth.Language = validLanguage(c.GetHeader(acceptLanguage))
 
 	if ok, err := h.auth.EqualsPopCode(auth.Email, auth.Code); !ok || err != nil {
 		c.Error(errs.CodeError.AddErr(err))
@@ -112,7 +79,6 @@ func (h Handler) signInByEmail(c *gin.Context) {
 			c.Error(errs.ServerError.AddErr(err))
 			return
 		}
-
 	} else if !customer.IsEmailVerified {
 		err = h.auth.SetEmailVerified(auth.Email)
 
@@ -121,19 +87,13 @@ func (h Handler) signInByEmail(c *gin.Context) {
 			return
 		}
 	}
-	h.sessions.SetNewCookie(customer.ID, c)
+	h.sess.SetNewCookie(customer.ID, auth.UserAgent, c)
 
 	c.Status(http.StatusOK)
 }
 
-// SignOut godoc
-// @Summary Delete user's session
-// @Description Make the user's session invalid (can accept cookie)
-// @Tags Sessions
-// @Success 200
-// @Router /session [delete]
-func (h Handler) signOut(c *gin.Context) {
-	h.sessions.PopCookie(c)
+func (h *Handler) signOut(c *gin.Context) {
+	h.sess.PopCookie(c)
 	c.Status(http.StatusOK)
 }
 
@@ -144,13 +104,4 @@ func generateSecretCode() string {
 		b[i] = chars[rand.Intn(len(chars))]
 	}
 	return string(b)
-}
-
-func validLanguage(language string) string {
-	switch language {
-	case "RU":
-		return "RU"
-	default:
-		return "EN"
-	}
 }
