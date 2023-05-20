@@ -8,7 +8,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/mixin"
 	"fmt"
-	gen "github.com/wtkeqrf0/you-together/ent"
+	loc "github.com/wtkeqrf0/you-together/ent"
 	"github.com/wtkeqrf0/you-together/ent/hook"
 	"github.com/wtkeqrf0/you-together/ent/room"
 	"github.com/wtkeqrf0/you-together/pkg/bind"
@@ -28,23 +28,23 @@ func (Room) Fields() []ent.Field {
 
 		field.String("name").Unique().Match(bind.NameRegexp).Annotations(
 			entsql.DefaultExpr("'room' || currval(pg_get_serial_sequence('users', 'id'))")).
-			StructTag(`json:"name,omitempty" example:"room5883"`),
+			StructTag(`json:"name,omitempty"`),
 
 		field.String("custom_name").Optional().MinLen(2).MaxLen(20).Nillable().
-			StructTag(`json:"customName,omitempty" example:"Gym"`),
+			StructTag(`json:"customName,omitempty"`),
 
 		field.Int("owner_id").Unique().Positive().StructTag(`json:"-"`),
 
 		field.Enum("privacy").Values("PRIVATE", "FRIENDS", "PUBLIC").
-			Default("PUBLIC").StructTag(`json:"privacy,omitempty" example:"PRIVATE"`),
+			Default("PUBLIC").StructTag(`json:"privacy,omitempty"`),
 
 		field.Bytes("password_hash").Optional().Sensitive().Nillable(),
 
 		field.Bool("has_chat").Default(true).
-			StructTag(`json:"has_chat,omitempty" example:"true"`),
+			StructTag(`json:"has_chat,omitempty"`),
 
 		field.String("description").Optional().MaxLen(140).Nillable().
-			StructTag(`json:"description,omitempty" example:"I'd like to relax"`),
+			StructTag(`json:"description,omitempty"`),
 	}
 }
 
@@ -80,7 +80,7 @@ func (Room) Hooks() []ent.Hook {
 }
 
 func bcryptRoomPassword(next ent.Mutator) ent.Mutator {
-	return hook.RoomFunc(func(ctx context.Context, m *gen.RoomMutation) (ent.Value, error) {
+	return hook.RoomFunc(func(ctx context.Context, m *loc.RoomMutation) (ent.Value, error) {
 		password, ok := m.PasswordHash()
 		if !ok {
 			return nil, fmt.Errorf("password_hash is not set")
@@ -98,7 +98,7 @@ func bcryptRoomPassword(next ent.Mutator) ent.Mutator {
 }
 
 func userNameCheck(next ent.Mutator) ent.Mutator {
-	return hook.UserFunc(func(ctx context.Context, m *gen.UserMutation) (ent.Value, error) {
+	return hook.UserFunc(func(ctx context.Context, m *loc.UserMutation) (ent.Value, error) {
 		username, ok := m.Name()
 		if !ok {
 			return nil, fmt.Errorf("roomname is not set")

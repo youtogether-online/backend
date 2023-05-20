@@ -14,7 +14,7 @@ import (
 
 // User is the model entity for the User schema.
 type User struct {
-	config `example:"-" json:"-" sql:"-"`
+	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"-"`
 	// CreateTime holds the value of the "create_time" field.
@@ -22,27 +22,27 @@ type User struct {
 	// UpdateTime holds the value of the "update_time" field.
 	UpdateTime time.Time `json:"update_time,omitempty"`
 	// Name holds the value of the "name" field.
-	Name string `json:"name,omitempty" example:"bobbas"`
+	Name string `json:"name,omitempty"`
 	// Email holds the value of the "email" field.
-	Email string `json:"email,omitempty" example:"myemail@gmail.com"`
+	Email string `json:"email,omitempty"`
 	// IsEmailVerified holds the value of the "is_email_verified" field.
-	IsEmailVerified bool `json:"isEmailVerified" example:"true"`
+	IsEmailVerified bool `json:"isEmailVerified"`
 	// PasswordHash holds the value of the "password_hash" field.
-	PasswordHash *[]byte `example:"-" json:"-" sql:"-"`
+	PasswordHash *[]byte `json:"-"`
 	// Biography holds the value of the "biography" field.
-	Biography *string `json:"biography,omitempty" example:"I'd like to relax"`
+	Biography *string `json:"biography,omitempty"`
 	// Role holds the value of the "role" field.
-	Role string `json:"role,omitempty" example:"USER"`
+	Role string `json:"role,omitempty"`
 	// FriendsIds holds the value of the "friends_ids" field.
-	FriendsIds []string `json:"friendsIds,omitempty" example:"bobba, imaxied"`
+	FriendsIds []string `json:"friendsIds,omitempty"`
 	// Language holds the value of the "language" field.
-	Language string `json:"language,omitempty" example:"RU"`
+	Language string `json:"language,omitempty"`
 	// Theme holds the value of the "theme" field.
-	Theme string `json:"theme,omitempty" example:"DARK"`
+	Theme string `json:"theme,omitempty"`
 	// FirstName holds the value of the "first_name" field.
-	FirstName *string `json:"firstName,omitempty" example:"Tele"`
+	FirstName *string `json:"firstName,omitempty"`
 	// LastName holds the value of the "last_name" field.
-	LastName *string `json:"lastName,omitempty" sql:"last_name" example:"phone"`
+	LastName *string `json:"lastName,omitempty"`
 	// Sessions holds the value of the "sessions" field.
 	Sessions []string `json:"-"`
 	// Edges holds the relations/edges for other nodes in the graph.

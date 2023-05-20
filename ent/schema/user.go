@@ -8,7 +8,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/mixin"
 	"fmt"
-	gen "github.com/wtkeqrf0/you-together/ent"
+	loc "github.com/wtkeqrf0/you-together/ent"
 	"github.com/wtkeqrf0/you-together/ent/hook"
 	"github.com/wtkeqrf0/you-together/ent/room"
 	"github.com/wtkeqrf0/you-together/pkg/bind"
@@ -29,35 +29,35 @@ func (User) Fields() []ent.Field {
 		field.Int("id").StructTag(`json:"-"`),
 		field.String("name").Unique().Match(bind.NameRegexp).Annotations(
 			entsql.DefaultExpr("'user' || currval(pg_get_serial_sequence('users', 'id'))")).
-			StructTag(`json:"name,omitempty" example:"bobbas"`),
+			StructTag(`json:"name,omitempty"`),
 
 		field.String("email").Unique().Match(regexp.MustCompile(emailRegexp)).
-			StructTag(`json:"email,omitempty" example:"myemail@gmail.com"`),
+			StructTag(`json:"email,omitempty"`),
 
 		field.Bool("is_email_verified").Default(false).
-			StructTag(`json:"isEmailVerified" example:"true"`),
+			StructTag(`json:"isEmailVerified"`),
 
 		field.Bytes("password_hash").Optional().Sensitive().Nillable(),
 
 		field.Text("biography").Optional().MaxLen(512).Nillable().
-			StructTag(`json:"biography,omitempty" example:"I'd like to relax"`),
+			StructTag(`json:"biography,omitempty"`),
 
-		field.String("role").Default("USER").StructTag(`json:"role,omitempty" example:"USER"`),
+		field.String("role").Default("USER").StructTag(`json:"role,omitempty"`),
 
 		field.Strings("friends_ids").Optional().
-			StructTag(`json:"friendsIds,omitempty" example:"bobba, imaxied"`),
+			StructTag(`json:"friendsIds,omitempty"`),
 
 		field.String("language").Default("EN").
-			StructTag(`json:"language,omitempty" example:"RU"`),
+			StructTag(`json:"language,omitempty"`),
 
 		field.String("theme").Default("SYSTEM").
-			StructTag(`json:"theme,omitempty" example:"DARK"`),
+			StructTag(`json:"theme,omitempty"`),
 
-		field.String("first_name").Optional().MinLen(2).MaxLen(30).Nillable().
-			StructTag(`json:"firstName,omitempty" example:"Tele"`),
+		field.String("first_name").Optional().MinLen(3).MaxLen(32).Nillable().
+			StructTag(`json:"firstName,omitempty"`),
 
-		field.String("last_name").Optional().MinLen(2).MaxLen(30).Nillable().
-			StructTag(`json:"lastName,omitempty" example:"phone"`),
+		field.String("last_name").Optional().MinLen(3).MaxLen(32).Nillable().
+			StructTag(`json:"lastName,omitempty"`),
 
 		field.Strings("sessions").Optional().StructTag(`json:"-"`),
 	}
@@ -94,7 +94,7 @@ func (User) Hooks() []ent.Hook {
 }
 
 func bcryptUserPassword(next ent.Mutator) ent.Mutator {
-	return hook.UserFunc(func(ctx context.Context, m *gen.UserMutation) (ent.Value, error) {
+	return hook.UserFunc(func(ctx context.Context, m *loc.UserMutation) (ent.Value, error) {
 		password, ok := m.PasswordHash()
 		if !ok {
 			return nil, fmt.Errorf("password_hash is not set")
@@ -112,7 +112,7 @@ func bcryptUserPassword(next ent.Mutator) ent.Mutator {
 }
 
 func roomNameCheck(next ent.Mutator) ent.Mutator {
-	return hook.UserFunc(func(ctx context.Context, m *gen.UserMutation) (ent.Value, error) {
+	return hook.UserFunc(func(ctx context.Context, m *loc.UserMutation) (ent.Value, error) {
 		username, ok := m.Name()
 		if !ok {
 			return nil, fmt.Errorf("username is not set")

@@ -41,8 +41,8 @@ var (
 		{Name: "friends_ids", Type: field.TypeJSON, Nullable: true},
 		{Name: "language", Type: field.TypeString, Default: "EN"},
 		{Name: "theme", Type: field.TypeString, Default: "SYSTEM"},
-		{Name: "first_name", Type: field.TypeString, Nullable: true, Size: 30},
-		{Name: "last_name", Type: field.TypeString, Nullable: true, Size: 30},
+		{Name: "first_name", Type: field.TypeString, Nullable: true, Size: 32},
+		{Name: "last_name", Type: field.TypeString, Nullable: true, Size: 32},
 		{Name: "sessions", Type: field.TypeJSON, Nullable: true},
 	}
 	// UsersTable holds the schema information for the "users" table.

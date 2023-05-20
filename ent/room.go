@@ -13,7 +13,7 @@ import (
 
 // Room is the model entity for the Room schema.
 type Room struct {
-	config `example:"-" json:"-"`
+	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"-"`
 	// CreateTime holds the value of the "create_time" field.
@@ -21,19 +21,19 @@ type Room struct {
 	// UpdateTime holds the value of the "update_time" field.
 	UpdateTime time.Time `json:"update_time,omitempty"`
 	// Name holds the value of the "name" field.
-	Name string `json:"name,omitempty" example:"room5883"`
+	Name string `json:"name,omitempty"`
 	// CustomName holds the value of the "custom_name" field.
-	CustomName *string `json:"customName,omitempty" example:"Gym"`
+	CustomName *string `json:"customName,omitempty"`
 	// OwnerID holds the value of the "owner_id" field.
 	OwnerID int `json:"-"`
 	// Privacy holds the value of the "privacy" field.
-	Privacy room.Privacy `json:"privacy,omitempty" example:"PRIVATE"`
+	Privacy room.Privacy `json:"privacy,omitempty"`
 	// PasswordHash holds the value of the "password_hash" field.
-	PasswordHash *[]byte `example:"-" json:"-"`
+	PasswordHash *[]byte `json:"-"`
 	// HasChat holds the value of the "has_chat" field.
-	HasChat bool `json:"has_chat,omitempty" example:"true"`
+	HasChat bool `json:"has_chat,omitempty"`
 	// Description holds the value of the "description" field.
-	Description *string `json:"description,omitempty" example:"I'd like to relax"`
+	Description *string `json:"description,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RoomQuery when eager-loading is set.
 	Edges RoomEdges `json:"edges"`
