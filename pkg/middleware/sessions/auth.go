@@ -6,9 +6,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/mssola/useragent"
 	"github.com/wtkeqrf0/you-together/internal/controller/dao"
+	"github.com/wtkeqrf0/you-together/pkg/bind"
 	"github.com/wtkeqrf0/you-together/pkg/middleware/errs"
 	"net/http"
-	"regexp"
 	"time"
 )
 
@@ -28,11 +28,6 @@ type Auth struct {
 func NewAuth(auth AuthService) *Auth {
 	return &Auth{auth: auth}
 }
-
-const (
-	userAgent string = "User-Agent"
-	uuid4     string = "/^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i"
-)
 
 // ValidateSession and identify the user in redis. Returns true, if session was expanded.
 func (a Auth) ValidateSession(sessionId string) (*dao.Session, bool, error) {
@@ -90,13 +85,10 @@ func (a Auth) GetSession(c *gin.Context) (*dao.Session, error) {
 	return res, nil
 }
 
-func (a Auth) SetNewCookie(id int, c *gin.Context) {
+func (a Auth) SetNewCookie(id int, userAgent string, c *gin.Context) {
 	a.PopCookie(c)
 
-	session, err := a.GenerateSession(
-		id, c.ClientIP(), c.GetHeader(userAgent),
-	)
-
+	session, err := a.GenerateSession(id, c.ClientIP(), userAgent)
 	if err != nil {
 		c.Error(errs.ServerError.AddErr(err))
 		return
@@ -110,7 +102,7 @@ func (a Auth) SetNewCookie(id int, c *gin.Context) {
 // PopCookie from cookie storage only if equals to uuid4
 func (a Auth) PopCookie(c *gin.Context) {
 	session, _ := c.Cookie(cfg.Session.CookieName)
-	if ok, _ := regexp.MatchString(uuid4, session); ok {
+	if ok := bind.UUID4.MatchString(session); ok {
 		a.auth.DelKeys(session)
 	}
 }
