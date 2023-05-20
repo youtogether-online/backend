@@ -8,17 +8,18 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
-	_ "github.com/wtkeqrf0/you-together/docs"
 	"github.com/wtkeqrf0/you-together/ent"
 	"github.com/wtkeqrf0/you-together/internal/controller"
 	"github.com/wtkeqrf0/you-together/internal/repo/postgres"
-	redis2 "github.com/wtkeqrf0/you-together/internal/repo/redis"
+	redisRepo "github.com/wtkeqrf0/you-together/internal/repo/redis"
 	"github.com/wtkeqrf0/you-together/internal/service"
 	"github.com/wtkeqrf0/you-together/pkg/bind"
 	"github.com/wtkeqrf0/you-together/pkg/client/email"
 	"github.com/wtkeqrf0/you-together/pkg/client/postgresql"
-	redisDB "github.com/wtkeqrf0/you-together/pkg/client/redis"
+	redisInit "github.com/wtkeqrf0/you-together/pkg/client/redis"
 	"github.com/wtkeqrf0/you-together/pkg/conf"
+	"github.com/wtkeqrf0/you-together/pkg/middleware/errs"
+	"github.com/wtkeqrf0/you-together/pkg/middleware/logger"
 	"github.com/wtkeqrf0/you-together/pkg/middleware/sessions"
 	"net/http"
 	"net/smtp"
@@ -39,46 +40,28 @@ func init() {
 	})
 	logrus.SetReportCaller(true)
 
-	logrus.SetReportCaller(true)
-
 	// global validator of incoming values
 	binding.Validator = bind.NewValid(validator.New())
 }
 
-// @title You Together API
-// @version 1.0
-// @description It's an API interacting with You Together using Golang
-// @accept application/json
-// @produce application/json
-// @schemes http
-
-// @host localhost:3000
-// @BasePath /api
-
-// @sessions.docs.description Authorization, registration and authentication
 func main() {
 	cfg := conf.GetConfig()
 
 	pClient, rClient, mailClient := getClients(cfg)
 
-	pConn, rConn := postgres.NewUserStorage(pClient.User), redis2.NewRClient(rClient)
-	auth := service.NewAuthService(pConn, rConn)
-
-	h := controller.NewHandler(
-		service.NewUserService(pConn, rConn),
-		sessions.NewAuth(auth),
-		auth,
-		service.NewEmailSender(mailClient),
-	)
+	h := initHandler(pClient, rClient, mailClient)
+	m := initMiddlewares()
 
 	r := gin.New()
-	h.InitRoutes(r, mailClient != nil)
 
-	Run(cfg.Listen.Port, r, pClient, rClient, mailClient)
+	m.InitGlobalMiddleWares(r)
+	h.InitRoutes(r.Group(cfg.Listen.MainPath), mailClient != nil)
+
+	run(cfg.Listen.Port, r, pClient, rClient, mailClient)
 }
 
-// Run the Server with graceful shutdown
-func Run(port int, r *gin.Engine, pClient *ent.Client, rClient *redis.Client, mailClient *smtp.Client) {
+// run the Server with graceful shutdown
+func run(port int, r *gin.Engine, pClient *ent.Client, rClient *redis.Client, mailClient *smtp.Client) {
 	srv := &http.Server{
 		Addr:           fmt.Sprintf(":%d", port),
 		Handler:        r,
@@ -127,9 +110,32 @@ func getClients(cfg *conf.Config) (*ent.Client, *redis.Client, *smtp.Client) {
 	pClient := postgresql.Open(cfg.DB.Postgres.Username, cfg.DB.Postgres.Password,
 		cfg.DB.Postgres.Host, cfg.DB.Postgres.Port, cfg.DB.Postgres.DBName)
 
-	rClient := redisDB.Open(cfg.DB.Redis.Host, cfg.DB.Redis.Port, cfg.DB.Redis.DbId)
+	rClient := redisInit.Open(cfg.DB.Redis.Host, cfg.DB.Redis.Port, cfg.DB.Redis.DbId)
 
 	mailClient := email.Open(cfg.Email.User, cfg.Email.Password, cfg.Email.Host, cfg.Email.Port)
 
 	return pClient, rClient, mailClient
+}
+
+func initHandler(pClient *ent.Client, rClient *redis.Client, mailClient *smtp.Client) *controller.Handler {
+	pConn := postgres.NewUserStorage(pClient.User)
+	rConn := redisRepo.NewRClient(rClient)
+	mailConn := service.NewEmailSender(mailClient)
+
+	auth := service.NewAuthService(pConn, rConn)
+	user := service.NewUserService(pConn, rConn)
+
+	return controller.NewHandler(
+		user,
+		auth,
+		mailConn,
+		sessions.NewAuth(auth),
+	)
+}
+
+func initMiddlewares() *controller.Middlewares {
+	return controller.NewMiddleWares(
+		errs.NewErrHandler(logrus.New()),
+		logger.NewQueryHandler(logrus.New()),
+	)
 }
