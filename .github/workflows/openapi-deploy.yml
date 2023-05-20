@@ -20,6 +20,12 @@ jobs:
         with:
           output: dist
           spec-file: "docs/OpenAPI.yaml"
+
+      - name: Upload OpenAPI UI as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: openapi-ui
+          path: dist
   
   deploy:
     runs-on: ubuntu-latest
@@ -31,6 +37,10 @@ jobs:
       contents: write
 
     steps:
+      - name: Download OpenAPI UI
+        uses: actions/download-artifact@v3
+        with:
+          name: openapi-ui
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
