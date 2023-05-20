@@ -26,15 +26,18 @@ func (f *PlainFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 		f.TimestampFormat), entry.Message)), nil
 }
 
-var logger = logrus.Logger{
-	Out: os.Stdout,
-	Formatter: &PlainFormatter{
-		TimestampFormat: "2006/01/02 15:32:05",
-	},
-	Level: logrus.InfoLevel,
+type QueryHandler struct {
+	log *logrus.Logger
 }
 
-func QueryLogging(c *gin.Context) {
+func NewQueryHandler(log *logrus.Logger) *QueryHandler {
+	log.SetLevel(logrus.InfoLevel)
+	log.SetFormatter(&PlainFormatter{TimestampFormat: "2006/01/02 15:32:05"})
+	log.SetOutput(os.Stdout)
+	return &QueryHandler{log: log}
+}
+
+func (q *QueryHandler) HandleQueries(c *gin.Context) {
 	s := time.Now()
 	c.Next()
 	l := time.Since(s)
@@ -67,7 +70,7 @@ func QueryLogging(c *gin.Context) {
 		method = setColor(method, white)
 	}
 
-	logger.Infof("%s| %12v |%6s| %s\n", status, l, method, c.Request.RequestURI)
+	q.log.Infof("%s| %12v |%6s| %s\n", status, l, method, c.Request.RequestURI)
 }
 
 func setColor(text any, color string) string {

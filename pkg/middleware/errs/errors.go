@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/sirupsen/logrus"
+	"github.com/wtkeqrf0/you-together/ent"
 	"net/http"
 	"os"
 )
@@ -36,22 +37,28 @@ var (
 	EmailError  = newError(http.StatusInternalServerError, "Can't send message to your email", "Try to send it later")
 )
 
-var logger = logrus.Logger{
-	Level:        logrus.ErrorLevel,
-	Out:          os.Stderr,
-	ReportCaller: true,
-	Formatter: &logrus.JSONFormatter{
+type ErrHandler struct {
+	log *logrus.Logger
+}
+
+func NewErrHandler(log *logrus.Logger) *ErrHandler {
+	log.SetLevel(logrus.ErrorLevel)
+	log.SetReportCaller(true)
+	log.SetFormatter(&logrus.JSONFormatter{
 		TimestampFormat: "2006/01/02 15:32:05",
 		FieldMap: logrus.FieldMap{
 			logrus.FieldKeyLevel: "status",
 			logrus.FieldKeyFunc:  "caller",
 			logrus.FieldKeyMsg:   "message",
 		},
-	},
+	})
+	log.SetOutput(os.Stderr)
+
+	return &ErrHandler{log: log}
 }
 
-// ErrorHandler used for error handling. Handles only MyError type errors
-func ErrorHandler(c *gin.Context) {
+// HandleErrors of MyError type
+func (e *ErrHandler) HandleErrors(c *gin.Context) {
 	c.Next()
 
 	errs := c.Errors
@@ -62,7 +69,7 @@ func ErrorHandler(c *gin.Context) {
 
 	for i, err := range errs {
 		if my, ok := err.Err.(MyError); ok {
-			logger.WithError(my.Err).Errorf("%02d# %s", i+1, my.Msg)
+			e.log.WithError(my.Err).Errorf("%02d# %s", i+1, my.Msg)
 			res := gin.H{"error": my.Msg, "advice": my.Advice}
 
 			if vErrs, ok := my.Err.(validator.ValidationErrors); ok {
@@ -92,21 +99,23 @@ func ErrorHandler(c *gin.Context) {
 						fields[field] = fmt.Sprintf("%s must be lesser than %s", field, vErr.Param())
 					case "printascii":
 						fields[field] = fmt.Sprintf("%s can contain only /:@-._~!?$&'()*+,;= and any english letters", field)
-					case "required_without_all":
-						fields[field] = fmt.Sprintf("%s should not be empty", field)
-						break
 					case "name":
-						fields[field] = fmt.Sprintf("name is not valid")
+						fields[field] = fmt.Sprintf("%s is not valid name", field)
+					case "uuid4":
+						fields[field] = fmt.Sprintf("%s is not valid uuid", field)
 					}
 				}
 				res["fields"] = fields
+			} else if ent.IsValidationError(err.Err) {
+				my.Status = http.StatusBadRequest
+				res["fields"] = gin.H{"FieldName": err.Err.Error()}
 			}
 
 			if i == 0 {
 				c.JSON(my.Status, res)
 			}
 		} else {
-			logger.WithError(err.Err).Error("UNEXPECTED ERROR")
+			e.log.WithError(err.Err).Error("UNEXPECTED ERROR")
 			if i == 0 {
 				c.JSON(ServerError.Status, ServerError.Msg)
 			}

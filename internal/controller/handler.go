@@ -2,19 +2,11 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/wtkeqrf0/you-together/ent"
 	"github.com/wtkeqrf0/you-together/internal/controller/dao"
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
 	"github.com/wtkeqrf0/you-together/pkg/conf"
-	"github.com/wtkeqrf0/you-together/pkg/middleware/errs"
-	"github.com/wtkeqrf0/you-together/pkg/middleware/logger"
 	"time"
-)
-
-const (
-	acceptLanguage string = "Accept-Language"
 )
 
 var (
@@ -55,7 +47,7 @@ type AuthMiddleware interface {
 	RequireSession(c *gin.Context)
 	MaybeSession(c *gin.Context)
 	GenerateSession(id int, ip, userAgent string) (string, error)
-	SetNewCookie(id int, c *gin.Context)
+	SetNewCookie(id int, userAgent string, c *gin.Context)
 	GetSession(c *gin.Context) (*dao.Session, error)
 	PopCookie(c *gin.Context)
 }
@@ -65,58 +57,66 @@ type MailSender interface {
 }
 
 type Handler struct {
-	users    UserService
-	sessions AuthMiddleware
-	auth     AuthService
-	mail     MailSender
+	users UserService
+	auth  AuthService
+	mail  MailSender
+	sess  AuthMiddleware
 }
 
-func NewHandler(users UserService, sessions AuthMiddleware, auth AuthService, mail MailSender) *Handler {
-	return &Handler{users: users, sessions: sessions, auth: auth, mail: mail}
+func NewHandler(users UserService, auth AuthService, mail MailSender, sess AuthMiddleware) *Handler {
+	return &Handler{users: users, auth: auth, mail: mail, sess: sess}
 }
 
-func (h Handler) InitRoutes(r *gin.Engine, mailSet bool) {
-	r.Use(logger.QueryLogging, gin.Recovery(), errs.ErrorHandler)
-	api := r.Group("/api")
+func (h *Handler) InitRoutes(rg *gin.RouterGroup, mailSet bool) {
 
-	docs := api.Group("/docs")
+	rg.StaticFile("/docs", "docs/OpenAPI.yaml")
+
+	auth := rg.Group("/auth")
 	{
-		docs.GET("/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	}
+		auth.POST("/password", h.signInByPassword)
+		auth.POST("/email", h.signInByEmail)
 
-	auth := api.Group("/auth")
-	{
-		pass := auth.Group("/password")
+		session := rg.Group("/session")
 		{
-			pass.POST("/sign-in", h.signInByPassword)
-		}
-
-		email := auth.Group("/email")
-		{
-			email.POST("/sign-in", h.signInByEmail)
+			session.GET("", h.sess.RequireSession, h.getMe)
+			session.DELETE("", h.signOut)
 		}
 	}
 
-	session := api.Group("/session")
-	{
-		session.GET("", h.sessions.RequireSession, h.getMe)
-		session.DELETE("", h.signOut)
-	}
-
-	user := api.Group("/user")
+	user := rg.Group("/user")
 	{
 		user.GET("/:username", h.getUserByUsername)
-		user.PATCH("", h.sessions.RequireSession, h.updateUser)
-		user.PATCH("/email", h.sessions.RequireSession, h.updateEmail)
-		user.PATCH("/password", h.sessions.RequireSession, h.updatePassword)
-		user.PATCH("/name", h.sessions.RequireSession, h.updateUsername)
-		user.GET("/check-name/:username", h.checkUsername)
+		user.PATCH("", h.sess.RequireSession, h.updateUser)
+		user.PATCH("/email", h.sess.RequireSession, h.updateEmail)
+		user.PATCH("/password", h.sess.RequireSession, h.updatePassword)
+		user.GET("/check-name/:name", h.checkUsername)
 	}
 
 	if mailSet {
-		email := api.Group("/email")
+		email := rg.Group("/email")
 		{
 			email.POST("/send-code", h.sendCodeToEmail)
 		}
 	}
+}
+
+type ErrHandler interface {
+	HandleErrors(c *gin.Context)
+}
+
+type QueryHandler interface {
+	HandleQueries(c *gin.Context)
+}
+
+type Middlewares struct {
+	erh ErrHandler
+	qh  QueryHandler
+}
+
+func NewMiddleWares(erh ErrHandler, qh QueryHandler) *Middlewares {
+	return &Middlewares{erh: erh, qh: qh}
+}
+
+func (m *Middlewares) InitGlobalMiddleWares(r *gin.Engine) {
+	r.Use(m.qh.HandleQueries, gin.Recovery(), m.erh.HandleErrors)
 }
