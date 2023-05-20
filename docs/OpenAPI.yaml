@@ -1,0 +1,701 @@
+openapi: 3.0.3
+info:
+  title: You-together API
+  description: |-
+    This is CRUD API documentation for you-together-online project.
+    You can get more info about that project [here](https://github.com/youtogether-online)
+  contact:
+    email: matvey-sizov@mail.ru
+  version: 1.0.0
+
+externalDocs:
+  description: Source code
+  url: https://github.com/youtogether-online/backend
+
+servers:
+  - url: http://localhost:3000/api
+    description: Backend local instance
+  - url: https://youtogether.localhost/api
+    description: Docker instance
+
+tags:
+  - name: Auth
+    description: Interaction with the session
+  - name: Email
+    description: Send messages from application smtp email
+  - name: User
+    description: get and update users
+  - name: Room
+    description: Any interaction with rooms
+
+paths:
+  /auth/session:
+    get:
+      tags: [ Auth ]
+      summary: Returns authorized user session data
+      description: Returns user session data from cookie session
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+        '401':
+          description: Non-valid session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/401'
+        '404':
+          description: User does not exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+    delete:
+      tags: [ Auth ]
+      security:
+        - cookieAuth: []
+      summary: Deletes user session
+      description: Deletes user session and clear user session cookie
+      responses:
+        '200':
+          description: OK
+        '500':
+          $ref: '#/components/responses/500'
+
+
+  /auth/email:
+    post:
+      tags: [ Auth ]
+      summary: Authorization via email
+      description: Authorize user with code that previously was sent to email. If user with specified email does not exist, create new user. Can be used for sign-in and sign-up.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailWithCode'
+      parameters:
+        - in: header
+          name: Accept-Language
+          schema:
+            type: string
+            enum:
+              - EN
+              - RU
+            example: RU
+      responses:
+        '200':
+          description: OK
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: session_id=f82f97fd-9930-4133-a6a7-1bccb3b933b4; Path=/api; Domain=localhost; SameSite=Lax; HttpOnly;
+        '400':
+          description: Code isn't correct or something isn't valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  /auth/password:
+    post:
+      tags: [ Auth ]
+      summary: Authorization via email with password
+      description: Authorize user with email and password. If user with specified email does not exist, create new user. Can be used for sign-in and sign-up.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailWithPassword'
+      parameters:
+        - in: header
+          name: Accept-Language
+          schema:
+              type: string
+              enum:
+                - EN
+                - RU
+              example: RU
+      responses:
+        '200':
+          description: OK
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: session_id=f82f97fd-9930-4133-a6a7-1bccb3b933b4; Path=/api; Domain=localhost; SameSite=Lax; HttpOnly;
+        '400':
+          description: Something is not valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/400'
+        '404':
+          description: Password isn't registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/400'
+
+  
+  /email/send-code:
+    post:
+      tags: [ Email ]
+      summary: Send secret authorization code to specified email
+      description: Generates 5-digit string, saves it and sends it to specified email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Email'
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Something is not valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/400'
+        '404':
+          description: Email param is not registered or not correct (docker)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/400'
+        '500':
+          description: Unable to save or send code
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/500'
+  
+  /user/{username}:
+    get:
+      tags: [ User ]
+      summary: Get user main info by username
+      description: Returns user's main data by username, if exist
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: username
+          required: true
+          schema:
+            $ref: '#/components/schemas/Name'
+      responses:
+        '200':
+          $ref: '#/components/schemas/User'
+        '400':
+          description: Something is not valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/400'
+        '404':
+          description: User with this name does not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+
+  /user/check-name/{name}:
+    get:
+      tags: [ User ]
+      summary: Check name on name already used
+      description: Checks specified name on already exist
+      parameters:
+        - in: path
+          name: name
+          required: true
+          schema:
+            $ref: '#/components/schemas/Name'
+      responses:
+        '200':
+          description: This name isn't in use
+        '403':
+          description: This name already in use
+        '500':
+          $ref: '#/components/responses/500'
+
+  
+  /user:
+    patch:
+      tags: [ User ]
+      summary: Update user's main data
+      description: Updates some user's main data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUser'
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Something is not valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/400'
+        '401':
+          description: You are not logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/401'
+        '500':
+          $ref: '#/components/responses/500'
+
+  /user/password:
+    patch:
+      tags: [ User ]
+      summary: Update user's password
+      description: Updates user's password by email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePassword'
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Something is not valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/400'
+        '401':
+          description: You are not logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/401'
+        '500':
+          $ref: '#/components/responses/500'
+
+  /user/email:
+    patch:
+      tags: [ User ]
+      summary: Update user's email
+      description: Updates user's email by password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEmail'
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Something is not valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/400'
+        '401':
+          description: You are not logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/401'
+        '500':
+          $ref: '#/components/responses/500'
+
+  /user/name:
+    patch:
+      tags: [ User ]
+      summary: Update user name
+      description: Updates user name
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateName'
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Name is not valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/400'
+        '401':
+          description: You are not logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/401'
+        '500':
+          $ref: '#/components/responses/500'
+
+components:
+  schemas:
+
+    EmailWithCode:
+      type: object
+      writeOnly: true
+      required:
+        - email
+        - code
+        - theme
+      properties:
+        email:
+          type: string
+          pattern: ^\S+@\S+\.\S+$
+          example: example@example.com
+        code:
+          type: string
+          minLength: 5
+          maxLength: 5
+          example: HI9I3
+        theme:
+          type: string
+          enum:
+            - DARK
+            - LIGHT
+            - SYSTEM
+          example: SYSTEM
+
+    EmailWithPassword:
+      type: object
+      writeOnly: true
+      required:
+        - email
+        - password
+        - theme
+      properties:
+        email:
+          type: string
+          pattern: ^\S+@\S+\.\S+$
+          example: example@example.com
+        password:
+          type: string
+          pattern: ^\P{Cc}\P{Cn}\P{Cs}$
+          example: Bob2020
+        theme:
+          type: string
+          enum:
+            - DARK
+            - LIGHT
+            - SYSTEM
+          example: SYSTEM
+
+    UpdateName:
+      type: object
+      writeOnly: true
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          pattern: ^[a-zA-Z][a-zA-Z0-9_]{3,18}([a-zA-Z0-9])$
+          example: user95
+          minLength: 5
+          maxLength: 20
+
+    UpdatePassword:
+      type: object
+      writeOnly: true
+      required:
+        - email
+        - code
+        - newPassword
+      properties:
+        email:
+          type: string
+          pattern: ^\S+@\S+\.\S+$
+          example: example@example.com
+        code:
+          type: string
+          minLength: 5
+          maxLength: 5
+          example: HI9I3
+        newPassword:
+          type: string
+          pattern: ^\P{Cc}\P{Cn}\P{Cs}$
+          example: Bob2020
+
+    UpdateEmail:
+      type: object
+      writeOnly: true
+      required:
+        - newEmail
+        - password
+      properties:
+        newEmail:
+          type: string
+          pattern: ^\S+@\S+\.\S+$
+          example: example@example.com
+        password:
+          type: string
+          pattern: ^\P{Cc}\P{Cn}\P{Cs}$
+          example: Bob2020
+
+    UpdateUser:
+      type: object
+      writeOnly: true
+      properties:
+        firstName:
+          type: string
+          example: Bomb
+          minLength: 3
+          maxLength: 32
+        lastName:
+          type: string
+          example: Hodovaniuk
+          minLength: 3
+          maxLength: 32
+        biography:
+          type: string
+          minLength: 1
+          maxLength: 140
+          example: 23 y.o designer from San Francisco
+        language:
+          type: string
+          enum:
+            - EN
+            - RU
+          example: RU
+        theme:
+          type: string
+          enum:
+            - DARK
+            - LIGHT
+            - SYSTEM
+          example: SYSTEM
+
+    Name:
+      type: string
+      writeOnly: true
+      required:
+        - name
+      properties:
+        username:
+          type: string
+          pattern: ^[a-zA-Z][a-zA-Z0-9_]{3,18}([a-zA-Z0-9])$
+          example: user95
+          minLength: 5
+          maxLength: 20
+
+    Email:
+      type: object
+      writeOnly: true
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          pattern: ^\S+@\S+\.\S+$
+          example: example@example.com
+
+    User:
+      type: object
+      readOnly: true
+      required:
+        - name
+        - role
+      properties:
+        name:
+          type: string
+          pattern: ^[a-zA-Z][a-zA-Z0-9_]{3,18}([a-zA-Z0-9])$
+          example: user95
+          minLength: 5
+          maxLength: 20
+        firstName:
+          type: string
+          example: Bomb
+          minLength: 3
+          maxLength: 32
+        lastName:
+          type: string
+          example: Hodovaniuk
+          minLength: 3
+          maxLength: 32
+        role:
+          enum:
+            - USER
+            - ADMIN
+          type: string
+          example: USER
+        biography:
+          type: string
+          minLength: 1
+          maxLength: 140
+          example: 23 y.o designer from San Francisco
+        friendsIds:
+          type: array
+          items:
+            type: integer
+          uniqueItems: true
+          example:
+            - 154
+            - 95848
+            - 5234
+            - 9774
+            - 4950
+            - 3495
+
+    Me:
+      type: object
+      readOnly: true
+      required:
+        - name
+        - role
+        - email
+        - language
+        - theme
+        - isEmailVerified
+      properties:
+        name:
+          type: string
+          pattern: ^[a-zA-Z][a-zA-Z0-9_]{3,18}([a-zA-Z0-9])$
+          example: user95
+          minLength: 5
+          maxLength: 20
+        firstName:
+          type: string
+          example: Bomb
+          minLength: 3
+          maxLength: 32
+        lastName:
+          type: string
+          example: Hodovaniuk
+          minLength: 3
+          maxLength: 32
+        role:
+          enum:
+            - USER
+            - ADMIN
+          type: string
+          example: USER
+        biography:
+          type: string
+          minLength: 1
+          maxLength: 140
+          example: 23 y.o designer from San Francisco
+        email:
+          type: string
+          pattern: ^\S+@\S+\.\S+$
+          example: example@example.com
+        language:
+          type: string
+          enum:
+            - EN
+            - RU
+          example: RU
+        theme:
+          type: string
+          enum:
+            - DARK
+            - LIGHT
+            - SYSTEM
+          example: SYSTEM
+        isEmailVerified:
+          type: boolean
+          example: false
+        friendsIds:
+          type: array
+          items:
+            type: integer
+          uniqueItems: true
+          example:
+            - 154
+            - 95848
+            - 5234
+            - 9774
+            - 4950
+            - 3495
+
+    Error:
+      type: object
+      readOnly: true
+      required:
+        - message
+        - advice
+      properties:
+        message:
+          type: string
+          example: Exception was occurred
+        advice:
+          type: string
+          example: Try to send request later
+
+    ValidError:
+      type: object
+      readOnly: true
+      required:
+        - message
+        - advice
+        - fields
+      properties:
+        message:
+          type: string
+          example: Validation error
+        advice:
+          type: string
+          example: Try to enter the correct data
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            email: email is not the correct email
+            code: code must have a length of 5
+
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: session_id
+
+  responses:
+    '500':
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    '404':
+      description: There is no such object
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    '401':
+      description: User is not logged in
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    '400':
+      description: Invalid data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidError'
+
