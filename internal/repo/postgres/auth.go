@@ -20,14 +20,14 @@ func (r *UserStorage) UserExistsByEmail(ctx context.Context, email string) bool 
 // CreateUserWithPassword without verified email and returns it (only on registration)
 func (r *UserStorage) CreateUserWithPassword(ctx context.Context, auth dto.EmailWithPassword) (*ent.User, error) {
 	return r.userClient.Create().SetEmail(auth.Email).
-		SetTheme(auth.Theme).SetLanguage(auth.Language).
+		SetNillableTheme(auth.Theme).SetNillableLanguage(auth.Language).
 		SetPasswordHash([]byte(auth.Password)).Save(ctx)
 }
 
 // CreateUserByEmail without password and returns it (only on registration)
 func (r *UserStorage) CreateUserByEmail(ctx context.Context, auth dto.EmailWithCode) (*ent.User, error) {
 	return r.userClient.Create().SetEmail(auth.Email).
-		SetNillableTheme(&auth.Theme).SetNillableLanguage(&auth.Language).
+		SetNillableTheme(auth.Theme).SetNillableLanguage(auth.Language).
 		SetIsEmailVerified(true).Save(ctx)
 }
 
