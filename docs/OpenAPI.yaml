@@ -38,25 +38,14 @@ paths:
         - cookieAuth: []
       responses:
         '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Me'
+          $ref: '#/components/schemas/Me'
         '401':
-          description: Non-valid session
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/responses/401'
+          $ref: '#/components/responses/401'
         '404':
-          description: User does not exists
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/responses/404'
+          $ref: '#/components/responses/404'
         '500':
           $ref: '#/components/responses/500'
+
     delete:
       tags: [ Auth ]
       security:
@@ -99,13 +88,10 @@ paths:
                 type: string
                 example: session_id=f82f97fd-9930-4133-a6a7-1bccb3b933b4; Path=/api; Domain=localhost; SameSite=Lax; HttpOnly;
         '400':
-          description: Code isn't correct or something isn't valid
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/responses/400'
+          $ref: '#/components/responses/400'
         '500':
           $ref: '#/components/responses/500'
+
   /auth/password:
     post:
       tags: [ Auth ]
@@ -135,21 +121,12 @@ paths:
                 type: string
                 example: session_id=f82f97fd-9930-4133-a6a7-1bccb3b933b4; Path=/api; Domain=localhost; SameSite=Lax; HttpOnly;
         '400':
-          description: Something is not valid
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/responses/400'
+          $ref: '#/components/responses/400'
         '404':
-          description: Password isn't registered
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/responses/404'
+          $ref: '#/components/responses/404'
         '500':
           $ref: '#/components/responses/400'
 
-  
   /email/send-code:
     post:
       tags: [ Email ]
@@ -165,23 +142,11 @@ paths:
         '200':
           description: OK
         '400':
-          description: Something is not valid
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/responses/400'
+          $ref: '#/components/responses/400'
         '404':
-          description: Email param is not registered or not correct (docker)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/responses/400'
+          $ref: '#/components/responses/400'
         '500':
-          description: Unable to save or send code
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/responses/500'
+          $ref: '#/components/responses/500'
   
   /user/{username}:
     get:
@@ -200,17 +165,9 @@ paths:
         '200':
           $ref: '#/components/schemas/User'
         '400':
-          description: Something is not valid
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/responses/400'
+          $ref: '#/components/responses/400'
         '404':
-          description: User with this name does not exist
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/responses/404'
+          $ref: '#/components/responses/404'
         '500':
           $ref: '#/components/responses/500'
 
@@ -233,7 +190,6 @@ paths:
         '500':
           $ref: '#/components/responses/500'
 
-  
   /user:
     patch:
       tags: [ User ]
@@ -249,17 +205,9 @@ paths:
         '200':
           description: OK
         '400':
-          description: Something is not valid
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/responses/400'
+          $ref: '#/components/responses/400'
         '401':
-          description: You are not logged in
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/responses/401'
+          $ref: '#/components/responses/401'
         '500':
           $ref: '#/components/responses/500'
 
@@ -278,17 +226,9 @@ paths:
         '200':
           description: OK
         '400':
-          description: Something is not valid
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/responses/400'
+          $ref: '#/components/responses/400'
         '401':
-          description: You are not logged in
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/responses/401'
+          $ref: '#/components/responses/401'
         '500':
           $ref: '#/components/responses/500'
 
@@ -307,17 +247,9 @@ paths:
         '200':
           description: OK
         '400':
-          description: Something is not valid
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/responses/400'
+          $ref: '#/components/responses/400'
         '401':
-          description: You are not logged in
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/responses/401'
+          $ref: '#/components/responses/401'
         '500':
           $ref: '#/components/responses/500'
 
@@ -336,17 +268,9 @@ paths:
         '200':
           description: OK
         '400':
-          description: Name is not valid
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/responses/400'
+          $ref: '#/components/responses/400'
         '401':
-          description: You are not logged in
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/responses/401'
+          $ref: '#/components/responses/401'
         '500':
           $ref: '#/components/responses/500'
 
@@ -661,8 +585,8 @@ components:
           additionalProperties:
             type: string
           example:
-            email: email is not the correct email
-            code: code must have a length of 5
+            Email: Email is not the correct email
+            Code: Code must have a length of 5
 
   securitySchemes:
     cookieAuth:

@@ -22,6 +22,10 @@ func NewValid(v *validator.Validate) *Valid {
 	if err := v.RegisterValidation("uuid4", validateUUID4); err != nil {
 		logrus.WithError(err).Warn("can't validate uuid4")
 	}
+
+	if err := v.RegisterValidation("enum", validateEnum); err != nil {
+		logrus.WithError(err).Warn("can't validate enums")
+	}
 	return &Valid{v: v}
 }
 
