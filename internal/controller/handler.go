@@ -22,7 +22,7 @@ type UserService interface {
 	FindMe(id int) (*dao.Me, error)
 
 	UpdateUser(customer *dto.UpdateUser, id int) error
-	UpdatePassword(password string, id int) error
+	UpdatePassword(newPassword []byte, id int) error
 	UpdateEmail(email string, id int) error
 	UpdateUsername(username string, id int) error
 	UsernameExist(username string) (bool, error)
