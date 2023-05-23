@@ -41,7 +41,7 @@ type RoomMutation struct {
 	custom_name   *string
 	owner_id      *int
 	addowner_id   *int
-	privacy       *room.Privacy
+	privacy       *string
 	password_hash *[]byte
 	has_chat      *bool
 	description   *string
@@ -122,12 +122,6 @@ func (m RoomMutation) Tx() (*Tx, error) {
 	tx := &Tx{config: m.config}
 	tx.init()
 	return tx, nil
-}
-
-// SetID sets the value of the id field. Note that this
-// operation is only accepted on creation of Room entities.
-func (m *RoomMutation) SetID(id int) {
-	m.id = &id
 }
 
 // ID returns the ID value in the mutation. Note that the ID is only available
@@ -372,12 +366,12 @@ func (m *RoomMutation) ResetOwnerID() {
 }
 
 // SetPrivacy sets the "privacy" field.
-func (m *RoomMutation) SetPrivacy(r room.Privacy) {
-	m.privacy = &r
+func (m *RoomMutation) SetPrivacy(s string) {
+	m.privacy = &s
 }
 
 // Privacy returns the value of the "privacy" field in the mutation.
-func (m *RoomMutation) Privacy() (r room.Privacy, exists bool) {
+func (m *RoomMutation) Privacy() (r string, exists bool) {
 	v := m.privacy
 	if v == nil {
 		return
@@ -388,7 +382,7 @@ func (m *RoomMutation) Privacy() (r room.Privacy, exists bool) {
 // OldPrivacy returns the old "privacy" field's value of the Room entity.
 // If the Room object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *RoomMutation) OldPrivacy(ctx context.Context) (v room.Privacy, err error) {
+func (m *RoomMutation) OldPrivacy(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPrivacy is only allowed on UpdateOne operations")
 	}
@@ -755,7 +749,7 @@ func (m *RoomMutation) SetField(name string, value ent.Value) error {
 		m.SetOwnerID(v)
 		return nil
 	case room.FieldPrivacy:
-		v, ok := value.(room.Privacy)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -1081,12 +1075,6 @@ func (m UserMutation) Tx() (*Tx, error) {
 	tx := &Tx{config: m.config}
 	tx.init()
 	return tx, nil
-}
-
-// SetID sets the value of the id field. Note that this
-// operation is only accepted on creation of User entities.
-func (m *UserMutation) SetID(id int) {
-	m.id = &id
 }
 
 // ID returns the ID value in the mutation. Note that the ID is only available

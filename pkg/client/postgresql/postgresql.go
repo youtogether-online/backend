@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/schema"
 	"fmt"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/sirupsen/logrus"
@@ -31,7 +32,7 @@ func Open(username, password, host string, port int, DBName string) *ent.Client 
 	drv := entsql.OpenDB(dialect.Postgres, db)
 	client := ent.NewClient(ent.Driver(drv))
 
-	if err = client.Schema.Create(context.Background()); err != nil {
+	if err = client.Schema.Create(context.Background(), schema.WithGlobalUniqueID(true)); err != nil {
 		logrus.WithError(err).Fatal("tables initialization failed")
 	}
 

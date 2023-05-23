@@ -13,7 +13,6 @@ import (
 	"github.com/wtkeqrf0/you-together/ent/room"
 	"github.com/wtkeqrf0/you-together/pkg/bind"
 	"golang.org/x/crypto/bcrypt"
-	"regexp"
 )
 
 // User holds the schema definition for the User dto.
@@ -21,43 +20,41 @@ type User struct {
 	ent.Schema
 }
 
-const emailRegexp string = "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
-
 // Fields of the User.
 func (User) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("id").StructTag(`json:"-"`),
 		field.String("name").Unique().Match(bind.NameRegexp).Annotations(
-			entsql.DefaultExpr("'user' || currval(pg_get_serial_sequence('users', 'id'))")).
-			StructTag(`json:"name,omitempty"`),
+			entsql.DefaultExpr("'user' || setval(pg_get_serial_sequence('users','id'),nextval(pg_get_serial_sequence('users','id'))-1)")).
+			StructTag(`json:"name,omitempty" validate:"omitempty,name"`),
 
-		field.String("email").Unique().Match(regexp.MustCompile(emailRegexp)).
-			StructTag(`json:"email,omitempty"`),
+		field.String("email").Unique().Match(bind.EmailRegexp).
+			StructTag(`json:"email,omitempty" validate:"required,email"`),
 
 		field.Bool("is_email_verified").Default(false).
-			StructTag(`json:"isEmailVerified"`),
+			StructTag(`json:"isEmailVerified,omitempty"`),
 
 		field.Bytes("password_hash").Optional().Sensitive().Nillable(),
 
 		field.Text("biography").Optional().MaxLen(512).Nillable().
-			StructTag(`json:"biography,omitempty"`),
+			StructTag(`json:"biography,omitempty" validate:"omitempty,lte=512"`),
 
-		field.String("role").Default("USER").StructTag(`json:"role,omitempty"`),
+		field.String("role").Default("USER").
+			StructTag(`json:"role,omitempty" validate:"omitempty,enum=USER*ADMIN"`),
 
 		field.Strings("friends_ids").Optional().
 			StructTag(`json:"friendsIds,omitempty"`),
 
 		field.String("language").Default("EN").
-			StructTag(`json:"language,omitempty"`),
+			StructTag(`json:"language,omitempty" validate:"omitempty,enum=EN*RU"`),
 
 		field.String("theme").Default("SYSTEM").
-			StructTag(`json:"theme,omitempty"`),
+			StructTag(`json:"theme,omitempty" validate:"omitempty,enum=SYSTEM*WHITE*DARK"`),
 
 		field.String("first_name").Optional().MinLen(3).MaxLen(32).Nillable().
-			StructTag(`json:"firstName,omitempty"`),
+			StructTag(`json:"firstName,omitempty" validate:"omitempty,gte=3,lte=32"`),
 
 		field.String("last_name").Optional().MinLen(3).MaxLen(32).Nillable().
-			StructTag(`json:"lastName,omitempty"`),
+			StructTag(`json:"lastName,omitempty" validate:"omitempty,gte=3,lte=32"`),
 
 		field.Strings("sessions").Optional().StructTag(`json:"-"`),
 	}

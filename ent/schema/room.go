@@ -23,20 +23,17 @@ type Room struct {
 // Fields of the Room.
 func (Room) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("id").StructTag(`json:"-"`).Annotations(
-			entsql.DefaultExpr("nextval(pg_get_serial_sequence('users', 'id'))")),
-
 		field.String("name").Unique().Match(bind.NameRegexp).Annotations(
-			entsql.DefaultExpr("'room' || currval(pg_get_serial_sequence('users', 'id'))")).
-			StructTag(`json:"name,omitempty"`),
+			entsql.DefaultExpr("'room' || setval(pg_get_serial_sequence('rooms','id'),nextval(pg_get_serial_sequence('rooms','id'))-1)")).
+			StructTag(`json:"name,omitempty" validate:"omitempty,name"`),
 
-		field.String("custom_name").Optional().MinLen(2).MaxLen(20).Nillable().
-			StructTag(`json:"customName,omitempty"`),
+		field.String("custom_name").Optional().MinLen(3).MaxLen(32).Nillable().
+			StructTag(`json:"customName,omitempty" validate:"omitempty,gte=3,lte=32"`),
 
 		field.Int("owner_id").Unique().Positive().StructTag(`json:"-"`),
 
-		field.Enum("privacy").Values("PRIVATE", "FRIENDS", "PUBLIC").
-			Default("PUBLIC").StructTag(`json:"privacy,omitempty"`),
+		field.String("privacy").Default("PUBLIC").
+			StructTag(`json:"privacy,omitempty" validate:"omitempty,enum=PUBLIC*PRIVATE*FRIENDS"`),
 
 		field.Bytes("password_hash").Optional().Sensitive().Nillable(),
 
@@ -44,7 +41,7 @@ func (Room) Fields() []ent.Field {
 			StructTag(`json:"has_chat,omitempty"`),
 
 		field.String("description").Optional().MaxLen(140).Nillable().
-			StructTag(`json:"description,omitempty"`),
+			StructTag(`json:"description,omitempty" validate:"omitempty,lte=140"`),
 	}
 }
 

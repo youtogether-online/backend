@@ -80,6 +80,11 @@ func OwnerID(v int) predicate.Room {
 	return predicate.Room(sql.FieldEQ(FieldOwnerID, v))
 }
 
+// Privacy applies equality check predicate on the "privacy" field. It's identical to PrivacyEQ.
+func Privacy(v string) predicate.Room {
+	return predicate.Room(sql.FieldEQ(FieldPrivacy, v))
+}
+
 // PasswordHash applies equality check predicate on the "password_hash" field. It's identical to PasswordHashEQ.
 func PasswordHash(v []byte) predicate.Room {
 	return predicate.Room(sql.FieldEQ(FieldPasswordHash, v))
@@ -356,23 +361,68 @@ func OwnerIDLTE(v int) predicate.Room {
 }
 
 // PrivacyEQ applies the EQ predicate on the "privacy" field.
-func PrivacyEQ(v Privacy) predicate.Room {
+func PrivacyEQ(v string) predicate.Room {
 	return predicate.Room(sql.FieldEQ(FieldPrivacy, v))
 }
 
 // PrivacyNEQ applies the NEQ predicate on the "privacy" field.
-func PrivacyNEQ(v Privacy) predicate.Room {
+func PrivacyNEQ(v string) predicate.Room {
 	return predicate.Room(sql.FieldNEQ(FieldPrivacy, v))
 }
 
 // PrivacyIn applies the In predicate on the "privacy" field.
-func PrivacyIn(vs ...Privacy) predicate.Room {
+func PrivacyIn(vs ...string) predicate.Room {
 	return predicate.Room(sql.FieldIn(FieldPrivacy, vs...))
 }
 
 // PrivacyNotIn applies the NotIn predicate on the "privacy" field.
-func PrivacyNotIn(vs ...Privacy) predicate.Room {
+func PrivacyNotIn(vs ...string) predicate.Room {
 	return predicate.Room(sql.FieldNotIn(FieldPrivacy, vs...))
+}
+
+// PrivacyGT applies the GT predicate on the "privacy" field.
+func PrivacyGT(v string) predicate.Room {
+	return predicate.Room(sql.FieldGT(FieldPrivacy, v))
+}
+
+// PrivacyGTE applies the GTE predicate on the "privacy" field.
+func PrivacyGTE(v string) predicate.Room {
+	return predicate.Room(sql.FieldGTE(FieldPrivacy, v))
+}
+
+// PrivacyLT applies the LT predicate on the "privacy" field.
+func PrivacyLT(v string) predicate.Room {
+	return predicate.Room(sql.FieldLT(FieldPrivacy, v))
+}
+
+// PrivacyLTE applies the LTE predicate on the "privacy" field.
+func PrivacyLTE(v string) predicate.Room {
+	return predicate.Room(sql.FieldLTE(FieldPrivacy, v))
+}
+
+// PrivacyContains applies the Contains predicate on the "privacy" field.
+func PrivacyContains(v string) predicate.Room {
+	return predicate.Room(sql.FieldContains(FieldPrivacy, v))
+}
+
+// PrivacyHasPrefix applies the HasPrefix predicate on the "privacy" field.
+func PrivacyHasPrefix(v string) predicate.Room {
+	return predicate.Room(sql.FieldHasPrefix(FieldPrivacy, v))
+}
+
+// PrivacyHasSuffix applies the HasSuffix predicate on the "privacy" field.
+func PrivacyHasSuffix(v string) predicate.Room {
+	return predicate.Room(sql.FieldHasSuffix(FieldPrivacy, v))
+}
+
+// PrivacyEqualFold applies the EqualFold predicate on the "privacy" field.
+func PrivacyEqualFold(v string) predicate.Room {
+	return predicate.Room(sql.FieldEqualFold(FieldPrivacy, v))
+}
+
+// PrivacyContainsFold applies the ContainsFold predicate on the "privacy" field.
+func PrivacyContainsFold(v string) predicate.Room {
+	return predicate.Room(sql.FieldContainsFold(FieldPrivacy, v))
 }
 
 // PasswordHashEQ applies the EQ predicate on the "password_hash" field.

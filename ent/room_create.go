@@ -76,15 +76,15 @@ func (rc *RoomCreate) SetOwnerID(i int) *RoomCreate {
 }
 
 // SetPrivacy sets the "privacy" field.
-func (rc *RoomCreate) SetPrivacy(r room.Privacy) *RoomCreate {
-	rc.mutation.SetPrivacy(r)
+func (rc *RoomCreate) SetPrivacy(s string) *RoomCreate {
+	rc.mutation.SetPrivacy(s)
 	return rc
 }
 
 // SetNillablePrivacy sets the "privacy" field if the given value is not nil.
-func (rc *RoomCreate) SetNillablePrivacy(r *room.Privacy) *RoomCreate {
-	if r != nil {
-		rc.SetPrivacy(*r)
+func (rc *RoomCreate) SetNillablePrivacy(s *string) *RoomCreate {
+	if s != nil {
+		rc.SetPrivacy(*s)
 	}
 	return rc
 }
@@ -120,12 +120,6 @@ func (rc *RoomCreate) SetNillableDescription(s *string) *RoomCreate {
 	if s != nil {
 		rc.SetDescription(*s)
 	}
-	return rc
-}
-
-// SetID sets the "id" field.
-func (rc *RoomCreate) SetID(i int) *RoomCreate {
-	rc.mutation.SetID(i)
 	return rc
 }
 
@@ -235,11 +229,6 @@ func (rc *RoomCreate) check() error {
 	if _, ok := rc.mutation.Privacy(); !ok {
 		return &ValidationError{Name: "privacy", err: errors.New(`ent: missing required field "Room.privacy"`)}
 	}
-	if v, ok := rc.mutation.Privacy(); ok {
-		if err := room.PrivacyValidator(v); err != nil {
-			return &ValidationError{Name: "privacy", err: fmt.Errorf(`ent: validator failed for field "Room.privacy": %w`, err)}
-		}
-	}
 	if _, ok := rc.mutation.HasChat(); !ok {
 		return &ValidationError{Name: "has_chat", err: errors.New(`ent: missing required field "Room.has_chat"`)}
 	}
@@ -262,10 +251,8 @@ func (rc *RoomCreate) sqlSave(ctx context.Context) (*Room, error) {
 		}
 		return nil, err
 	}
-	if _spec.ID.Value != _node.ID {
-		id := _spec.ID.Value.(int64)
-		_node.ID = int(id)
-	}
+	id := _spec.ID.Value.(int64)
+	_node.ID = int(id)
 	rc.mutation.id = &_node.ID
 	rc.mutation.done = true
 	return _node, nil
@@ -276,10 +263,6 @@ func (rc *RoomCreate) createSpec() (*Room, *sqlgraph.CreateSpec) {
 		_node = &Room{config: rc.config}
 		_spec = sqlgraph.NewCreateSpec(room.Table, sqlgraph.NewFieldSpec(room.FieldID, field.TypeInt))
 	)
-	if id, ok := rc.mutation.ID(); ok {
-		_node.ID = id
-		_spec.ID.Value = id
-	}
 	if value, ok := rc.mutation.CreateTime(); ok {
 		_spec.SetField(room.FieldCreateTime, field.TypeTime, value)
 		_node.CreateTime = value
@@ -301,7 +284,7 @@ func (rc *RoomCreate) createSpec() (*Room, *sqlgraph.CreateSpec) {
 		_node.OwnerID = value
 	}
 	if value, ok := rc.mutation.Privacy(); ok {
-		_spec.SetField(room.FieldPrivacy, field.TypeEnum, value)
+		_spec.SetField(room.FieldPrivacy, field.TypeString, value)
 		_node.Privacy = value
 	}
 	if value, ok := rc.mutation.PasswordHash(); ok {
@@ -379,7 +362,7 @@ func (rcb *RoomCreateBulk) Save(ctx context.Context) ([]*Room, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
+				if specs[i].ID.Value != nil {
 					id := specs[i].ID.Value.(int64)
 					nodes[i].ID = int(id)
 				}

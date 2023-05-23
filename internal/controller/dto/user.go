@@ -32,22 +32,13 @@ type Email struct {
 }
 
 type EmailWithPassword struct {
-	Email     string  `json:"email,omitempty" header:"-" validate:"required,email"`
-	Password  string  `json:"password,omitempty" header:"-" validate:"required,printascii,gte=4,lte=20"`
-	Theme     *string `json:"theme,omitempty" header:"-" validate:"omitempty,enum=SYSTEM*WHITE*DARK"`
-	UserAgent string  `header:"User-Agent" json:"-" validate:"required"`
-	Language  *string `header:"Accept-Language" json:"-" validate:"omitempty,enum=EN*RU"`
+	Email    string  `json:"email,omitempty" header:"-" validate:"required,email"`
+	Password string  `json:"password,omitempty" header:"-" validate:"required,printascii,gte=4,lte=20"`
+	Language *string `header:"Accept-Language" json:"-" validate:"omitempty,enum=EN*RU"`
 }
 
 type EmailWithCode struct {
-	Email     string  `json:"email,omitempty" validate:"required,email"`
-	Code      string  `json:"code,omitempty" validate:"required,len=5"`
-	Theme     *string `json:"theme,omitempty" validate:"omitempty,enum=SYSTEM*WHITE*DARK"`
-	UserAgent string  `header:"User-Agent" validate:"required"`
-	Language  *string `header:"Accept-Language" validate:"omitempty,enum=EN*RU"`
-}
-
-type AuthHeaders struct {
-	UserAgent string  `header:"User-Agent" validate:"required"`
-	Language  *string `header:"Accept-Language" validate:"omitempty,enum=EN*RU"`
+	Email    string  `json:"email,omitempty" validate:"required,email"`
+	Code     string  `json:"code,omitempty" validate:"required,len=5"`
+	Language *string `header:"Accept-Language" validate:"omitempty,enum=EN*RU"`
 }

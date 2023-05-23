@@ -3,7 +3,6 @@
 package room
 
 import (
-	"fmt"
 	"time"
 
 	"entgo.io/ent"
@@ -92,35 +91,10 @@ var (
 	CustomNameValidator func(string) error
 	// OwnerIDValidator is a validator for the "owner_id" field. It is called by the builders before save.
 	OwnerIDValidator func(int) error
+	// DefaultPrivacy holds the default value on creation for the "privacy" field.
+	DefaultPrivacy string
 	// DefaultHasChat holds the default value on creation for the "has_chat" field.
 	DefaultHasChat bool
 	// DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
 	DescriptionValidator func(string) error
 )
-
-// Privacy defines the type for the "privacy" enum field.
-type Privacy string
-
-// PrivacyPUBLIC is the default value of the Privacy enum.
-const DefaultPrivacy = PrivacyPUBLIC
-
-// Privacy values.
-const (
-	PrivacyPRIVATE Privacy = "PRIVATE"
-	PrivacyFRIENDS Privacy = "FRIENDS"
-	PrivacyPUBLIC  Privacy = "PUBLIC"
-)
-
-func (pr Privacy) String() string {
-	return string(pr)
-}
-
-// PrivacyValidator is a validator for the "privacy" field enum values. It is called by the builders before save.
-func PrivacyValidator(pr Privacy) error {
-	switch pr {
-	case PrivacyPRIVATE, PrivacyFRIENDS, PrivacyPUBLIC:
-		return nil
-	default:
-		return fmt.Errorf("room: invalid enum value for privacy field: %q", pr)
-	}
-}

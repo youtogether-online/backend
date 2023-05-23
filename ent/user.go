@@ -14,35 +14,35 @@ import (
 
 // User is the model entity for the User schema.
 type User struct {
-	config `json:"-"`
+	config `json:"-" validate:"-"`
 	// ID of the ent.
-	ID int `json:"-"`
+	ID int `json:"id,omitempty"`
 	// CreateTime holds the value of the "create_time" field.
 	CreateTime time.Time `json:"create_time,omitempty"`
 	// UpdateTime holds the value of the "update_time" field.
 	UpdateTime time.Time `json:"update_time,omitempty"`
 	// Name holds the value of the "name" field.
-	Name string `json:"name,omitempty"`
+	Name string `json:"name,omitempty" validate:"omitempty,name"`
 	// Email holds the value of the "email" field.
-	Email string `json:"email,omitempty"`
+	Email string `json:"email,omitempty" validate:"required,email"`
 	// IsEmailVerified holds the value of the "is_email_verified" field.
-	IsEmailVerified bool `json:"isEmailVerified"`
+	IsEmailVerified bool `json:"isEmailVerified,omitempty"`
 	// PasswordHash holds the value of the "password_hash" field.
-	PasswordHash *[]byte `json:"-"`
+	PasswordHash *[]byte `json:"-" validate:"-"`
 	// Biography holds the value of the "biography" field.
-	Biography *string `json:"biography,omitempty"`
+	Biography *string `json:"biography,omitempty" validate:"omitempty,lte=512"`
 	// Role holds the value of the "role" field.
-	Role string `json:"role,omitempty"`
+	Role string `json:"role,omitempty" validate:"omitempty,enum=USER*ADMIN"`
 	// FriendsIds holds the value of the "friends_ids" field.
 	FriendsIds []string `json:"friendsIds,omitempty"`
 	// Language holds the value of the "language" field.
-	Language string `json:"language,omitempty"`
+	Language string `json:"language,omitempty" validate:"omitempty,enum=EN*RU"`
 	// Theme holds the value of the "theme" field.
-	Theme string `json:"theme,omitempty"`
+	Theme string `json:"theme,omitempty" validate:"omitempty,enum=SYSTEM*WHITE*DARK"`
 	// FirstName holds the value of the "first_name" field.
-	FirstName *string `json:"firstName,omitempty"`
+	FirstName *string `json:"firstName,omitempty" validate:"omitempty,gte=3,lte=32"`
 	// LastName holds the value of the "last_name" field.
-	LastName *string `json:"lastName,omitempty"`
+	LastName *string `json:"lastName,omitempty" validate:"omitempty,gte=3,lte=32"`
 	// Sessions holds the value of the "sessions" field.
 	Sessions []string `json:"-"`
 	// Edges holds the relations/edges for other nodes in the graph.

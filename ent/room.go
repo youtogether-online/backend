@@ -13,27 +13,27 @@ import (
 
 // Room is the model entity for the Room schema.
 type Room struct {
-	config `json:"-"`
+	config `json:"-" validate:"-"`
 	// ID of the ent.
-	ID int `json:"-"`
+	ID int `json:"id,omitempty"`
 	// CreateTime holds the value of the "create_time" field.
 	CreateTime time.Time `json:"create_time,omitempty"`
 	// UpdateTime holds the value of the "update_time" field.
 	UpdateTime time.Time `json:"update_time,omitempty"`
 	// Name holds the value of the "name" field.
-	Name string `json:"name,omitempty"`
+	Name string `json:"name,omitempty" validate:"omitempty,name"`
 	// CustomName holds the value of the "custom_name" field.
-	CustomName *string `json:"customName,omitempty"`
+	CustomName *string `json:"customName,omitempty" validate:"omitempty,gte=3,lte=32"`
 	// OwnerID holds the value of the "owner_id" field.
 	OwnerID int `json:"-"`
 	// Privacy holds the value of the "privacy" field.
-	Privacy room.Privacy `json:"privacy,omitempty"`
+	Privacy string `json:"privacy,omitempty" validate:"omitempty,enum=PUBLIC*PRIVATE*FRIENDS"`
 	// PasswordHash holds the value of the "password_hash" field.
-	PasswordHash *[]byte `json:"-"`
+	PasswordHash *[]byte `json:"-" validate:"-"`
 	// HasChat holds the value of the "has_chat" field.
 	HasChat bool `json:"has_chat,omitempty"`
 	// Description holds the value of the "description" field.
-	Description *string `json:"description,omitempty"`
+	Description *string `json:"description,omitempty" validate:"omitempty,lte=140"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RoomQuery when eager-loading is set.
 	Edges RoomEdges `json:"edges"`
@@ -128,7 +128,7 @@ func (r *Room) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field privacy", values[i])
 			} else if value.Valid {
-				r.Privacy = room.Privacy(value.String)
+				r.Privacy = value.String
 			}
 		case room.FieldPasswordHash:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -200,7 +200,7 @@ func (r *Room) String() string {
 	builder.WriteString(fmt.Sprintf("%v", r.OwnerID))
 	builder.WriteString(", ")
 	builder.WriteString("privacy=")
-	builder.WriteString(fmt.Sprintf("%v", r.Privacy))
+	builder.WriteString(r.Privacy)
 	builder.WriteString(", ")
 	builder.WriteString("password_hash=<sensitive>")
 	builder.WriteString(", ")

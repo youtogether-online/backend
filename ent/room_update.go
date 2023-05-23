@@ -75,15 +75,15 @@ func (ru *RoomUpdate) AddOwnerID(i int) *RoomUpdate {
 }
 
 // SetPrivacy sets the "privacy" field.
-func (ru *RoomUpdate) SetPrivacy(r room.Privacy) *RoomUpdate {
-	ru.mutation.SetPrivacy(r)
+func (ru *RoomUpdate) SetPrivacy(s string) *RoomUpdate {
+	ru.mutation.SetPrivacy(s)
 	return ru
 }
 
 // SetNillablePrivacy sets the "privacy" field if the given value is not nil.
-func (ru *RoomUpdate) SetNillablePrivacy(r *room.Privacy) *RoomUpdate {
-	if r != nil {
-		ru.SetPrivacy(*r)
+func (ru *RoomUpdate) SetNillablePrivacy(s *string) *RoomUpdate {
+	if s != nil {
+		ru.SetPrivacy(*s)
 	}
 	return ru
 }
@@ -234,11 +234,6 @@ func (ru *RoomUpdate) check() error {
 			return &ValidationError{Name: "owner_id", err: fmt.Errorf(`ent: validator failed for field "Room.owner_id": %w`, err)}
 		}
 	}
-	if v, ok := ru.mutation.Privacy(); ok {
-		if err := room.PrivacyValidator(v); err != nil {
-			return &ValidationError{Name: "privacy", err: fmt.Errorf(`ent: validator failed for field "Room.privacy": %w`, err)}
-		}
-	}
 	if v, ok := ru.mutation.Description(); ok {
 		if err := room.DescriptionValidator(v); err != nil {
 			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "Room.description": %w`, err)}
@@ -278,7 +273,7 @@ func (ru *RoomUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.AddField(room.FieldOwnerID, field.TypeInt, value)
 	}
 	if value, ok := ru.mutation.Privacy(); ok {
-		_spec.SetField(room.FieldPrivacy, field.TypeEnum, value)
+		_spec.SetField(room.FieldPrivacy, field.TypeString, value)
 	}
 	if value, ok := ru.mutation.PasswordHash(); ok {
 		_spec.SetField(room.FieldPasswordHash, field.TypeBytes, value)
@@ -415,15 +410,15 @@ func (ruo *RoomUpdateOne) AddOwnerID(i int) *RoomUpdateOne {
 }
 
 // SetPrivacy sets the "privacy" field.
-func (ruo *RoomUpdateOne) SetPrivacy(r room.Privacy) *RoomUpdateOne {
-	ruo.mutation.SetPrivacy(r)
+func (ruo *RoomUpdateOne) SetPrivacy(s string) *RoomUpdateOne {
+	ruo.mutation.SetPrivacy(s)
 	return ruo
 }
 
 // SetNillablePrivacy sets the "privacy" field if the given value is not nil.
-func (ruo *RoomUpdateOne) SetNillablePrivacy(r *room.Privacy) *RoomUpdateOne {
-	if r != nil {
-		ruo.SetPrivacy(*r)
+func (ruo *RoomUpdateOne) SetNillablePrivacy(s *string) *RoomUpdateOne {
+	if s != nil {
+		ruo.SetPrivacy(*s)
 	}
 	return ruo
 }
@@ -587,11 +582,6 @@ func (ruo *RoomUpdateOne) check() error {
 			return &ValidationError{Name: "owner_id", err: fmt.Errorf(`ent: validator failed for field "Room.owner_id": %w`, err)}
 		}
 	}
-	if v, ok := ruo.mutation.Privacy(); ok {
-		if err := room.PrivacyValidator(v); err != nil {
-			return &ValidationError{Name: "privacy", err: fmt.Errorf(`ent: validator failed for field "Room.privacy": %w`, err)}
-		}
-	}
 	if v, ok := ruo.mutation.Description(); ok {
 		if err := room.DescriptionValidator(v); err != nil {
 			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "Room.description": %w`, err)}
@@ -648,7 +638,7 @@ func (ruo *RoomUpdateOne) sqlSave(ctx context.Context) (_node *Room, err error) 
 		_spec.AddField(room.FieldOwnerID, field.TypeInt, value)
 	}
 	if value, ok := ruo.mutation.Privacy(); ok {
-		_spec.SetField(room.FieldPrivacy, field.TypeEnum, value)
+		_spec.SetField(room.FieldPrivacy, field.TypeString, value)
 	}
 	if value, ok := ruo.mutation.PasswordHash(); ok {
 		_spec.SetField(room.FieldPasswordHash, field.TypeBytes, value)
