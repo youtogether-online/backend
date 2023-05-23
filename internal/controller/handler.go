@@ -20,7 +20,8 @@ type UserService interface {
 	FindUserByUsername(username string) (*dao.User, error)
 	FindUserByID(id int) (*ent.User, error)
 	FindMe(id int) (*dao.Me, error)
-	UpdateUser(customer dto.UpdateUser, id int) error
+
+	UpdateUser(customer *dto.UpdateUser, id int) error
 	UpdatePassword(password string, id int) error
 	UpdateEmail(email string, id int) error
 	UpdateUsername(username string, id int) error
@@ -37,9 +38,9 @@ type AuthService interface {
 	SetSession(sessionId string, info dao.Session) error
 	DelKeys(keys ...string)
 
-	CreateUserWithPassword(auth dto.EmailWithPassword) (*ent.User, error)
+	CreateUserWithPassword(email string, password []byte, language *string) (*ent.User, error)
 	UserExistsByEmail(email string) (bool, error)
-	CreateUserByEmail(auth dto.EmailWithCode) (*ent.User, error)
+	CreateUserByEmail(email string, language *string) (*ent.User, error)
 	AuthUserByEmail(email string) (*ent.User, error)
 	SetEmailVerified(email string) error
 }
