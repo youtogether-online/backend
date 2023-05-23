@@ -24,7 +24,7 @@ tags:
   - name: Email
     description: Send messages from application smtp email
   - name: User
-    description: get and update users
+    description: Get and update users
   - name: Room
     description: Any interaction with rooms
 
@@ -153,8 +153,6 @@ paths:
       tags: [ User ]
       summary: Get user main info by username
       description: Returns user's main data by username, if exist
-      security:
-        - cookieAuth: []
       parameters:
         - in: path
           name: username
@@ -195,6 +193,8 @@ paths:
       tags: [ User ]
       summary: Update user's main data
       description: Updates some user's main data
+      security:
+        - cookieAuth: [ ]
       requestBody:
         required: true
         content:
@@ -237,6 +237,8 @@ paths:
       tags: [ User ]
       summary: Update user's email
       description: Updates user's email by password
+      security:
+        - cookieAuth: [ ]
       requestBody:
         required: true
         content:
@@ -258,6 +260,8 @@ paths:
       tags: [ User ]
       summary: Update user name
       description: Updates user name
+      security:
+        - cookieAuth: [ ]
       requestBody:
         required: true
         content:
@@ -283,7 +287,6 @@ components:
       required:
         - email
         - code
-        - theme
       properties:
         email:
           type: string
@@ -294,13 +297,6 @@ components:
           minLength: 5
           maxLength: 5
           example: HI9I3
-        theme:
-          type: string
-          enum:
-            - DARK
-            - LIGHT
-            - SYSTEM
-          example: SYSTEM
 
     EmailWithPassword:
       type: object
@@ -308,7 +304,6 @@ components:
       required:
         - email
         - password
-        - theme
       properties:
         email:
           type: string
@@ -318,13 +313,6 @@ components:
           type: string
           pattern: ^\P{Cc}\P{Cn}\P{Cs}$
           example: Bob2020
-        theme:
-          type: string
-          enum:
-            - DARK
-            - LIGHT
-            - SYSTEM
-          example: SYSTEM
 
     UpdateName:
       type: object
