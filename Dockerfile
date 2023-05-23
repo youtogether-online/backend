@@ -1,4 +1,4 @@
-FROM golang:alpine AS builder
+FROM golang:alpine3.18 AS builder
 
 LABEL stage=gobuilder
 
@@ -17,12 +17,11 @@ RUN go build -ldflags="-s -w" -o /app/main cmd/main.go
 ADD /configs /app/configs
 
 
-FROM scratch
+FROM debian:buster-slim
 
 MAINTAINER matvey-sizov@mail.ru
 
 ENV PROD 1
-ENV GIN_MODE "release"
 ENV POSTGRES_DB "you-together"
 ENV POSTGRES_PASSWORD "postgres"
 
