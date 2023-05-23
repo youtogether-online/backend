@@ -14,7 +14,7 @@ type UserPostgres interface {
 	FindUserByUsername(ctx context.Context, username string) (*dao.User, error)
 	FindUserByID(ctx context.Context, id int) (*ent.User, error)
 	UpdateUser(ctx context.Context, customer *dto.UpdateUser, id int) error
-	UpdatePassword(ctx context.Context, password string, id int) error
+	UpdatePassword(ctx context.Context, newPassword []byte, id int) error
 	UpdateEmail(ctx context.Context, email string, id int) error
 	UpdateUsername(ctx context.Context, newUsername string, id int) error
 	UsernameExist(ctx context.Context, username string) (bool, error)
@@ -51,8 +51,8 @@ func (u *UserService) UpdateUser(customer *dto.UpdateUser, id int) error {
 	return u.postgres.UpdateUser(context.Background(), customer, id)
 }
 
-func (u *UserService) UpdatePassword(password string, id int) error {
-	return u.postgres.UpdatePassword(context.Background(), password, id)
+func (u *UserService) UpdatePassword(newPassword []byte, id int) error {
+	return u.postgres.UpdatePassword(context.Background(), newPassword, id)
 }
 
 func (u *UserService) UpdateEmail(email string, id int) error {

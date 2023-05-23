@@ -54,27 +54,26 @@ func (r *UserStorage) FindUserByID(ctx context.Context, id int) (*ent.User, erro
 }
 
 func (r *UserStorage) UpdateUser(ctx context.Context, customer *dto.UpdateUser, id int) error {
-	return r.userClient.Update().
+	return r.userClient.UpdateOneID(id).
 		SetNillableBiography(customer.Biography).
 		SetNillableLanguage(customer.Language).
 		SetNillableTheme(customer.Theme).
 		SetNillableFirstName(customer.FirstName).
-		SetNillableLastName(customer.LastName).
-		Where(user.ID(id)).Exec(ctx)
+		SetNillableLastName(customer.LastName).Exec(ctx)
 }
 
 func (r *UserStorage) UpdateEmail(ctx context.Context, email string, id int) error {
-	return r.userClient.Update().SetEmail(email).
-		SetIsEmailVerified(false).Where(user.ID(id)).Exec(ctx)
+	return r.userClient.UpdateOneID(id).SetEmail(email).
+		SetIsEmailVerified(false).Exec(ctx)
 }
 
-func (r *UserStorage) UpdatePassword(ctx context.Context, password string, id int) error {
-	return r.userClient.Update().SetPasswordHash([]byte(password)).
-		SetIsEmailVerified(true).Where(user.ID(id)).Exec(ctx)
+func (r *UserStorage) UpdatePassword(ctx context.Context, newPassword []byte, id int) error {
+	return r.userClient.UpdateOneID(id).SetPasswordHash(newPassword).
+		SetIsEmailVerified(true).Exec(ctx)
 }
 
 func (r *UserStorage) UpdateUsername(ctx context.Context, username string, id int) error {
-	return r.userClient.Update().SetName(username).Where(user.ID(id)).Exec(ctx)
+	return r.userClient.UpdateOneID(id).SetName(username).Exec(ctx)
 }
 
 func (r *UserStorage) UsernameExist(ctx context.Context, username string) (bool, error) {

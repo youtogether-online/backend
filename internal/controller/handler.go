@@ -22,7 +22,7 @@ type UserService interface {
 	FindMe(id int) (*dao.Me, error)
 
 	UpdateUser(customer *dto.UpdateUser, id int) error
-	UpdatePassword(newPassword []byte, email string) error
+	UpdatePassword(password string, id int) error
 	UpdateEmail(email string, id int) error
 	UpdateUsername(username string, id int) error
 	UsernameExist(username string) (bool, error)
@@ -89,7 +89,7 @@ func (h *Handler) InitRoutes(rg *gin.RouterGroup, mailSet bool) {
 		user.GET("/:username", h.getUserByUsername)
 		user.PATCH("", h.sess.RequireSession, h.updateUser)
 		user.PATCH("/email", h.sess.RequireSession, h.updateEmail)
-		user.PATCH("/password", h.updatePassword)
+		user.PATCH("/password", h.sess.RequireSession, h.updatePassword)
 		user.PATCH("/name", h.sess.RequireSession, h.updateUsername)
 		user.GET("/check-name/:name", h.checkUsername)
 	}
