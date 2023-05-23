@@ -8,6 +8,7 @@ import (
 	"github.com/wtkeqrf0/you-together/ent"
 	"net/http"
 	"os"
+	"strings"
 )
 
 // Sign-in errors
@@ -77,9 +78,7 @@ func (e *ErrHandler) HandleErrors(c *gin.Context) {
 
 				for _, vErr := range vErrs {
 					field := vErr.Field()
-					if field == "" {
-						field = "Field"
-					}
+
 					switch vErr.Tag() {
 					case "email":
 						fields[field] = fmt.Sprintf("%s is not the correct email", field)
@@ -103,6 +102,8 @@ func (e *ErrHandler) HandleErrors(c *gin.Context) {
 						fields[field] = fmt.Sprintf("%s is not valid name", field)
 					case "uuid4":
 						fields[field] = fmt.Sprintf("%s is not valid uuid", field)
+					case "enum":
+						fields[field] = fmt.Sprintf("%s may contain only %v", field, strings.Split(vErr.Param(), "*"))
 					}
 				}
 				res["fields"] = fields
