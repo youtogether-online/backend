@@ -16,7 +16,7 @@ type AuthService interface {
 	SetSession(sessionId string, info dao.Session) error
 	GetSession(sessionId string) (*dao.Session, error)
 	ExpandExpireSession(sessionId string) (bool, error)
-	IDExist(id int) bool
+	IDExist(id int) (bool, error)
 	DelKeys(keys ...string)
 	AddSession(id int, sessions ...string) error
 }
@@ -30,26 +30,27 @@ func NewAuth(auth AuthService) *Auth {
 }
 
 // ValidateSession and identify the user in redis. Returns true, if session was expanded.
-func (a Auth) ValidateSession(sessionId string) (*dao.Session, bool, error) {
+func (a Auth) ValidateSession(sessionId string) (info *dao.Session, ok bool, err error) {
 	if sessionId == "" {
 		return nil, false, fmt.Errorf("session id is not found")
 	}
 
-	info, err := a.auth.GetSession(sessionId)
-	if err != nil {
+	if info, err = a.auth.GetSession(sessionId); err != nil {
 		return nil, false, err
 	}
 
-	if !a.auth.IDExist(info.ID) {
+	if ok, err = a.auth.IDExist(info.ID); err != nil {
+		return nil, false, err
+	} else if !ok {
 		return nil, false, fmt.Errorf("user does not exists")
 	}
 
-	ok, err := a.auth.ExpandExpireSession(sessionId)
+	ok, err = a.auth.ExpandExpireSession(sessionId)
 	if err != nil {
 		return nil, false, fmt.Errorf("session does not exist: %v", err)
 	}
 
-	return info, ok, nil
+	return
 }
 
 // GenerateSession and save it to redis
@@ -85,10 +86,10 @@ func (a Auth) GetSession(c *gin.Context) (*dao.Session, error) {
 	return res, nil
 }
 
-func (a Auth) SetNewCookie(id int, userAgent string, c *gin.Context) {
+func (a Auth) SetNewCookie(id int, c *gin.Context) {
 	a.PopCookie(c)
 
-	session, err := a.GenerateSession(id, c.ClientIP(), userAgent)
+	session, err := a.GenerateSession(id, c.ClientIP(), c.Request.UserAgent())
 	if err != nil {
 		c.Error(errs.ServerError.AddErr(err))
 		return

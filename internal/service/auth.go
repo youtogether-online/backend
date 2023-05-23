@@ -8,8 +8,8 @@ import (
 )
 
 type AuthPostgres interface {
-	IDExist(ctx context.Context, id int) bool
-	UserExistsByEmail(ctx context.Context, email string) bool
+	IDExist(ctx context.Context, id int) (bool, error)
+	UserExistsByEmail(ctx context.Context, email string) (bool, error)
 	CreateUserWithPassword(ctx context.Context, auth dto.EmailWithPassword) (*ent.User, error)
 	CreateUserByEmail(ctx context.Context, auth dto.EmailWithCode) (*ent.User, error)
 	AuthUserByEmail(ctx context.Context, email string) (*ent.User, error)
@@ -27,12 +27,12 @@ func NewAuthService(postgres AuthPostgres, redis AuthRedis) *AuthService {
 }
 
 // IDExist returns true if user Exists. Panics if error occurred
-func (a AuthService) IDExist(id int) bool {
+func (a AuthService) IDExist(id int) (bool, error) {
 	return a.postgres.IDExist(context.Background(), id)
 }
 
 // UserExistsByEmail returns true if user Exists. Panic if error occurred
-func (a AuthService) UserExistsByEmail(email string) bool {
+func (a AuthService) UserExistsByEmail(email string) (bool, error) {
 	return a.postgres.UserExistsByEmail(context.Background(), email)
 }
 

@@ -8,13 +8,13 @@ import (
 )
 
 // IDExist returns true if username exists. Panics if error occurred
-func (r *UserStorage) IDExist(ctx context.Context, id int) bool {
-	return r.userClient.Query().Where(user.ID(id)).ExistX(ctx)
+func (r *UserStorage) IDExist(ctx context.Context, id int) (bool, error) {
+	return r.userClient.Query().Where(user.ID(id)).Exist(ctx)
 }
 
 // UserExistsByEmail returns true if user Exists. Panic if error occurred
-func (r *UserStorage) UserExistsByEmail(ctx context.Context, email string) bool {
-	return r.userClient.Query().Where(user.Email(email)).ExistX(ctx)
+func (r *UserStorage) UserExistsByEmail(ctx context.Context, email string) (bool, error) {
+	return r.userClient.Query().Where(user.Email(email)).Exist(ctx)
 }
 
 // CreateUserWithPassword without verified email and returns it (only on registration)

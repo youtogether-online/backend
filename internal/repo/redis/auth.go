@@ -61,17 +61,14 @@ func (r *RClient) DelKeys(ctx context.Context, keys ...string) {
 }
 
 // EqualsPopCode returns true if code is saved earlier in email and deletes it
-func (r *RClient) EqualsPopCode(ctx context.Context, email string, code string) (exist bool, err error) {
-	err = r.client.Watch(ctx, func(tx *redis.Tx) error {
-		exist, err = tx.SIsMember(ctx, email, code).Result()
-
-		if err != nil {
+func (r *RClient) EqualsPopCode(ctx context.Context, email string, code string) (ok bool, err error) {
+	return ok, r.client.Watch(ctx, func(tx *redis.Tx) error {
+		ok, err = tx.SIsMember(ctx, email, code).Result()
+		if err != nil || !ok {
 			return err
 		}
 		return tx.Del(ctx, email).Err()
 	}, email)
-
-	return
 }
 
 // SetCodes or add it to existing key

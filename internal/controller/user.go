@@ -53,8 +53,8 @@ func (h *Handler) getUserByUsername(c *gin.Context) {
 }
 
 func (h *Handler) updateUser(c *gin.Context) {
-	upd, ok := bind.FillStruct[dto.UpdateUser](c)
-	if !ok {
+	upd := bind.FillStructJSON[dto.UpdateUser](c)
+	if upd == (dto.UpdateUser{}) {
 		return
 	}
 
@@ -77,8 +77,8 @@ func (h *Handler) updateUser(c *gin.Context) {
 }
 
 func (h *Handler) updateEmail(c *gin.Context) {
-	upd, ok := bind.FillStruct[dto.UpdateEmail](c)
-	if !ok {
+	upd := bind.FillStructJSON[dto.UpdateEmail](c)
+	if upd == (dto.UpdateEmail{}) {
 		return
 	}
 
@@ -120,10 +120,11 @@ func (h *Handler) updateEmail(c *gin.Context) {
 }
 
 func (h *Handler) updatePassword(c *gin.Context) {
-	upd, ok := bind.FillStruct[dto.UpdatePassword](c)
-	if !ok {
+	upd := bind.FillStructJSON[dto.UpdatePassword](c)
+	if upd == (dto.UpdatePassword{}) {
 		return
 	}
+
 	info, err := h.sess.GetSession(c)
 	if err != nil {
 		c.Error(errs.ServerError.AddErr(err))
@@ -151,8 +152,8 @@ func (h *Handler) updatePassword(c *gin.Context) {
 }
 
 func (h *Handler) updateUsername(c *gin.Context) {
-	upd, ok := bind.FillStruct[dto.UpdateName](c)
-	if !ok {
+	upd := bind.FillStructJSON[dto.UpdateName](c)
+	if upd == (dto.UpdateName{}) {
 		return
 	}
 	info, err := h.sess.GetSession(c)
@@ -176,16 +177,6 @@ func (h *Handler) updateUsername(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-// CheckUsername godoc
-// @Summary Check username on exist
-// @Description Status 200 if username not used or 403 if username is already used
-// @Tags User Get
-// @Param username path string true "Name of the user"
-// @Success 200 "name isn't used"
-// @Failure 400 {object} errs.MyError "Username is not valid"
-// @Failure 403 "name already used"
-// @Failure 500 {object} errs.MyError
-// @Router /user/check-name/{name} [get]
 func (h *Handler) checkUsername(c *gin.Context) {
 	name := c.Param("name")
 	if err := binding.Validator.ValidateStruct(&dto.Name{Name: name}); err != nil {
@@ -193,7 +184,9 @@ func (h *Handler) checkUsername(c *gin.Context) {
 		return
 	}
 
-	if h.users.UsernameExist(name) {
+	if ok, err := h.users.UsernameExist(name); err != nil {
+		c.Error(errs.ServerError.AddErr(err))
+	} else if ok {
 		c.Status(http.StatusForbidden)
 	} else {
 		c.Status(http.StatusOK)

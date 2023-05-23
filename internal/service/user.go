@@ -17,7 +17,7 @@ type UserPostgres interface {
 	UpdatePassword(ctx context.Context, password string, id int) error
 	UpdateEmail(ctx context.Context, email string, id int) error
 	UpdateUsername(ctx context.Context, newUsername string, id int) error
-	UsernameExist(ctx context.Context, username string) bool
+	UsernameExist(ctx context.Context, username string) (bool, error)
 }
 
 type UserService struct {
@@ -63,7 +63,7 @@ func (u UserService) UpdateUsername(username string, id int) error {
 	return u.postgres.UpdateUsername(context.Background(), username, id)
 }
 
-func (u UserService) UsernameExist(username string) bool {
+func (u UserService) UsernameExist(username string) (bool, error) {
 	return u.postgres.UsernameExist(context.Background(), username)
 }
 

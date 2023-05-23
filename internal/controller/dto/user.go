@@ -1,5 +1,13 @@
 package dto
 
+type UpdateUser struct {
+	Biography *string `json:"biography,omitempty" sql:"biography" validate:"omitempty,lte=512"`
+	Language  *string `json:"language,omitempty" sql:"language" validate:"omitempty,enum=EN*RU"`
+	Theme     *string `json:"theme,omitempty" sql:"theme" validate:"omitempty,enum=SYSTEM*WHITE*DARK"`
+	FirstName *string `json:"firstName,omitempty" sql:"first_name" validate:"omitempty,gte=3,lte=32"`
+	LastName  *string `json:"lastName,omitempty" sql:"last_name" validate:"omitempty,gte=3,lte=32"`
+}
+
 type UpdateEmail struct {
 	Password string `json:"password,omitempty" validate:"required,printascii,gte=4,lte=20"`
 	NewEmail string `json:"newEmail,omitempty" validate:"required,email"`
@@ -19,30 +27,27 @@ type Name struct {
 	Name string `json:"name,omitempty" validate:"required,gte=5,lte=20,name"`
 }
 
-type EmailWithPassword struct {
-	Email     string  `json:"email,omitempty" validate:"required,email"`
-	Password  string  `json:"password,omitempty" validate:"required,printascii,gte=4,lte=20"`
-	UserAgent string  `json:"-" header:"User-Agent"`
-	Language  *string `json:"language,omitempty" header:"Accept-Language" enum:"EN,RU" default:"EN"`
-	Theme     *string `json:"theme,omitempty" enum:"SYSTEM,DARK,WHITE" default:"SYSTEM"`
-}
-
 type Email struct {
 	Email string `json:"email,omitempty" validate:"required,email"`
+}
+
+type EmailWithPassword struct {
+	Email     string  `json:"email,omitempty" header:"-" validate:"required,email"`
+	Password  string  `json:"password,omitempty" header:"-" validate:"required,printascii,gte=4,lte=20"`
+	Theme     *string `json:"theme,omitempty" header:"-" validate:"omitempty,enum=SYSTEM*WHITE*DARK"`
+	UserAgent string  `header:"User-Agent" json:"-" validate:"required"`
+	Language  *string `header:"Accept-Language" json:"-" validate:"omitempty,enum=EN*RU"`
 }
 
 type EmailWithCode struct {
 	Email     string  `json:"email,omitempty" validate:"required,email"`
 	Code      string  `json:"code,omitempty" validate:"required,len=5"`
-	UserAgent string  `json:"-" header:"User-Agent"`
-	Language  *string `json:"language,omitempty" header:"Accept-Language" enum:"EN,RU" default:"EN"`
-	Theme     *string `json:"theme,omitempty" enum:"SYSTEM,DARK,WHITE" default:"SYSTEM"`
+	Theme     *string `json:"theme,omitempty" validate:"omitempty,enum=SYSTEM*WHITE*DARK"`
+	UserAgent string  `header:"User-Agent" validate:"required"`
+	Language  *string `header:"Accept-Language" validate:"omitempty,enum=EN*RU"`
 }
 
-type UpdateUser struct {
-	Biography *string `json:"biography,omitempty" sql:"biography"`
-	Language  *string `json:"language,omitempty" enum:"EN,RU" default:"EN" sql:"language"`
-	Theme     *string `json:"theme,omitempty" enum:"SYSTEM,DARK,WHITE" default:"SYSTEM" sql:"theme"`
-	FirstName *string `json:"firstName,omitempty" sql:"first_name"`
-	LastName  *string `json:"lastName,omitempty" sql:"last_name"`
+type AuthHeaders struct {
+	UserAgent string  `header:"User-Agent" validate:"required"`
+	Language  *string `header:"Accept-Language" validate:"omitempty,enum=EN*RU"`
 }

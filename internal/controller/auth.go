@@ -11,8 +11,8 @@ import (
 )
 
 func (h *Handler) signInByPassword(c *gin.Context) {
-	auth, ok := bind.FillStruct[dto.EmailWithPassword](c)
-	if !ok {
+	auth := bind.FillStructJSON[dto.EmailWithPassword](c)
+	if auth == (dto.EmailWithPassword{}) {
 		return
 	}
 
@@ -35,14 +35,14 @@ func (h *Handler) signInByPassword(c *gin.Context) {
 		return
 	}
 
-	h.sess.SetNewCookie(customer.ID, auth.UserAgent, c)
+	h.sess.SetNewCookie(customer.ID, c)
 
 	c.Status(http.StatusOK)
 }
 
 func (h *Handler) sendCodeToEmail(c *gin.Context) {
-	to, ok := bind.FillStruct[dto.Email](c)
-	if !ok {
+	to := bind.FillStructJSON[dto.Email](c)
+	if to == (dto.Email{}) {
 		return
 	}
 
@@ -60,12 +60,15 @@ func (h *Handler) sendCodeToEmail(c *gin.Context) {
 }
 
 func (h *Handler) signInByEmail(c *gin.Context) {
-	auth, ok := bind.FillStruct[dto.EmailWithCode](c)
-	if !ok {
+	auth := bind.FillStructJSON[dto.EmailWithCode](c)
+	if auth == (dto.EmailWithCode{}) {
 		return
 	}
 
-	if ok, err := h.auth.EqualsPopCode(auth.Email, auth.Code); !ok || err != nil {
+	if oki, err := h.auth.EqualsPopCode(auth.Email, auth.Code); err != nil {
+		c.Error(errs.ServerError.AddErr(err))
+		return
+	} else if !oki {
 		c.Error(errs.CodeError.AddErr(err))
 		return
 	}
@@ -87,7 +90,7 @@ func (h *Handler) signInByEmail(c *gin.Context) {
 			return
 		}
 	}
-	h.sess.SetNewCookie(customer.ID, auth.UserAgent, c)
+	h.sess.SetNewCookie(customer.ID, c)
 
 	c.Status(http.StatusOK)
 }
