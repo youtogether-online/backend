@@ -5,6 +5,7 @@ import (
 	"github.com/wtkeqrf0/you-together/ent"
 	"github.com/wtkeqrf0/you-together/internal/controller/dao"
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
+	"github.com/wtkeqrf0/you-together/pkg/bind"
 	"github.com/wtkeqrf0/you-together/pkg/conf"
 	"time"
 )
@@ -23,7 +24,7 @@ type UserService interface {
 	UpdatePassword(password string, id int) error
 	UpdateEmail(email string, id int) error
 	UpdateUsername(username string, id int) error
-	UsernameExist(username string) bool
+	UsernameExist(username string) (bool, error)
 
 	SetVariable(key string, value any, exp time.Duration) error
 	ContainsKeys(keys ...string) (int64, error)
@@ -37,7 +38,7 @@ type AuthService interface {
 	DelKeys(keys ...string)
 
 	CreateUserWithPassword(auth dto.EmailWithPassword) (*ent.User, error)
-	UserExistsByEmail(email string) bool
+	UserExistsByEmail(email string) (bool, error)
 	CreateUserByEmail(auth dto.EmailWithCode) (*ent.User, error)
 	AuthUserByEmail(email string) (*ent.User, error)
 	SetEmailVerified(email string) error
@@ -47,7 +48,7 @@ type AuthMiddleware interface {
 	RequireSession(c *gin.Context)
 	MaybeSession(c *gin.Context)
 	GenerateSession(id int, ip, userAgent string) (string, error)
-	SetNewCookie(id int, userAgent string, c *gin.Context)
+	SetNewCookie(id int, c *gin.Context)
 	GetSession(c *gin.Context) (*dao.Session, error)
 	PopCookie(c *gin.Context)
 }
@@ -61,15 +62,14 @@ type Handler struct {
 	auth  AuthService
 	mail  MailSender
 	sess  AuthMiddleware
+	v     *bind.Valid
 }
 
-func NewHandler(users UserService, auth AuthService, mail MailSender, sess AuthMiddleware) *Handler {
-	return &Handler{users: users, auth: auth, mail: mail, sess: sess}
+func NewHandler(users UserService, auth AuthService, mail MailSender, sess AuthMiddleware, v *bind.Valid) *Handler {
+	return &Handler{users: users, auth: auth, mail: mail, sess: sess, v: v}
 }
 
 func (h *Handler) InitRoutes(rg *gin.RouterGroup, mailSet bool) {
-
-	rg.StaticFile("/docs", "docs/OpenAPI.yaml")
 
 	auth := rg.Group("/auth")
 	{
