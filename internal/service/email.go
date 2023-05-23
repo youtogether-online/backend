@@ -14,7 +14,7 @@ func NewEmailSender(c *smtp.Client) *EmailSender {
 	return &EmailSender{c: c}
 }
 
-func (m EmailSender) SendEmail(subj, body, from string, to ...string) error {
+func (m *EmailSender) SendEmail(subj, body, from string, to ...string) error {
 	if err := m.c.Mail(from); err != nil {
 		return err
 	}

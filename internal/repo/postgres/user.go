@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"github.com/sirupsen/logrus"
 	"github.com/wtkeqrf0/you-together/ent"
 	"github.com/wtkeqrf0/you-together/ent/user"
 	"github.com/wtkeqrf0/you-together/internal/controller/dao"
@@ -54,16 +53,14 @@ func (r *UserStorage) FindUserByID(ctx context.Context, id int) (*ent.User, erro
 	return r.userClient.Get(ctx, id)
 }
 
-func (r *UserStorage) UpdateUser(ctx context.Context, customer dto.UpdateUser, id int) error {
-	updCustomer, err := r.userClient.Update().
+func (r *UserStorage) UpdateUser(ctx context.Context, customer *dto.UpdateUser, id int) error {
+	return r.userClient.Update().
 		SetNillableBiography(customer.Biography).
 		SetNillableLanguage(customer.Language).
 		SetNillableTheme(customer.Theme).
 		SetNillableFirstName(customer.FirstName).
-		SetNillableLastName(customer.LastName).Where(user.ID(id)).Save(ctx)
-
-	logrus.WithError(err).Debug(updCustomer)
-	return err
+		SetNillableLastName(customer.LastName).
+		Where(user.ID(id)).Exec(ctx)
 }
 
 func (r *UserStorage) UpdateEmail(ctx context.Context, email string, id int) error {

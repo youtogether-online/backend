@@ -13,7 +13,7 @@ type UserPostgres interface {
 	FindMe(ctx context.Context, id int) (*dao.Me, error)
 	FindUserByUsername(ctx context.Context, username string) (*dao.User, error)
 	FindUserByID(ctx context.Context, id int) (*ent.User, error)
-	UpdateUser(ctx context.Context, customer dto.UpdateUser, id int) error
+	UpdateUser(ctx context.Context, customer *dto.UpdateUser, id int) error
 	UpdatePassword(ctx context.Context, password string, id int) error
 	UpdateEmail(ctx context.Context, email string, id int) error
 	UpdateUsername(ctx context.Context, newUsername string, id int) error
@@ -30,16 +30,16 @@ func NewUserService(postgres UserPostgres, redis UserRedis) *UserService {
 }
 
 // FindUserByUsername returns the main information about user
-func (u UserService) FindUserByUsername(username string) (*dao.User, error) {
+func (u *UserService) FindUserByUsername(username string) (*dao.User, error) {
 	return u.postgres.FindUserByUsername(context.Background(), username)
 }
 
-func (u UserService) FindUserByID(id int) (*ent.User, error) {
+func (u *UserService) FindUserByID(id int) (*ent.User, error) {
 	return u.postgres.FindUserByID(context.Background(), id)
 }
 
 // FindMe returns the detail information about user
-func (u UserService) FindMe(id int) (*dao.Me, error) {
+func (u *UserService) FindMe(id int) (*dao.Me, error) {
 	user, err := u.postgres.FindMe(context.Background(), id)
 	if err == nil {
 		user.Email = user.Email[:1] + "**" + user.Email[strings.Index(user.Email, "@")-1:]
@@ -47,23 +47,23 @@ func (u UserService) FindMe(id int) (*dao.Me, error) {
 	return user, err
 }
 
-func (u UserService) UpdateUser(customer dto.UpdateUser, id int) error {
+func (u *UserService) UpdateUser(customer *dto.UpdateUser, id int) error {
 	return u.postgres.UpdateUser(context.Background(), customer, id)
 }
 
-func (u UserService) UpdatePassword(password string, id int) error {
+func (u *UserService) UpdatePassword(password string, id int) error {
 	return u.postgres.UpdatePassword(context.Background(), password, id)
 }
 
-func (u UserService) UpdateEmail(email string, id int) error {
+func (u *UserService) UpdateEmail(email string, id int) error {
 	return u.postgres.UpdateEmail(context.Background(), email, id)
 }
 
-func (u UserService) UpdateUsername(username string, id int) error {
+func (u *UserService) UpdateUsername(username string, id int) error {
 	return u.postgres.UpdateUsername(context.Background(), username, id)
 }
 
-func (u UserService) UsernameExist(username string) (bool, error) {
+func (u *UserService) UsernameExist(username string) (bool, error) {
 	return u.postgres.UsernameExist(context.Background(), username)
 }
 
@@ -73,11 +73,11 @@ type UserRedis interface {
 }
 
 // ContainsKeys of redis by key
-func (u UserService) ContainsKeys(keys ...string) (int64, error) {
+func (u *UserService) ContainsKeys(keys ...string) (int64, error) {
 	return u.redis.ContainsKeys(context.Background(), keys...)
 }
 
 // SetVariable of redis by key, his value and exploration time
-func (u UserService) SetVariable(key string, value any, exp time.Duration) error {
+func (u *UserService) SetVariable(key string, value any, exp time.Duration) error {
 	return u.redis.SetVariable(context.Background(), key, value, exp)
 }

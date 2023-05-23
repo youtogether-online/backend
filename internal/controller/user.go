@@ -54,7 +54,7 @@ func (h *Handler) getUserByUsername(c *gin.Context) {
 
 func (h *Handler) updateUser(c *gin.Context) {
 	upd := bind.FillStructJSON[dto.UpdateUser](c)
-	if upd == (dto.UpdateUser{}) {
+	if upd == nil {
 		return
 	}
 
@@ -78,7 +78,7 @@ func (h *Handler) updateUser(c *gin.Context) {
 
 func (h *Handler) updateEmail(c *gin.Context) {
 	upd := bind.FillStructJSON[dto.UpdateEmail](c)
-	if upd == (dto.UpdateEmail{}) {
+	if upd == nil {
 		return
 	}
 
@@ -121,7 +121,7 @@ func (h *Handler) updateEmail(c *gin.Context) {
 
 func (h *Handler) updatePassword(c *gin.Context) {
 	upd := bind.FillStructJSON[dto.UpdatePassword](c)
-	if upd == (dto.UpdatePassword{}) {
+	if upd == nil {
 		return
 	}
 
@@ -153,7 +153,7 @@ func (h *Handler) updatePassword(c *gin.Context) {
 
 func (h *Handler) updateUsername(c *gin.Context) {
 	upd := bind.FillStructJSON[dto.UpdateName](c)
-	if upd == (dto.UpdateName{}) {
+	if upd == nil {
 		return
 	}
 	info, err := h.sess.GetSession(c)

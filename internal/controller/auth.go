@@ -12,14 +12,14 @@ import (
 
 func (h *Handler) signInByPassword(c *gin.Context) {
 	auth := bind.FillStructJSON[dto.EmailWithPassword](c)
-	if auth == (dto.EmailWithPassword{}) {
+	if auth == nil {
 		return
 	}
 
 	customer, err := h.auth.AuthUserByEmail(auth.Email)
 
 	if err != nil {
-		customer, err = h.auth.CreateUserWithPassword(auth)
+		customer, err = h.auth.CreateUserWithPassword(auth.Email, []byte(auth.Password), auth.Language)
 
 		if err != nil {
 			c.Error(errs.ServerError.AddErr(err))
@@ -42,7 +42,7 @@ func (h *Handler) signInByPassword(c *gin.Context) {
 
 func (h *Handler) sendCodeToEmail(c *gin.Context) {
 	to := bind.FillStructJSON[dto.Email](c)
-	if to == (dto.Email{}) {
+	if to == nil {
 		return
 	}
 
@@ -61,7 +61,7 @@ func (h *Handler) sendCodeToEmail(c *gin.Context) {
 
 func (h *Handler) signInByEmail(c *gin.Context) {
 	auth := bind.FillStructJSON[dto.EmailWithCode](c)
-	if auth == (dto.EmailWithCode{}) {
+	if auth == nil {
 		return
 	}
 
@@ -76,7 +76,7 @@ func (h *Handler) signInByEmail(c *gin.Context) {
 	customer, err := h.auth.AuthUserByEmail(auth.Email)
 
 	if err != nil {
-		customer, err = h.auth.CreateUserByEmail(auth)
+		customer, err = h.auth.CreateUserByEmail(auth.Email, auth.Language)
 
 		if err != nil {
 			c.Error(errs.ServerError.AddErr(err))
