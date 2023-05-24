@@ -216,6 +216,8 @@ paths:
       tags: [ User ]
       summary: Update user's password
       description: Updates user's password by email
+      security:
+        - cookieAuth: [ ]
       requestBody:
         required: true
         content:
