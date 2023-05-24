@@ -120,14 +120,14 @@ func (h *Handler) updateEmail(c *gin.Context) {
 }
 
 func (h *Handler) updatePassword(c *gin.Context) {
-	upd := bind.FillStructJSON[dto.UpdatePassword](c)
-	if upd == nil {
-		return
-	}
-
 	info, err := h.sess.GetSession(c)
 	if err != nil {
 		c.Error(errs.ServerError.AddErr(err))
+		return
+	}
+
+	upd := bind.FillStructJSON[dto.UpdatePassword](c)
+	if upd == nil {
 		return
 	}
 
@@ -139,7 +139,7 @@ func (h *Handler) updatePassword(c *gin.Context) {
 		return
 	}
 
-	if err = h.users.UpdatePassword(upd.NewPassword, info.ID); err != nil {
+	if err = h.users.UpdatePassword([]byte(upd.NewPassword), info.ID); err != nil {
 		if ent.IsNotFound(err) {
 			c.Error(errs.NoSuchUser.AddErr(err))
 		} else {
