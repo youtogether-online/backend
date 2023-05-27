@@ -75,13 +75,14 @@ func FillStructJSON[T any](c *gin.Context) (t T) {
 
 */
 
-// FillStructJSON of given generic type by request JSON body and headers. Header has authority on body
-func FillStructJSON[T any](c *gin.Context) (t *T) {
+// FillStructJSON of given generic type by request JSON body
+func FillStructJSON[T any](c *gin.Context) *T {
+	var t T
 	if err := c.ShouldBindJSON(t); err != nil {
-		c.Error(errs.ValidError.AddErr(err))
-		return
+		c.Error(err)
+		return &t
 	}
-	return
+	return &t
 }
 
 // FillStructByHeader of given generic type by request JSON body and headers. Header has authority on body

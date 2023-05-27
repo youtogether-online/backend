@@ -22,7 +22,7 @@ func (h *Handler) signInByPassword(c *gin.Context) {
 		customer, err = h.auth.CreateUserWithPassword(auth.Email, []byte(auth.Password), auth.Language)
 
 		if err != nil {
-			c.Error(errs.ServerError.AddErr(err))
+			c.Error(err)
 			return
 		}
 	} else if customer.PasswordHash == nil {
@@ -79,14 +79,14 @@ func (h *Handler) signInByEmail(c *gin.Context) {
 		customer, err = h.auth.CreateUserByEmail(auth.Email, auth.Language)
 
 		if err != nil {
-			c.Error(errs.ServerError.AddErr(err))
+			c.Error(err)
 			return
 		}
 	} else if !customer.IsEmailVerified {
 		err = h.auth.SetEmailVerified(auth.Email)
 
 		if err != nil {
-			c.Error(errs.ServerError.AddErr(err))
+			c.Error(err)
 			return
 		}
 	}
