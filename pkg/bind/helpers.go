@@ -3,7 +3,6 @@ package bind
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/wtkeqrf0/you-together/pkg/middleware/errs"
 	"regexp"
 	"strings"
 )
@@ -78,20 +77,11 @@ func FillStructJSON[T any](c *gin.Context) (t T) {
 // FillStructJSON of given generic type by request JSON body
 func FillStructJSON[T any](c *gin.Context) *T {
 	var t T
-	if err := c.ShouldBindJSON(t); err != nil {
+	if err := c.ShouldBindJSON(&t); err != nil {
 		c.Error(err)
 		return &t
 	}
 	return &t
-}
-
-// FillStructByHeader of given generic type by request JSON body and headers. Header has authority on body
-func FillStructByHeader[T any](c *gin.Context) (t T) {
-	if err := c.ShouldBindHeader(&t); err != nil {
-		c.Error(errs.ValidError.AddErr(err))
-		return
-	}
-	return
 }
 
 func validateName(fl validator.FieldLevel) bool {
