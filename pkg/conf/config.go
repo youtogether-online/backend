@@ -20,9 +20,9 @@ type Config struct {
 	} `yaml:"session"`
 
 	Listen struct {
-		MainPath string `yaml:"main_path" env:"MAIN_PATH" env-default:"/api"`
-		Port     int    `yaml:"port" env:"PORT" env-default:"3000"`
-		Host     string `yaml:"host" env:"HOST" env-default:"127.0.0.1"`
+		MainPath   string `yaml:"main_path" env:"MAIN_PATH" env-default:"/api"`
+		Port       int    `yaml:"port" env:"PORT" env-default:"3000"`
+		DomainName string `yaml:"domain_name" env:"DOMAIN_NAME" env-default:"127.0.0.1"`
 	} `yaml:"listen"`
 
 	DB struct {

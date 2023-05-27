@@ -97,7 +97,7 @@ func (a Auth) SetNewCookie(id int, c *gin.Context) {
 
 	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie(cfg.Session.CookieName, session, int(cfg.Session.Duration.Seconds()),
-		cfg.Session.CookiePath, cfg.Listen.Host, true, true)
+		cfg.Session.CookiePath, cfg.Listen.DomainName, true, true)
 }
 
 // PopCookie from cookie storage only if equals to uuid4
