@@ -19,8 +19,8 @@ import (
 	"github.com/wtkeqrf0/you-together/pkg/conf"
 	"github.com/wtkeqrf0/you-together/pkg/log"
 	"github.com/wtkeqrf0/you-together/pkg/middleware/errs"
-	"github.com/wtkeqrf0/you-together/pkg/middleware/handleAuth"
-	"github.com/wtkeqrf0/you-together/pkg/middleware/handleQuery"
+	"github.com/wtkeqrf0/you-together/pkg/middleware/query"
+	"github.com/wtkeqrf0/you-together/pkg/middleware/session"
 	"net/http"
 	"net/smtp"
 	"os"
@@ -117,7 +117,7 @@ func initHandler(pClient *ent.Client, rClient *redis.Client, mailClient *smtp.Cl
 		user,
 		auth,
 		mailConn,
-		handleAuth.NewAuth(auth),
+		session.NewAuth(auth),
 		bind.NewValid(validator.New()),
 	)
 }
@@ -125,6 +125,6 @@ func initHandler(pClient *ent.Client, rClient *redis.Client, mailClient *smtp.Cl
 func initMiddlewares() *controller.Middlewares {
 	return controller.NewMiddleWares(
 		errs.NewErrHandler(),
-		handleQuery.NewQueryHandler(),
+		query.NewQueryHandler(),
 	)
 }

@@ -102,11 +102,11 @@ func (h *Handler) InitRoutes(rg *gin.RouterGroup, mailSet bool) {
 }
 
 type ErrHandler interface {
-	HandleErrors(c *gin.Context)
+	HandleErrors() gin.HandlerFunc
 }
 
 type QueryHandler interface {
-	HandleQueries(c *gin.Context)
+	HandleQueries() gin.HandlerFunc
 }
 
 type Middlewares struct {
@@ -119,5 +119,5 @@ func NewMiddleWares(erh ErrHandler, qh QueryHandler) *Middlewares {
 }
 
 func (m *Middlewares) InitGlobalMiddleWares(r *gin.Engine) {
-	r.Use(m.qh.HandleQueries, gin.Recovery(), m.erh.HandleErrors)
+	r.Use(m.qh.HandleQueries(), gin.Recovery(), m.erh.HandleErrors())
 }
