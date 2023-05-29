@@ -1,4 +1,4 @@
-package handleAuth
+package session
 
 import (
 	"github.com/gin-gonic/gin"
