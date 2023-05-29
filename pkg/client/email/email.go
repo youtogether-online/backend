@@ -3,17 +3,17 @@ package email
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/sirupsen/logrus"
+	"github.com/wtkeqrf0/you-together/pkg/log"
 	"net/smtp"
 	"strings"
 )
 
 // Open smtp connection, start TLS and authorize the user
 func Open(username, password, host string, port int) *smtp.Client {
-	logrus.Println(host, port)
+
 	c, err := smtp.Dial(fmt.Sprintf("%s:%d", host, port))
 	if err != nil {
-		logrus.WithError(err).Warn("can't connect to specified email HOST:PORT")
+		log.WithErr(err).Warn("can't connect to specified email HOST:PORT")
 		return nil
 	}
 
@@ -25,7 +25,7 @@ func Open(username, password, host string, port int) *smtp.Client {
 	if ok, _ := c.Extension("STARTTLS"); ok {
 		if err = c.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
 			c.Close()
-			logrus.WithError(err).Warn("can't start email TLS connection")
+			log.WithErr(err).Warn("can't start email TLS connection")
 			return nil
 		}
 	}
@@ -44,7 +44,7 @@ func Open(username, password, host string, port int) *smtp.Client {
 
 	if err = c.Auth(auth); err != nil {
 		c.Close()
-		logrus.WithError(err).Warn("can't authorize specified USER email")
+		log.WithErr(err).Warn("can't authorize specified USER email")
 		return nil
 	}
 

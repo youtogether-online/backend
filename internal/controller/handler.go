@@ -47,10 +47,9 @@ type AuthService interface {
 
 type AuthMiddleware interface {
 	RequireSession(c *gin.Context)
-	MaybeSession(c *gin.Context)
 	GenerateSession(id int, ip, userAgent string) (string, error)
 	SetNewCookie(id int, c *gin.Context)
-	GetSession(c *gin.Context) (*dao.Session, error)
+	GetSession(c *gin.Context) *dao.Session
 	PopCookie(c *gin.Context)
 }
 

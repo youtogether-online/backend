@@ -6,6 +6,7 @@ import (
 	"github.com/wtkeqrf0/you-together/ent/user"
 	"github.com/wtkeqrf0/you-together/internal/controller/dao"
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
+	"github.com/wtkeqrf0/you-together/pkg/log"
 )
 
 type UserStorage struct {
@@ -54,26 +55,34 @@ func (r *UserStorage) FindUserByID(ctx context.Context, id int) (*ent.User, erro
 }
 
 func (r *UserStorage) UpdateUser(ctx context.Context, customer *dto.UpdateUser, id int) error {
-	return r.userClient.UpdateOneID(id).
+	res, err := r.userClient.UpdateOneID(id).
 		SetNillableBiography(customer.Biography).
 		SetNillableLanguage(customer.Language).
 		SetNillableTheme(customer.Theme).
 		SetNillableFirstName(customer.FirstName).
-		SetNillableLastName(customer.LastName).Exec(ctx)
+		SetNillableLastName(customer.LastName).Save(ctx)
+	log.Debug(res)
+	return err
 }
 
 func (r *UserStorage) UpdateEmail(ctx context.Context, email string, id int) error {
-	return r.userClient.UpdateOneID(id).SetEmail(email).
-		SetIsEmailVerified(false).Exec(ctx)
+	res, err := r.userClient.UpdateOneID(id).SetEmail(email).
+		SetIsEmailVerified(false).Save(ctx)
+	log.Debug(res)
+	return err
 }
 
 func (r *UserStorage) UpdatePassword(ctx context.Context, newPassword []byte, id int) error {
-	return r.userClient.UpdateOneID(id).SetPasswordHash(newPassword).
-		SetIsEmailVerified(true).Exec(ctx)
+	res, err := r.userClient.UpdateOneID(id).SetPasswordHash(newPassword).
+		SetIsEmailVerified(true).Save(ctx)
+	log.Debug(res)
+	return err
 }
 
 func (r *UserStorage) UpdateUsername(ctx context.Context, username string, id int) error {
-	return r.userClient.UpdateOneID(id).SetName(username).Exec(ctx)
+	res, err := r.userClient.UpdateOneID(id).SetName(username).Save(ctx)
+	log.Debug(res)
+	return err
 }
 
 func (r *UserStorage) UsernameExist(ctx context.Context, username string) (bool, error) {

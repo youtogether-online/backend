@@ -4,29 +4,21 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/sirupsen/logrus"
 	"github.com/wtkeqrf0/you-together/ent"
+	"github.com/wtkeqrf0/you-together/pkg/log"
 	"net/http"
-	"os"
 )
 
 // Sign-in errors
 var (
-	NoSuchUser       = newError(http.StatusNotFound, "There is no such user", "But you can still find another existing user!")
 	CodeError        = newError(http.StatusBadRequest, "Code is not correct", "Try to request a new one")
 	PasswordError    = newError(http.StatusBadRequest, "Wrong password", "You can still sign in by your email!")
-	PasswordNotFound = newError(http.StatusNotFound, "You have not registered a password for you account", "Try change the password in your profile")
+	PasswordNotFound = newError(http.StatusBadRequest, "You have not registered a password for you account", "Try change the password in your profile")
 )
 
 // Auth errors
 var (
 	UnAuthorized = newError(http.StatusUnauthorized, "You are not logged in", "Click on the button below to sign in!")
-)
-
-// Input errors
-var (
-	ValidError   = newError(http.StatusBadRequest, "Validation error", "Try to enter the correct data")
-	AlreadyExist = newError(http.StatusBadRequest, "Already exist", "Try to enter another data")
 )
 
 // Server errors
@@ -41,23 +33,12 @@ const (
 )
 
 type ErrHandler struct {
-	log *logrus.Logger
+	log *log.Logger
 }
 
-func NewErrHandler(log *logrus.Logger) *ErrHandler {
-	log.SetLevel(logrus.ErrorLevel)
-	log.SetReportCaller(true)
-	log.SetFormatter(&logrus.JSONFormatter{
-		TimestampFormat: "2006/01/02 15:32:05",
-		FieldMap: logrus.FieldMap{
-			logrus.FieldKeyLevel: "status",
-			logrus.FieldKeyFunc:  "caller",
-			logrus.FieldKeyMsg:   "message",
-		},
-	})
-	log.SetOutput(os.Stderr)
+func NewErrHandler() *ErrHandler {
 
-	return &ErrHandler{log: log}
+	return &ErrHandler{log: log.NewLogger(log.ErrLevel, &log.JSONFormatter{}, true)}
 }
 
 // HandleErrors of MyError type
@@ -147,7 +128,7 @@ func (e *ErrHandler) HandleErrors(c *gin.Context) {
 			status = http.StatusBadRequest
 		}
 
-		e.log.WithError(resErr).Errorf("%02d# %s", i+1, res[message])
+		e.log.WithErr(resErr).Errf("%02d# %s", i+1, res[message])
 		if i == 0 {
 			c.JSON(status, res)
 		}

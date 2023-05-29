@@ -8,10 +8,9 @@ import (
 	"entgo.io/ent/dialect/sql/schema"
 	"fmt"
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/sirupsen/logrus"
 	"github.com/wtkeqrf0/you-together/ent"
 	_ "github.com/wtkeqrf0/you-together/ent/runtime"
-	"log"
+	"github.com/wtkeqrf0/you-together/pkg/log"
 	"time"
 )
 
@@ -22,30 +21,32 @@ func Open(username, password, host string, port int, DBName string) *ent.Client 
 
 	db, err := sql.Open("pgx", dbURL)
 	if err != nil {
-		logrus.WithError(err).Fatal("error occurred while opening PostgreSQL connection")
+		log.WithErr(err).Fatal("error occurred while opening PostgreSQL connection")
 	}
 
 	if err = db.Ping(); err != nil {
-		logrus.WithError(err).Fatal("unable to connect to the postgres database")
+		log.WithErr(err).Fatal("unable to connect to the postgres database")
 	}
 
 	drv := entsql.OpenDB(dialect.Postgres, db)
 	client := ent.NewClient(ent.Driver(drv))
 
 	if err = client.Schema.Create(context.Background(), schema.WithGlobalUniqueID(true)); err != nil {
-		logrus.WithError(err).Fatal("tables initialization failed")
+		log.WithErr(err).Fatal("tables initialization failed")
 	}
 
-	client.Use(logger)
+	client.Use(dbLogger)
 
 	return client
 }
 
-func logger(next ent.Mutator) ent.Mutator {
+var logger = log.NewLogger(log.InfoLevel, &log.TextFormatter{}, false)
+
+func dbLogger(next ent.Mutator) ent.Mutator {
 	return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
 		start := time.Now()
 		defer func() {
-			log.Printf("Op=%s\tType=%s\tTime=%s\n", m.Op(), m.Type(), time.Since(start))
+			logger.Infof("Op=%s\tType=%s\tTime=%s", m.Op(), m.Type(), time.Since(start))
 		}()
 		return next.Mutate(ctx, m)
 	})

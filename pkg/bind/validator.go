@@ -2,7 +2,7 @@ package bind
 
 import (
 	"github.com/go-playground/validator/v10"
-	"github.com/sirupsen/logrus"
+	"github.com/wtkeqrf0/you-together/pkg/log"
 )
 
 type Valid struct {
@@ -11,19 +11,19 @@ type Valid struct {
 
 func NewValid(v *validator.Validate) *Valid {
 	if err := v.RegisterValidation("name", validateName); err != nil {
-		logrus.WithError(err).Warn("can't validate name")
+		log.WithErr(err).Warn("can't validate name")
 	}
 
 	if err := v.RegisterValidation("email", validateEmail); err != nil {
-		logrus.WithError(err).Warn("can't validate email")
+		log.WithErr(err).Warn("can't validate email")
 	}
 
 	if err := v.RegisterValidation("uuid4", validateUUID4); err != nil {
-		logrus.WithError(err).Warn("can't validate uuid4")
+		log.WithErr(err).Warn("can't validate uuid4")
 	}
 
 	if err := v.RegisterValidation("enum", validateEnum); err != nil {
-		logrus.WithError(err).Warn("can't validate enums")
+		log.WithErr(err).Warn("can't validate enums")
 	}
 	return &Valid{v: v}
 }
