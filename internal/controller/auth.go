@@ -3,7 +3,6 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
-	"github.com/wtkeqrf0/you-together/pkg/bind"
 	"github.com/wtkeqrf0/you-together/pkg/middleware/errs"
 	"golang.org/x/crypto/bcrypt"
 	"math/rand"
@@ -11,7 +10,7 @@ import (
 )
 
 func (h *Handler) signInByPassword(c *gin.Context) {
-	auth := bind.FillStructJSON[dto.EmailWithPassword](c)
+	auth := fillStructJSONWithHeader[dto.EmailWithPassword](c)
 	if auth == nil {
 		return
 	}
@@ -41,7 +40,7 @@ func (h *Handler) signInByPassword(c *gin.Context) {
 }
 
 func (h *Handler) sendCodeToEmail(c *gin.Context) {
-	to := bind.FillStructJSON[dto.Email](c)
+	to := fillStructJSON[dto.Email](c)
 	if to == nil {
 		return
 	}
@@ -60,7 +59,7 @@ func (h *Handler) sendCodeToEmail(c *gin.Context) {
 }
 
 func (h *Handler) signInByEmail(c *gin.Context) {
-	auth := bind.FillStructJSON[dto.EmailWithCode](c)
+	auth := fillStructJSONWithHeader[dto.EmailWithCode](c)
 	if auth == nil {
 		return
 	}
@@ -107,4 +106,29 @@ func generateSecretCode() string {
 		b[i] = chars[rand.Intn(len(chars))]
 	}
 	return string(b)
+}
+
+// fillStructJSON of given generic type by request JSON body
+func fillStructJSON[T any](c *gin.Context) *T {
+	var t T
+	if err := c.ShouldBindJSON(&t); err != nil {
+		c.Error(err)
+		return nil
+	}
+	return &t
+}
+
+// fillStructJSONWithHeader of given generic type by request headers
+func fillStructJSONWithHeader[T any](c *gin.Context) *T {
+	var t T
+	if err := c.ShouldBindJSON(&t); err != nil {
+		c.Error(err)
+		return nil
+	}
+
+	if err := c.ShouldBindHeader(&t); err != nil {
+		c.Error(err)
+		return nil
+	}
+	return &t
 }
