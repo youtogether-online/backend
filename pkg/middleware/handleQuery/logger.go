@@ -1,10 +1,9 @@
-package logger
+package handleQuery
 
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
-	"os"
+	"github.com/wtkeqrf0/you-together/pkg/log"
 	"time"
 )
 
@@ -17,24 +16,12 @@ const (
 	white  string = "\033[47m"
 )
 
-type PlainFormatter struct {
-	TimestampFormat string
-}
-
-func (f *PlainFormatter) Format(entry *logrus.Entry) ([]byte, error) {
-	return []byte(fmt.Sprintf("%s |%s\n", entry.Time.Format(
-		f.TimestampFormat), entry.Message)), nil
-}
-
 type QueryHandler struct {
-	log *logrus.Logger
+	log *log.Logger
 }
 
-func NewQueryHandler(log *logrus.Logger) *QueryHandler {
-	log.SetLevel(logrus.InfoLevel)
-	log.SetFormatter(&PlainFormatter{TimestampFormat: "2006/01/02 15:32:05"})
-	log.SetOutput(os.Stdout)
-	return &QueryHandler{log: log}
+func NewQueryHandler() *QueryHandler {
+	return &QueryHandler{log: log.NewLogger(log.InfoLevel, &log.TextFormatter{}, false)}
 }
 
 func (q *QueryHandler) HandleQueries(c *gin.Context) {

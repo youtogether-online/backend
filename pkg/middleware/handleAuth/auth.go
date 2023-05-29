@@ -1,4 +1,4 @@
-package sessions
+package handleAuth
 
 import (
 	"fmt"
@@ -73,17 +73,19 @@ func (a Auth) GenerateSession(id int, ip, userAgent string) (string, error) {
 	})
 }
 
-func (a Auth) GetSession(c *gin.Context) (*dao.Session, error) {
+func (a Auth) GetSession(c *gin.Context) *dao.Session {
 	get, ok := c.Get("user_info")
 	if !ok {
-		return nil, fmt.Errorf("session not found in context")
+		c.Error(fmt.Errorf("session not found in context"))
+		return nil
 	}
 
 	res, ok := get.(*dao.Session)
 	if !ok {
-		return nil, fmt.Errorf("cannot parse session")
+		c.Error(fmt.Errorf("cannot parse session"))
+		return nil
 	}
-	return res, nil
+	return res
 }
 
 func (a Auth) SetNewCookie(id int, c *gin.Context) {
