@@ -5,8 +5,8 @@ import (
 	"github.com/wtkeqrf0/you-together/ent"
 	"github.com/wtkeqrf0/you-together/internal/controller/dao"
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
-	"github.com/wtkeqrf0/you-together/pkg/bind"
 	"github.com/wtkeqrf0/you-together/pkg/conf"
+	"github.com/wtkeqrf0/you-together/pkg/middleware/bind"
 	"time"
 )
 
@@ -45,6 +45,10 @@ type AuthService interface {
 	SetEmailVerified(email string) error
 }
 
+type MailSender interface {
+	SendEmail(subj, body, from string, to ...string) error
+}
+
 type AuthMiddleware interface {
 	RequireSession(c *gin.Context)
 	GenerateSession(id int, ip, userAgent string) (string, error)
@@ -53,8 +57,9 @@ type AuthMiddleware interface {
 	PopCookie(c *gin.Context)
 }
 
-type MailSender interface {
-	SendEmail(subj, body, from string, to ...string) error
+type Validator interface {
+	Struct(s any) error
+	Var(s any, tag string) error
 }
 
 type Handler struct {
@@ -62,10 +67,10 @@ type Handler struct {
 	auth  AuthService
 	mail  MailSender
 	sess  AuthMiddleware
-	v     *bind.Valid
+	v     *bind.Bind
 }
 
-func NewHandler(users UserService, auth AuthService, mail MailSender, sess AuthMiddleware, v *bind.Valid) *Handler {
+func NewHandler(users UserService, auth AuthService, mail MailSender, sess AuthMiddleware, v *bind.Bind) *Handler {
 	return &Handler{users: users, auth: auth, mail: mail, sess: sess, v: v}
 }
 
@@ -73,30 +78,31 @@ func (h *Handler) InitRoutes(rg *gin.RouterGroup, mailSet bool) {
 
 	auth := rg.Group("/auth")
 	{
-		auth.POST("/password", h.signInByPassword)
-		auth.POST("/email", h.signInByEmail)
+		bind.HandleData(h.signInByPassword, h.v)
+		auth.POST("/password", bind.HandleData(h.signInByPassword, h.v))
+		auth.POST("/email", bind.HandleData(h.signInByEmail, h.v))
 
 		session := rg.Group("/session")
 		{
-			session.GET("", h.sess.RequireSession, h.getMe)
+			session.GET("", h.sess.RequireSession, bind.HandleData(h.getMe, h.v))
 			session.DELETE("", h.signOut)
 		}
 	}
 
 	user := rg.Group("/user")
 	{
-		user.GET("/:username", h.getUserByUsername)
+		user.GET("/:username", bind.HandleData(h.getUserByUsername, h.v))
 		user.PATCH("", h.sess.RequireSession, h.updateUser)
 		user.PATCH("/email", h.sess.RequireSession, h.updateEmail)
 		user.PATCH("/password", h.sess.RequireSession, h.updatePassword)
 		user.PATCH("/name", h.sess.RequireSession, h.updateUsername)
-		user.GET("/check-name/:name", h.checkUsername)
+		user.GET("/check-name/:name", bind.HandleData(h.checkUsername, h.v))
 	}
 
 	if mailSet {
 		email := rg.Group("/email")
 		{
-			email.POST("/send-code", h.sendCodeToEmail)
+			email.POST("/send-code", bind.HandleData(h.sendCodeToEmail, h.v))
 		}
 	}
 }
