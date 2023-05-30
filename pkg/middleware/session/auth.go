@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/mssola/useragent"
 	"github.com/wtkeqrf0/you-together/internal/controller/dao"
-	"github.com/wtkeqrf0/you-together/pkg/bind"
+	"github.com/wtkeqrf0/you-together/pkg/middleware/bind"
 	"github.com/wtkeqrf0/you-together/pkg/middleware/errs"
 	"net/http"
 	"time"

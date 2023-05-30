@@ -23,10 +23,6 @@ type UpdateName struct {
 	NewName string `json:"newName,omitempty" validate:"required,gte=5,lte=20,name"`
 }
 
-type Name struct {
-	Name string `json:"name,omitempty" validate:"required,gte=5,lte=20,name"`
-}
-
 type Email struct {
 	Email string `json:"email,omitempty" validate:"required,email"`
 }
