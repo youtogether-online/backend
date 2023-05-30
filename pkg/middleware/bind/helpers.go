@@ -7,9 +7,12 @@ import (
 )
 
 var (
+	//TODO name regexp do only on characters. Min and max will be other validation
 	NameRegexp  = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_]{3,18}([a-zA-Z0-9])$`)
 	EmailRegexp = regexp.MustCompile(`^\S+@\S+\.\S+$`)
-	UUID4       = regexp.MustCompile(`^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$`)
+	//TODO password regexp do only on characters. Min and max will be other validation
+	PasswordRegexp = regexp.MustCompile(``)
+	UUID4          = regexp.MustCompile(`^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$`)
 )
 
 func validateName(fl validator.FieldLevel) bool {
@@ -35,4 +38,8 @@ func validateEnum(fl validator.FieldLevel) bool {
 	}
 
 	return false
+}
+
+func validatePassword(fl validator.FieldLevel) bool {
+	return PasswordRegexp.MatchString(fl.Field().String())
 }
