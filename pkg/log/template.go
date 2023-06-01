@@ -10,11 +10,11 @@ type JSONFormatter struct {
 }
 
 func (f *JSONFormatter) Format(e *Entry) string {
-	str := fmt.Sprintf(`"caller":"%s","status":"%d","time":"%s","message":"%s"`,
-		e.caller, e.status, e.time.Format(timestampFormat), e.message)
+	str := fmt.Sprintf(`"caller":"%s:%d","status":"%s","time":"%s","message":"%s"`,
+		e.caller.Function, e.caller.Line, e.status, e.time.Format(timestampFormat), e.message)
 
-	if e.err != "" {
-		str += fmt.Sprintf(`,"error":"%s"`, e.err)
+	if e.err != nil {
+		str += fmt.Sprintf(`,"error":"%v"`, e.err)
 	}
 
 	return fmt.Sprintf(`{%s}`, str)

@@ -1,12 +1,10 @@
 package log
 
-import "os"
+import (
+	"os"
+)
 
-var logger = &Logger{
-	reportCaller: true,
-	level:        InfoLevel,
-	formatter:    &JSONFormatter{},
-}
+var logger = NewLogger(InfoLevel, &JSONFormatter{}, true)
 
 func SetLevel(level Level) {
 	logger.level = level
@@ -15,68 +13,108 @@ func SetLevel(level Level) {
 func WithErr(err error) *Entry {
 	return &Entry{
 		l:   logger,
-		err: err.Error(),
+		err: err,
 	}
 }
 
 func Debug(args ...any) {
 	if logger.level >= DebugLevel {
-		go send(&Entry{l: logger, status: DebugLevel}, args...)
+		e := newEntry(logger, debug)
+		if logger.reportCaller {
+			e.caller = getReportCaller()
+		}
+		go e.send(args...)
 	}
 }
 
 func Debugf(format string, args ...any) {
 	if logger.level >= DebugLevel {
-		go sendf(&Entry{l: logger, status: DebugLevel}, format, args...)
+		e := newEntry(logger, debug)
+		if logger.reportCaller {
+			e.caller = getReportCaller()
+		}
+		go e.sendf(format, args...)
 	}
 }
 
 func Info(args ...any) {
 	if logger.level >= InfoLevel {
-		go send(&Entry{l: logger, status: InfoLevel}, args...)
+		e := newEntry(logger, info)
+		if logger.reportCaller {
+			e.caller = getReportCaller()
+		}
+		go e.send(args...)
 	}
 }
 
 func Infof(format string, args ...any) {
 	if logger.level >= InfoLevel {
-		go sendf(&Entry{l: logger, status: InfoLevel}, format, args...)
+		e := newEntry(logger, info)
+		if logger.reportCaller {
+			e.caller = getReportCaller()
+		}
+		go e.sendf(format, args...)
 	}
 }
 
 func Warn(args ...any) {
 	if logger.level >= WarnLevel {
-		go send(&Entry{l: logger, status: WarnLevel}, args...)
+		e := newEntry(logger, warning)
+		if logger.reportCaller {
+			e.caller = getReportCaller()
+		}
+		go e.send(args...)
 	}
 }
 
 func Warnf(format string, args ...any) {
 	if logger.level >= WarnLevel {
-		go sendf(&Entry{l: logger, status: WarnLevel}, format, args...)
+		e := newEntry(logger, warning)
+		if logger.reportCaller {
+			e.caller = getReportCaller()
+		}
+		go e.sendf(format, args...)
 	}
 }
 
 func Err(args ...any) {
 	if logger.level >= ErrLevel {
-		go send(&Entry{l: logger, status: ErrLevel}, args...)
+		e := newEntry(logger, err)
+		if logger.reportCaller {
+			e.caller = getReportCaller()
+		}
+		go e.send(args...)
 	}
 }
 
 func Errf(format string, args ...any) {
 	if logger.level >= ErrLevel {
-		go sendf(&Entry{l: logger, status: ErrLevel}, format, args...)
+		e := newEntry(logger, err)
+		if logger.reportCaller {
+			e.caller = getReportCaller()
+		}
+		go e.sendf(format, args...)
 	}
 }
 
 func Fatal(args ...any) {
 	if logger.level == FatalLevel {
-		send(&Entry{l: logger, status: FatalLevel}, args...)
+		e := newEntry(logger, fatal)
+		if logger.reportCaller {
+			e.caller = getReportCaller()
+		}
+		e.send(args...)
 		os.Exit(1)
 	}
 }
 
 func Fatalf(format string, args ...any) {
 	if logger.level == FatalLevel {
-		go sendf(&Entry{l: logger, status: FatalLevel}, format, args...)
+		e := newEntry(logger, fatal)
+		if logger.reportCaller {
+			e.caller = getReportCaller()
+		}
+		e.sendf(format, args...)
 		os.Exit(1)
 	}
 }
