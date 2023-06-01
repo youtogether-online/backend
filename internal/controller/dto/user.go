@@ -9,12 +9,12 @@ type UpdateUser struct {
 }
 
 type UpdateEmail struct {
-	Password string `json:"password,omitempty" validate:"required,printascii,gte=4,lte=20"`
+	Password string `json:"password,omitempty" validate:"required,gte=4,lte=20,password"`
 	NewEmail string `json:"newEmail,omitempty" validate:"required,email"`
 }
 
 type UpdatePassword struct {
-	NewPassword string `json:"newPassword,omitempty" validate:"required,printascii,gte=4,lte=20"`
+	NewPassword string `json:"newPassword,omitempty" validate:"required,gte=4,lte=20,password"`
 	Email       string `json:"email,omitempty" validate:"required,email"`
 	Code        string `json:"code,omitempty" validate:"required,len=5"`
 }
@@ -29,7 +29,7 @@ type Email struct {
 
 type EmailWithPassword struct {
 	Email    string  `json:"email,omitempty" header:"-" validate:"required,email"`
-	Password string  `json:"password,omitempty" header:"-" validate:"required,printascii,gte=4,lte=20"`
+	Password string  `json:"password,omitempty" header:"-" validate:"required,gte=4,lte=20,password"`
 	Language *string `json:"-" header:"Accept-Language" validate:"omitempty,enum=EN*RU"`
 }
 
