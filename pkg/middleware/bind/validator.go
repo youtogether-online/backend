@@ -6,11 +6,8 @@ import (
 	"github.com/wtkeqrf0/you-together/pkg/log"
 )
 
-type Bind struct {
-	v *validator.Validate
-}
-
-func NewBind(v *validator.Validate) *Bind {
+func NewValidator() *validator.Validate {
+	v := validator.New()
 	if err := v.RegisterValidation("name", validateName); err != nil {
 		log.WithErr(err).Warn("can't validate name fields")
 	}
@@ -30,20 +27,12 @@ func NewBind(v *validator.Validate) *Bind {
 	if err := v.RegisterValidation("password", validatePassword); err != nil {
 		log.WithErr(err).Warn("can't validate password fields")
 	}
-	return &Bind{v: v}
+	return v
 }
 
-func (b *Bind) Struct(s any) error {
-	return b.v.Struct(s)
-}
-
-func (b *Bind) Var(s any, tag string) error {
-	return b.v.Var(s, tag)
-}
-
-func HandleData[T any](handler func(*gin.Context, T) error, v *Bind) func(*gin.Context) error {
+func HandleBody[T any](handler func(*gin.Context, T) error, v *validator.Validate) func(*gin.Context) error {
 	return func(c *gin.Context) error {
-		// TODO var validation
+
 		var t T
 		if err := c.ShouldBindJSON(&t); err != nil {
 			return err
@@ -53,5 +42,47 @@ func HandleData[T any](handler func(*gin.Context, T) error, v *Bind) func(*gin.C
 
 		return handler(c, t)
 
+	}
+}
+
+func HandleParam(handler func(*gin.Context, string) error, name string, tag string, v *validator.Validate) func(*gin.Context) error {
+	return func(c *gin.Context) error {
+		t := c.Param(name)
+
+		if err := v.Var(t, tag); err != nil {
+			return err
+		}
+
+		return handler(c, t)
+	}
+}
+
+func HandleBodyWithHeader[T any](handler func(*gin.Context, T) error, v *validator.Validate) func(*gin.Context) error {
+	return func(c *gin.Context) error {
+
+		var t T
+		if err := c.ShouldBindJSON(&t); err != nil {
+			return err
+		} else if err = c.ShouldBindHeader(&t); err != nil {
+			return err
+		} else if err = v.Struct(&t); err != nil {
+			return err
+		}
+
+		return handler(c, t)
+	}
+}
+
+func HandleQuery[T any](handler func(*gin.Context, T) error, v *validator.Validate) func(*gin.Context) error {
+	return func(c *gin.Context) error {
+
+		var t T
+		if err := c.ShouldBindQuery(&t); err != nil {
+			return err
+		} else if err = v.Struct(&t); err != nil {
+			return err
+		}
+
+		return handler(c, t)
 	}
 }

@@ -22,10 +22,7 @@ func (h *Handler) getMe(c *gin.Context, info *dao.Session) error {
 
 func (h *Handler) getUserByUsername(c *gin.Context, username string) error {
 
-	if err := h.v.Var(&username, "required,name"); err != nil {
-		return err
-	}
-
+	//TODO if user == nil - user not found
 	user, err := h.users.FindUserByUsername(username)
 	if err != nil {
 		return err
@@ -35,9 +32,9 @@ func (h *Handler) getUserByUsername(c *gin.Context, username string) error {
 	return nil
 }
 
-func (h *Handler) updateUser(c *gin.Context, upd *dto.UpdateUser, info *dao.Session) error {
+func (h *Handler) updateUser(c *gin.Context, upd dto.UpdateUser, info *dao.Session) error {
 
-	if err := h.users.UpdateUser(upd, info.ID); err != nil {
+	if err := h.users.UpdateUser(&upd, info.ID); err != nil {
 		return err
 	}
 
@@ -45,7 +42,7 @@ func (h *Handler) updateUser(c *gin.Context, upd *dto.UpdateUser, info *dao.Sess
 	return nil
 }
 
-func (h *Handler) updateEmail(c *gin.Context, upd *dto.UpdateEmail, info *dao.Session) error {
+func (h *Handler) updateEmail(c *gin.Context, upd dto.UpdateEmail, info *dao.Session) error {
 
 	user, err := h.users.FindUserByID(info.ID)
 
@@ -67,7 +64,7 @@ func (h *Handler) updateEmail(c *gin.Context, upd *dto.UpdateEmail, info *dao.Se
 	return nil
 }
 
-func (h *Handler) updatePassword(c *gin.Context, upd *dto.UpdatePassword, info *dao.Session) error {
+func (h *Handler) updatePassword(c *gin.Context, upd dto.UpdatePassword, info *dao.Session) error {
 
 	if ok, err := h.auth.EqualsPopCode(upd.Email, upd.Code); err != nil {
 		return errs.ServerError.AddErr(err)
@@ -83,7 +80,7 @@ func (h *Handler) updatePassword(c *gin.Context, upd *dto.UpdatePassword, info *
 	return nil
 }
 
-func (h *Handler) updateUsername(c *gin.Context, upd *dto.UpdateName, info *dao.Session) error {
+func (h *Handler) updateUsername(c *gin.Context, upd dto.UpdateName, info *dao.Session) error {
 
 	if err := h.users.UpdateUsername(upd.NewName, info.ID); err != nil {
 		return err
@@ -94,10 +91,6 @@ func (h *Handler) updateUsername(c *gin.Context, upd *dto.UpdateName, info *dao.
 }
 
 func (h *Handler) checkUsername(c *gin.Context, name string) error {
-	if err := h.v.Var(&name, "required,name"); err != nil {
-		return err
-	}
-
 	if ok, err := h.users.UsernameExist(name); err != nil {
 		return err
 	} else if ok {

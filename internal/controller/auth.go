@@ -2,14 +2,15 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/wtkeqrf0/you-together/internal/controller/dao"
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
 	"github.com/wtkeqrf0/you-together/pkg/middleware/errs"
 	"golang.org/x/crypto/bcrypt"
-	"math/rand"
 	"net/http"
+	"strconv"
 )
 
-func (h *Handler) signInByPassword(c *gin.Context, auth *dto.EmailWithPassword) error {
+func (h *Handler) signInByPassword(c *gin.Context, auth dto.EmailWithPassword) error {
 
 	customer, err := h.auth.AuthUserByEmail(auth.Email)
 
@@ -33,14 +34,14 @@ func (h *Handler) signInByPassword(c *gin.Context, auth *dto.EmailWithPassword) 
 	return nil
 }
 
-func (h *Handler) sendCodeToEmail(c *gin.Context, to *dto.Email) error {
+func (h *Handler) sendCodeToEmail(c *gin.Context, to dto.Email) error {
 
-	code := generateSecretCode()
+	code := h.sess.GenerateSecretCode()
 	if err := h.auth.SetCodes(to.Email, code); err != nil {
 		return errs.ServerError.AddErr(err)
 	}
 
-	if err := h.mail.SendEmail("Verify email for you-together account", code, cfg.Email.From, to.Email); err != nil {
+	if err := h.mail.SendEmail("Verify email for you-together account", code, "", to.Email); err != nil {
 		return errs.EmailError.AddErr(err)
 	}
 
@@ -48,7 +49,7 @@ func (h *Handler) sendCodeToEmail(c *gin.Context, to *dto.Email) error {
 	return nil
 }
 
-func (h *Handler) signInByEmail(c *gin.Context, auth *dto.EmailWithCode) error {
+func (h *Handler) signInByEmail(c *gin.Context, auth dto.EmailWithCode) error {
 	if oki, err := h.auth.EqualsPopCode(auth.Email, auth.Code); err != nil {
 		return errs.ServerError.AddErr(err)
 	} else if !oki {
@@ -76,16 +77,8 @@ func (h *Handler) signInByEmail(c *gin.Context, auth *dto.EmailWithCode) error {
 	return nil
 }
 
-func (h *Handler) signOut(c *gin.Context) {
-	h.sess.PopCookie(c)
+func (h *Handler) signOut(c *gin.Context, info *dao.Session) error {
+	h.auth.DelKeys(strconv.Itoa(info.ID))
 	c.Status(http.StatusOK)
-}
-
-// generateSecretCode for email auth
-func generateSecretCode() string {
-	b := make([]rune, 5)
-	for i := range b {
-		b[i] = chars[rand.Intn(len(chars))]
-	}
-	return string(b)
+	return nil
 }
