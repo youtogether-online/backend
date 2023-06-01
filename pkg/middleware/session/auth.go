@@ -6,8 +6,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/mssola/useragent"
 	"github.com/wtkeqrf0/you-together/internal/controller/dao"
-	"github.com/wtkeqrf0/you-together/pkg/middleware/bind"
+	"github.com/wtkeqrf0/you-together/pkg/conf"
 	"github.com/wtkeqrf0/you-together/pkg/middleware/errs"
+	"math/rand"
 	"net/http"
 	"time"
 )
@@ -17,16 +18,16 @@ type AuthService interface {
 	GetSession(sessionId string) (*dao.Session, error)
 	ExpandExpireSession(sessionId string) (bool, error)
 	IDExist(id int) (bool, error)
-	DelKeys(keys ...string)
 	AddSession(id int, sessions ...string) error
 }
 
 type Auth struct {
 	auth AuthService
+	cfg  *conf.Config
 }
 
-func NewAuth(auth AuthService) *Auth {
-	return &Auth{auth: auth}
+func NewAuth(auth AuthService, cfg *conf.Config) *Auth {
+	return &Auth{auth: auth, cfg: cfg}
 }
 
 // ValidateSession and identify the user in redis. Returns true, if session was expanded.
@@ -89,8 +90,6 @@ func (a Auth) GetSession(c *gin.Context) *dao.Session {
 }
 
 func (a Auth) SetNewCookie(id int, c *gin.Context) {
-	a.PopCookie(c)
-
 	session, err := a.GenerateSession(id, c.ClientIP(), c.Request.UserAgent())
 	if err != nil {
 		c.Error(errs.ServerError.AddErr(err))
@@ -98,14 +97,15 @@ func (a Auth) SetNewCookie(id int, c *gin.Context) {
 	}
 
 	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie(cfg.Session.CookieName, session, int(cfg.Session.Duration.Seconds()),
-		cfg.Session.CookiePath, cfg.Listen.DomainName, true, true)
+	c.SetCookie(a.cfg.Session.CookieName, session, int(a.cfg.Session.Duration.Seconds()),
+		a.cfg.Session.CookiePath, a.cfg.Listen.DomainName, true, true)
 }
 
-// PopCookie from cookie storage only if equals to uuid4
-func (a Auth) PopCookie(c *gin.Context) {
-	session, _ := c.Cookie(cfg.Session.CookieName)
-	if ok := bind.UUID4.MatchString(session); ok {
-		a.auth.DelKeys(session)
+// GenerateSecretCode for email auth
+func (a Auth) GenerateSecretCode() string {
+	b := make([]rune, 5)
+	for i := range b {
+		b[i] = rand.Int31n(26) + 65
 	}
+	return string(b)
 }
