@@ -7,11 +7,9 @@ import (
 )
 
 var (
-	//TODO name regexp do only on characters. Min and max will be other validation
-	NameRegexp  = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_]{3,18}([a-zA-Z0-9])$`)
-	EmailRegexp = regexp.MustCompile(`^\S+@\S+\.\S+$`)
-	//TODO password regexp do only on characters. Min and max will be other validation
-	PasswordRegexp = regexp.MustCompile(``)
+	NameRegexp     = regexp.MustCompile(`^[a-zA-Z]\w{3,18}([a-zA-Z0-9])$`)
+	EmailRegexp    = regexp.MustCompile(`^\S+@\S+\.\S+$`)
+	PasswordRegexp = regexp.MustCompile(`^\w{4,20}$`)
 	UUID4          = regexp.MustCompile(`^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$`)
 )
 
