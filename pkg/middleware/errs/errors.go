@@ -45,7 +45,7 @@ func NewErrHandler() *ErrHandler {
 }
 
 // HandleErrors of StandardError type
-func (e *ErrHandler) HandleErrors(handler func(*gin.Context) error) gin.HandlerFunc {
+func (e *ErrHandler) HandleError(handler func(*gin.Context) error) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		err := handler(c)
 		if err == nil {
@@ -68,6 +68,7 @@ func (e *ErrHandler) HandleErrors(handler func(*gin.Context) error) gin.HandlerF
 			my = redisErr.GetInfo()
 		}
 
+		//TODO change Msg name
 		e.log.WithErr(err).Err(my.Msg)
 		c.JSON(my.Status, my)
 	}
