@@ -71,7 +71,7 @@ paths:
             schema:
               $ref: '#/components/schemas/EmailWithCode'
       parameters:
-        - in: header
+        - in: headers
           name: Accept-Language
           schema:
             type: string
@@ -104,7 +104,7 @@ paths:
             schema:
               $ref: '#/components/schemas/EmailWithPassword'
       parameters:
-        - in: header
+        - in: headers
           name: Accept-Language
           schema:
               type: string
