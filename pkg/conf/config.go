@@ -3,7 +3,7 @@ package conf
 import (
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/joho/godotenv"
-	"github.com/sirupsen/logrus"
+	"github.com/wtkeqrf0/you-together/pkg/log"
 	"sync"
 	"time"
 )
@@ -22,7 +22,7 @@ type Config struct {
 	Listen struct {
 		MainPath   string `yaml:"main_path" env:"MAIN_PATH" env-default:"/api"`
 		Port       int    `yaml:"port" env:"PORT" env-default:"3000"`
-		DomainName string `yaml:"domain_name" env:"DOMAIN_NAME" env-default:"127.0.0.1"`
+		DomainName string `yaml:"domain_name" env:"DOMAIN_NAME" env-default:"localhost"`
 	} `yaml:"listen"`
 
 	DB struct {
@@ -64,17 +64,16 @@ func GetConfig() *Config {
 		godotenv.Load()
 
 		if err := cleanenv.ReadConfig("configs/config.yml", inst); err != nil {
-			logrus.WithError(err).Error("error occurred while reading config file")
+			log.WithErr(err).Err("error occurred while reading config file")
 			help, _ := cleanenv.GetDescription(inst, nil)
-			logrus.Info(help)
-			logrus.Exit(0)
+			log.Fatal(help)
 		}
 
 		if inst.Prod == 1 {
 			inst.DB.Postgres.Host = "postgres"
 			inst.DB.Redis.Host = "redis"
 		} else {
-			logrus.SetLevel(logrus.DebugLevel)
+			log.SetLevel(log.DebugLevel)
 		}
 	})
 

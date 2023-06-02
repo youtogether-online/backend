@@ -3,7 +3,7 @@ package redis
 import (
 	"context"
 	"github.com/redis/go-redis/v9"
-	"github.com/sirupsen/logrus"
+	"github.com/wtkeqrf0/you-together/pkg/log"
 	"net"
 	"strconv"
 )
@@ -16,7 +16,7 @@ func Open(host string, port, db int) *redis.Client {
 	})
 
 	if err := client.Ping(context.Background()).Err(); err != nil {
-		logrus.WithError(err).Fatal("unable to connect to the redis database")
+		log.WithErr(err).Fatal("unable to connect to the redis database")
 	}
 
 	return client

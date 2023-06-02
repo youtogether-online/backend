@@ -2,163 +2,100 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
+	"github.com/wtkeqrf0/you-together/internal/controller/dao"
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
-	"github.com/wtkeqrf0/you-together/pkg/bind"
 	"github.com/wtkeqrf0/you-together/pkg/middleware/errs"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 )
 
-func (h *Handler) getMe(c *gin.Context) {
-	info, err := h.sess.GetSession(c)
-	if err != nil {
-		c.Error(errs.UnAuthorized.AddErr(err))
-		return
-	}
+func (h *Handler) getMe(c *gin.Context, info *dao.Session) error {
 
 	user, err := h.users.FindMe(info.ID)
 	if err != nil {
-		c.Error(err)
-		return
+		return err
 	}
 
 	c.JSON(http.StatusOK, user)
+	return nil
 }
 
-func (h *Handler) getUserByUsername(c *gin.Context) {
-	username := c.Param("username")
-	if err := binding.Validator.ValidateStruct(&dto.Name{Name: username}); err != nil {
-		c.Error(err)
-		return
-	}
+func (h *Handler) getUserByUsername(c *gin.Context, username string) error {
 
 	user, err := h.users.FindUserByUsername(username)
-
 	if err != nil {
-		c.Error(err)
-		return
+		return err
 	}
 
 	c.JSON(http.StatusOK, user)
+	return nil
 }
 
-func (h *Handler) updateUser(c *gin.Context) {
-	upd := bind.FillStructJSON[dto.UpdateUser](c)
-	if upd == nil {
-		return
-	}
+func (h *Handler) updateUser(c *gin.Context, upd dto.UpdateUser, info *dao.Session) error {
 
-	info, err := h.sess.GetSession(c)
-	if err != nil {
-		c.Error(errs.ServerError.AddErr(err))
-		return
-	}
-
-	if err = h.users.UpdateUser(upd, info.ID); err != nil {
-		c.Error(err)
-		return
+	if err := h.users.UpdateUser(&upd, info.ID); err != nil {
+		return err
 	}
 
 	c.Status(http.StatusOK)
+	return nil
 }
 
-func (h *Handler) updateEmail(c *gin.Context) {
-	upd := bind.FillStructJSON[dto.UpdateEmail](c)
-	if upd == nil {
-		return
-	}
-
-	info, err := h.sess.GetSession(c)
-	if err != nil {
-		c.Error(errs.ServerError.AddErr(err))
-		return
-	}
+func (h *Handler) updateEmail(c *gin.Context, upd dto.UpdateEmail, info *dao.Session) error {
 
 	user, err := h.users.FindUserByID(info.ID)
 
 	if err != nil {
-		c.Error(err)
-		return
+		return err
 	} else if user.PasswordHash == nil {
-		c.Error(errs.PasswordNotFound)
-		return
+		return errs.PasswordNotFound
 	}
 
 	if err = bcrypt.CompareHashAndPassword(*user.PasswordHash, []byte(upd.Password)); err != nil {
-		c.Error(errs.PasswordError.AddErr(err))
-		return
+		return errs.PasswordNotFound.AddErr(err)
 	}
 
 	if err = h.users.UpdateEmail(upd.NewEmail, info.ID); err != nil {
-		c.Error(err)
-		return
+		return err
 	}
 
 	c.Status(http.StatusOK)
+	return nil
 }
 
-func (h *Handler) updatePassword(c *gin.Context) {
-	info, err := h.sess.GetSession(c)
-	if err != nil {
-		c.Error(errs.UnAuthorized.AddErr(err))
-		return
-	}
+func (h *Handler) updatePassword(c *gin.Context, upd dto.UpdatePassword, info *dao.Session) error {
 
-	upd := bind.FillStructJSON[dto.UpdatePassword](c)
-	if upd == nil {
-		return
-	}
-
-	var ok bool
-	if ok, err = h.auth.EqualsPopCode(upd.Email, upd.Code); err != nil {
-		c.Error(errs.ServerError.AddErr(err))
-		return
+	if ok, err := h.auth.EqualsPopCode(upd.Email, upd.Code); err != nil {
+		return errs.ServerError.AddErr(err)
 	} else if !ok {
-		c.Error(errs.CodeError.AddErr(err))
-		return
+		return errs.CodeError.AddErr(err)
 	}
 
-	if err = h.users.UpdatePassword([]byte(upd.NewPassword), info.ID); err != nil {
-		c.Error(err)
-		return
-	}
-
-	c.Status(http.StatusOK)
-}
-
-func (h *Handler) updateUsername(c *gin.Context) {
-	upd := bind.FillStructJSON[dto.UpdateName](c)
-	if upd == nil {
-		return
-	}
-
-	info, err := h.sess.GetSession(c)
-	if err != nil {
-		c.Error(errs.UnAuthorized.AddErr(err))
-		return
-	}
-
-	if err = h.users.UpdateUsername(upd.NewName, info.ID); err != nil {
-		c.Error(err)
-		return
+	if err := h.users.UpdatePassword([]byte(upd.NewPassword), info.ID); err != nil {
+		return err
 	}
 
 	c.Status(http.StatusOK)
+	return nil
 }
 
-func (h *Handler) checkUsername(c *gin.Context) {
-	name := c.Param("name")
-	if err := binding.Validator.ValidateStruct(&dto.Name{Name: name}); err != nil {
-		c.Error(err)
-		return
+func (h *Handler) updateUsername(c *gin.Context, upd dto.UpdateName, info *dao.Session) error {
+
+	if err := h.users.UpdateUsername(upd.NewName, info.ID); err != nil {
+		return err
 	}
 
+	c.Status(http.StatusOK)
+	return nil
+}
+
+func (h *Handler) checkUsername(c *gin.Context, name string) error {
 	if ok, err := h.users.UsernameExist(name); err != nil {
-		c.Error(err)
+		return err
 	} else if ok {
 		c.Status(http.StatusForbidden)
 	} else {
 		c.Status(http.StatusOK)
 	}
+	return nil
 }

@@ -11,7 +11,7 @@ import (
 	loc "github.com/wtkeqrf0/you-together/ent"
 	"github.com/wtkeqrf0/you-together/ent/hook"
 	"github.com/wtkeqrf0/you-together/ent/room"
-	"github.com/wtkeqrf0/you-together/pkg/bind"
+	"github.com/wtkeqrf0/you-together/pkg/middleware/bind"
 	"golang.org/x/crypto/bcrypt"
 )
 
