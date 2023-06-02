@@ -2,35 +2,32 @@ package errs
 
 // RedisError describes all server-known errors
 type RedisError struct {
-	Status int               `json:"-"`
-	Msg    string            `json:"message,omitempty"`
-	Fields map[string]string `json:"fields,omitempty"`
-	Advice string            `json:"advice,omitempty"`
-	Err    error             `json:"-"`
+	Status int    `json:"-"`
+	Msg    string `json:"message,omitempty"`
+	Advice string `json:"advice,omitempty"`
+	Err    error  `json:"-"`
+}
+
+func NewRedisError(status int, msg string, advice string) *RedisError {
+	return &RedisError{Status: status, Msg: msg, Advice: advice}
+}
+
+func (r RedisError) AddError(err error) RedisError {
+	r.Err = err
+	return r
 }
 
 // Error implements the Error type
-func (e RedisError) Error() string {
-	return e.Msg
+func (r RedisError) Error() string {
+	return r.Msg
 }
 
-func (e RedisError) GetInfo() *AbstractError {
-	var msg any
-	if e.Msg != "" {
-		msg = e.Msg
-	} else {
-		msg = e.Fields
-	}
+func (r RedisError) GetInfo() *AbstractError {
 
 	return &AbstractError{
-		Status: e.Status,
-		Msg:    msg,
-		Advice: e.Advice,
-		Err:    e.Err,
+		Status: r.Status,
+		Msg:    r.Msg,
+		Advice: r.Advice,
+		Err:    r.Err,
 	}
-}
-
-// newRedisError creates a new RedisError and returns it
-func newRedisError() RedisError {
-	return RedisError{} //TODO
 }
