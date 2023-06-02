@@ -36,7 +36,8 @@ func Open(username, password, host string, port int, DBName string) *ent.Client 
 		log.WithErr(err).Fatal("tables initialization failed")
 	}
 
-	client.Use(dbLogger)
+	//TODO activate middlewares for ent
+	client.Use(dbLogger, toEntErrors)
 
 	return client
 }
@@ -47,11 +48,16 @@ func dbLogger(next ent.Mutator) ent.Mutator {
 	return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
 		start := time.Now()
 		defer func() {
-			logger.Infof("Op=%s\tType=%s\tTime=%s", m.Op(), m.Type(), time.Since(start))
+			logger.Infof("  Op=%s  Type=%s  Time=%s", m.Op(), m.Type(), time.Since(start))
 		}()
 
-		val, err := next.Mutate(ctx, m)
+		return next.Mutate(ctx, m)
+	})
+}
 
+func toEntErrors(next ent.Mutator) ent.Mutator {
+	return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+		v, err := next.Mutate(ctx, m)
 		if err != nil {
 
 			if ent.IsNotFound(err) {
@@ -71,7 +77,6 @@ func dbLogger(next ent.Mutator) ent.Mutator {
 
 			}
 		}
-
-		return val, err
+		return v, err
 	})
 }
