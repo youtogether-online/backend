@@ -11,7 +11,7 @@ type JSONFormatter struct {
 
 func (f *JSONFormatter) Format(e *Entry) string {
 	str := fmt.Sprintf(`"caller":"%s:%d","status":"%s","time":"%s","message":"%s"`,
-		e.caller.Function, e.caller.Line, e.status, e.time.Format(timestampFormat), e.message)
+		e.caller.File, e.caller.Line, e.status, e.time.Format(timestampFormat), e.message)
 
 	if e.err != nil {
 		str += fmt.Sprintf(`,"error":"%v"`, e.err)
