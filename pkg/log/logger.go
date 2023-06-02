@@ -34,20 +34,18 @@ func NewLogger(level Level, formatter Formatter, reportCaller bool) *Logger {
 	return &Logger{level: level, formatter: formatter, reportCaller: reportCaller}
 }
 
+const frameIndex int = 3
+
 func getReportCaller() *runtime.Frame {
-	//_, file, line, _ := runtime.Caller(2)
 
-	targetFrameIndex := 4
-
-	// Set size to targetFrameIndex+2 to ensure we have room for one more caller than we need
-	programCounters := make([]uintptr, 6)
+	programCounters := make([]uintptr, frameIndex+2)
 	n := runtime.Callers(0, programCounters)
 
 	frame := runtime.Frame{Function: "unknown"}
 	if n > 0 {
 		frames := runtime.CallersFrames(programCounters[:n])
-		for more, i := true, 0; more && i <= targetFrameIndex; i++ {
-			if i == targetFrameIndex {
+		for more, i := true, 0; more && i <= frameIndex; i++ {
+			if i == frameIndex {
 				frame, more = frames.Next()
 			} else {
 				_, more = frames.Next()
