@@ -22,7 +22,6 @@ func (h *Handler) getMe(c *gin.Context, info *dao.Session) error {
 
 func (h *Handler) getUserByUsername(c *gin.Context, username string) error {
 
-	//TODO if user == nil - user not found
 	user, err := h.users.FindUserByUsername(username)
 	if err != nil {
 		return err

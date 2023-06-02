@@ -2,11 +2,13 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 	"github.com/wtkeqrf0/you-together/ent"
 	"github.com/wtkeqrf0/you-together/ent/user"
 	"github.com/wtkeqrf0/you-together/internal/controller/dao"
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
 	"github.com/wtkeqrf0/you-together/pkg/log"
+	"github.com/wtkeqrf0/you-together/pkg/middleware/errs"
 )
 
 type UserStorage struct {
@@ -19,16 +21,14 @@ func NewUserStorage(userClient *ent.UserClient) *UserStorage {
 
 // FindMe returns the detail information about user
 func (r *UserStorage) FindMe(ctx context.Context, id int) (*dao.Me, error) {
-	var me []*dao.Me
-
-	err := r.userClient.Query().Where(user.ID(id)).
+	customer, err := r.userClient.Query().Where(user.ID(id)).
 		Select(user.FieldName, user.FieldEmail, user.FieldIsEmailVerified,
 			user.FieldBiography, user.FieldRole, user.FieldFriendsIds,
 			user.FieldLanguage, user.FieldTheme, user.FieldFirstName,
-			user.FieldLastName).Scan(ctx, &me)
+			user.FieldLastName, user.FieldSessions, user.FieldCreateTime).Only(ctx)
 
-	if me != nil {
-		return me[0], nil
+	if err == nil {
+		return dao.TransformToMe(customer), nil
 	}
 
 	return nil, err
@@ -36,15 +36,15 @@ func (r *UserStorage) FindMe(ctx context.Context, id int) (*dao.Me, error) {
 
 // FindUserByUsername returns the main information about user
 func (r *UserStorage) FindUserByUsername(ctx context.Context, username string) (*dao.User, error) {
-	var customer []*dao.User
-
-	err := r.userClient.Query().Where(user.Name(username)).
+	customer, err := r.userClient.Query().Where(user.Name(username)).
 		Select(user.FieldName, user.FieldBiography, user.FieldRole,
-			user.FieldFriendsIds, user.FieldFirstName, user.FieldLastName).
-		Scan(ctx, &customer)
+			user.FieldFriendsIds, user.FieldFirstName, user.FieldLastName, user.FieldCreateTime).Only(ctx)
 
-	if customer != nil {
-		return customer[0], nil
+	_, ok := err.(errs.EntError)
+	fmt.Println(ok)
+
+	if err == nil {
+		return dao.TransformToUser(customer), nil
 	}
 
 	return nil, err
