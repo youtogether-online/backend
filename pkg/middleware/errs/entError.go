@@ -9,28 +9,32 @@ type EntError struct {
 	Err    error             `json:"-"`
 }
 
+func newEntError(status int, msg string, advice string) *EntError {
+	return &EntError{Status: status, Msg: msg, Advice: advice}
+}
+
+func (e EntError) AddError(err error) EntError {
+	e.Err = err
+	return e
+}
+
+func (e EntError) AddFields(fields map[string]string) EntError {
+	e.Fields = fields
+	return e
+}
+
 // Error implements the Error type
 func (e EntError) Error() string {
 	return e.Msg
 }
 
 func (e EntError) GetInfo() *AbstractError {
-	var msg any
-	if e.Msg != "" {
-		msg = e.Msg
-	} else {
-		msg = e.Fields
-	}
 
 	return &AbstractError{
 		Status: e.Status,
-		Msg:    msg,
+		Msg:    e.Msg,
+		Fields: e.Fields,
 		Advice: e.Advice,
 		Err:    e.Err,
 	}
-}
-
-// newEntError creates a new EntError and returns it
-func newEntError() EntError {
-	return EntError{} //TODO
 }

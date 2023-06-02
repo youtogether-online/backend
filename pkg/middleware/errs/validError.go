@@ -16,9 +16,7 @@ type ValidError struct {
 func (e *ValidError) GetInfo() *AbstractError {
 	return &AbstractError{
 		Status: e.Status,
-		Msg:    e.Fields,
-		Advice: "",
-		Err:    nil,
+		Fields: e.Fields,
 	}
 }
 

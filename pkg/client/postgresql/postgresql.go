@@ -11,6 +11,7 @@ import (
 	"github.com/wtkeqrf0/you-together/ent"
 	_ "github.com/wtkeqrf0/you-together/ent/runtime"
 	"github.com/wtkeqrf0/you-together/pkg/log"
+	"github.com/wtkeqrf0/you-together/pkg/middleware/errs"
 	"time"
 )
 
@@ -48,6 +49,29 @@ func dbLogger(next ent.Mutator) ent.Mutator {
 		defer func() {
 			logger.Infof("Op=%s\tType=%s\tTime=%s", m.Op(), m.Type(), time.Since(start))
 		}()
-		return next.Mutate(ctx, m)
+
+		val, err := next.Mutate(ctx, m)
+
+		if err != nil {
+
+			if ent.IsNotFound(err) {
+				err = errs.EntNotFoundError.AddError(err)
+
+			} else if v, ok := err.(*ent.ValidationError); ok {
+				err = errs.EntValidError.AddError(err).AddFields(map[string]string{v.Name: fmt.Sprintf("%s is incorrect", v.Name)})
+
+			} else if ent.IsNotSingular(err) {
+				err = errs.EntNotSingularError.AddError(err)
+
+			} else if ent.IsConstraintError(err) {
+				err = errs.EntConstraintError.AddError(err)
+
+			} else if ent.IsNotLoaded(err) {
+				err = errs.EntNotLoadedError.AddError(err)
+
+			}
+		}
+
+		return val, err
 	})
 }
