@@ -9,8 +9,8 @@ type EntError struct {
 	Err    error             `json:"-"`
 }
 
-func newEntError(status int, msg string, advice string) *EntError {
-	return &EntError{Status: status, Msg: msg, Advice: advice}
+func newEntError(status int, msg string, advice string) EntError {
+	return EntError{Status: status, Msg: msg, Advice: advice}
 }
 
 func (e EntError) AddError(err error) EntError {
