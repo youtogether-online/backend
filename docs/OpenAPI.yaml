@@ -38,7 +38,11 @@ paths:
         - cookieAuth: []
       responses:
         '200':
-          $ref: '#/components/schemas/Me'
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
         '401':
           $ref: '#/components/responses/401'
         '404':
@@ -71,7 +75,7 @@ paths:
             schema:
               $ref: '#/components/schemas/EmailWithCode'
       parameters:
-        - in: headers
+        - in: header
           name: Accept-Language
           schema:
             type: string
@@ -104,7 +108,7 @@ paths:
             schema:
               $ref: '#/components/schemas/EmailWithPassword'
       parameters:
-        - in: headers
+        - in: header
           name: Accept-Language
           schema:
               type: string
@@ -161,7 +165,11 @@ paths:
             $ref: '#/components/schemas/Name'
       responses:
         '200':
-          $ref: '#/components/schemas/User'
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
         '400':
           $ref: '#/components/responses/400'
         '404':
@@ -282,7 +290,6 @@ paths:
 
 components:
   schemas:
-
     EmailWithCode:
       type: object
       writeOnly: true
