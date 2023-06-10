@@ -74,15 +74,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/EmailWithCode'
-      parameters:
-        - in: header
-          name: Accept-Language
-          schema:
-            type: string
-            enum:
-              - EN
-              - RU
-            example: RU
       responses:
         '200':
           description: OK
@@ -107,15 +98,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/EmailWithPassword'
-      parameters:
-        - in: header
-          name: Accept-Language
-          schema:
-              type: string
-              enum:
-                - EN
-                - RU
-              example: RU
       responses:
         '200':
           description: OK
