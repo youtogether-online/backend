@@ -74,6 +74,15 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/EmailWithCode'
+      parameters:
+        - in: header
+          name: Accept-Language
+          schema:
+            type: string
+            enum:
+              - EN
+              - RU
+            example: RU
       responses:
         '200':
           description: OK
@@ -84,6 +93,8 @@ paths:
                 example: session_id=f82f97fd-9930-4133-a6a7-1bccb3b933b4; Path=/api; Domain=localhost; SameSite=Lax; HttpOnly;
         '400':
           $ref: '#/components/responses/400'
+        '404':
+          $ref: '#/components/responses/404'
         '500':
           $ref: '#/components/responses/500'
 
@@ -98,6 +109,15 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/EmailWithPassword'
+      parameters:
+        - in: header
+          name: Accept-Language
+          schema:
+            type: string
+            enum:
+              - EN
+              - RU
+            example: RU
       responses:
         '200':
           description: OK
@@ -111,7 +131,7 @@ paths:
         '404':
           $ref: '#/components/responses/404'
         '500':
-          $ref: '#/components/responses/400'
+          $ref: '#/components/responses/500'
 
   /email/send-code:
     post:
@@ -130,7 +150,7 @@ paths:
         '400':
           $ref: '#/components/responses/400'
         '404':
-          $ref: '#/components/responses/400'
+          $ref: '#/components/responses/404'
         '500':
           $ref: '#/components/responses/500'
   
