@@ -79,10 +79,13 @@ func run(port int, r *gin.Engine, pClient *ent.Client, rClient *redis.Client, ma
 		log.WithErr(err).Fatal("PostgreSQL Connection Shutdown Failed")
 	}
 
-	log.Info("Server Exited Properly")
-	if err := mailClient.Quit(); err != nil {
-		log.WithErr(err).Fatal("Email Connection Shutdown Failed")
+	if mailClient != nil {
+		if err := mailClient.Quit(); err != nil {
+			log.WithErr(err).Fatal("Email Connection Shutdown Failed")
+		}
 	}
+
+	log.LastInfo("Server Exited Properly")
 }
 
 func getClients(cfg *conf.Config) (*ent.Client, *redis.Client, *smtp.Client) {
@@ -124,7 +127,7 @@ func createSetter(r *gin.Engine, pClient *ent.Client, rClient *redis.Client, cfg
 		errs.NewErrHandler(),
 		query.NewQueryHandler(),
 		session.NewAuth(auth, cfg),
-		cfg.Listen.MainPath,
+		cfg.Listen.QueryPath,
 		mailSet,
 	)
 }
