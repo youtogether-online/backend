@@ -7,21 +7,22 @@ import (
 	"strings"
 )
 
-// ValidError describes all validation errors
-type ValidError struct {
-	Status int               `json:"-"`
-	Fields map[string]string `json:"fields,omitempty"`
+// validError describes all validation errors
+type validError struct {
+	status int
+	Fields map[string]string
 }
 
-func (e *ValidError) GetInfo() *AbstractError {
+func (e *validError) GetInfo() *AbstractError {
 	return &AbstractError{
-		Status: e.Status,
+		Status: e.status,
 		Fields: e.Fields,
+		Code:   validErr,
 	}
 }
 
 // newValidError creates a new StandardError and returns it
-func newValidError(errs validator.ValidationErrors) *ValidError {
+func newValidError(errs validator.ValidationErrors) *validError {
 	fields := make(map[string]string)
 
 	for _, err := range errs {
@@ -52,8 +53,8 @@ func newValidError(errs validator.ValidationErrors) *ValidError {
 		}
 	}
 
-	return &ValidError{
-		Status: http.StatusBadRequest,
+	return &validError{
+		status: http.StatusBadRequest,
 		Fields: fields,
 	}
 }

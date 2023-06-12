@@ -1,33 +1,43 @@
 package errs
 
-// RedisError describes all server-known errors
-type RedisError struct {
-	Status int    `json:"-"`
-	Msg    string `json:"message,omitempty"`
-	Advice string `json:"advice,omitempty"`
-	Err    error  `json:"-"`
+import "net/http"
+
+// Database errors (templates)
+var (
+	RedisNilError = newRedisError(http.StatusBadRequest, notFoundErr, "Can't find value", "Register, please")
+	RedisTxError  = newRedisError(http.StatusInternalServerError, serverErr, "Operation failed", "Try to request it later")
+)
+
+// redisError describes all server-known errors
+type redisError struct {
+	status      int
+	code        ErrCode
+	Description string
+	Advice      string
+	err         error
 }
 
-func NewRedisError(status int, msg string, advice string) *RedisError {
-	return &RedisError{Status: status, Msg: msg, Advice: advice}
+func newRedisError(status int, code ErrCode, description string, advice string) redisError {
+	return redisError{status: status, code: code, Description: description, Advice: advice}
 }
 
-func (r RedisError) AddError(err error) RedisError {
-	r.Err = err
+func (r redisError) AddError(err error) redisError {
+	r.err = err
 	return r
 }
 
 // Error implements the Error type
-func (r RedisError) Error() string {
-	return r.Msg
+func (r redisError) Error() string {
+	return r.Description
 }
 
-func (r RedisError) GetInfo() *AbstractError {
+func (r redisError) GetInfo() *AbstractError {
 
 	return &AbstractError{
-		Status: r.Status,
-		Msg:    r.Msg,
-		Advice: r.Advice,
-		Err:    r.Err,
+		Status:      r.status,
+		Code:        r.code,
+		Description: r.Description,
+		Advice:      r.Advice,
+		Err:         r.err,
 	}
 }
