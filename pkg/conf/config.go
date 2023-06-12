@@ -20,7 +20,7 @@ type Config struct {
 	} `yaml:"session"`
 
 	Listen struct {
-		MainPath   string `yaml:"main_path" env:"MAIN_PATH" env-default:"/api"`
+		QueryPath  string `yaml:"query_path" env:"QUERY_PATH" env-default:"/api"`
 		Port       int    `yaml:"port" env:"PORT" env-default:"3000"`
 		DomainName string `yaml:"domain_name" env:"DOMAIN_NAME" env-default:"localhost"`
 	} `yaml:"listen"`
@@ -31,14 +31,14 @@ type Config struct {
 			DBName   string `yaml:"db_name" env:"POSTGRES_DB" env-default:"you-together"`
 			Password string `yaml:"password" env:"POSTGRES_PASSWORD" env-default:"postgres"`
 			// if prod=1, host will always be "postgres" (docker constant)
-			Host string `yaml:"host" env:"POSTGRES_HOST" env-default:"127.0.0.1"`
+			Host string `yaml:"host" env:"POSTGRES_HOST" env-default:"localhost"`
 			Port int    `yaml:"port" env:"POSTGRES_PORT" env-default:"5432"`
 		} `yaml:"postgres"`
 
 		Redis struct {
 			DbId int `yaml:"db_id" env:"REDIS_DB" env-default:"0"`
 			// if prod=1, host will always be "redis" (docker constant)
-			Host string `yaml:"host" env:"REDIS_HOST" env-default:"127.0.0.1"`
+			Host string `yaml:"host" env:"REDIS_HOST" env-default:"localhost"`
 			Port int    `yaml:"port" env:"REDIS_POST" env-default:"6379"`
 		} `yaml:"redis"`
 	} `yaml:"db"`
@@ -61,7 +61,7 @@ var (
 // or (if not specified) configuration file and returns it
 func GetConfig() *Config {
 	once.Do(func() {
-		godotenv.Load()
+		_ = godotenv.Load()
 
 		if err := cleanenv.ReadConfig("configs/config.yml", inst); err != nil {
 			log.WithErr(err).Err("error occurred while reading config file")
