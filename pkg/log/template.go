@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-var timestampFormat = "2006/01/02 15:32:05"
+const timestampFormat string = "2006/01/02 15:32:05"
 
 type JSONFormatter struct {
 }
