@@ -9,9 +9,9 @@ import (
 	"fmt"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/wtkeqrf0/you-together/ent"
+	"github.com/wtkeqrf0/you-together/ent/intercept"
 	_ "github.com/wtkeqrf0/you-together/ent/runtime"
 	"github.com/wtkeqrf0/you-together/pkg/log"
-	"github.com/wtkeqrf0/you-together/pkg/middleware/errs"
 	"time"
 )
 
@@ -32,51 +32,28 @@ func Open(username, password, host string, port int, DBName string) *ent.Client 
 	drv := entsql.OpenDB(dialect.Postgres, db)
 	client := ent.NewClient(ent.Driver(drv))
 
+	client.Intercept(queryLogger(log.NewLogger(log.InfoLevel, &log.TextFormatter{}, false)))
+
 	if err = client.Schema.Create(context.Background(), schema.WithGlobalUniqueID(true)); err != nil {
 		log.WithErr(err).Fatal("tables initialization failed")
 	}
 
-	//TODO activate middlewares for ent
-	client.Use(dbLogger, toEntErrors)
-
 	return client
 }
 
-var logger = log.NewLogger(log.InfoLevel, &log.TextFormatter{}, false)
-
-func dbLogger(next ent.Mutator) ent.Mutator {
-	return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-		start := time.Now()
-		defer func() {
-			logger.Infof("  Op=%s  Type=%s  Time=%s", m.Op(), m.Type(), time.Since(start))
-		}()
-
-		return next.Mutate(ctx, m)
-	})
-}
-
-func toEntErrors(next ent.Mutator) ent.Mutator {
-	return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-		v, err := next.Mutate(ctx, m)
-		if err != nil {
-
-			if ent.IsNotFound(err) {
-				err = errs.EntNotFoundError.AddError(err)
-
-			} else if v, ok := err.(*ent.ValidationError); ok {
-				err = errs.EntValidError.AddError(err).AddFields(map[string]string{v.Name: fmt.Sprintf("%s is incorrect", v.Name)})
-
-			} else if ent.IsNotSingular(err) {
-				err = errs.EntNotSingularError.AddError(err)
-
-			} else if ent.IsConstraintError(err) {
-				err = errs.EntConstraintError.AddError(err)
-
-			} else if ent.IsNotLoaded(err) {
-				err = errs.EntNotLoadedError.AddError(err)
-
+func queryLogger(l *log.Logger) ent.InterceptFunc {
+	return func(next ent.Querier) ent.Querier {
+		return ent.QuerierFunc(func(ctx context.Context, query ent.Query) (ent.Value, error) {
+			q, err := intercept.NewQuery(query)
+			if err != nil {
+				return nil, err
 			}
-		}
-		return v, err
-	})
+
+			start := time.Now()
+			defer func() {
+				l.Infof(" Duration=%s | Schema=%s", time.Since(start), q.Type())
+			}()
+			return next.Query(ctx, query)
+		})
+	}
 }
