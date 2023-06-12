@@ -8,7 +8,7 @@ import (
 var (
 	EntNotFoundError    = newEntError(http.StatusBadRequest, notFoundErr, "Not found", "Try to find another entity")
 	EntValidError       = newEntError(http.StatusBadRequest, validErr, "", "")
-	EntConstraintError  = newEntError(http.StatusBadRequest, validErr, "Can't set this value", "Try to set constraint value")
+	EntConstraintError  = newEntError(http.StatusBadRequest, notFoundErr, "Can't set this value", "Try to set constraint value")
 	EntNotSingularError = newEntError(http.StatusInternalServerError, serverErr, "Single result was expected, but several were found", "Try to look for something else")
 	EntNotLoadedError   = newEntError(http.StatusInternalServerError, serverErr, "Can't load data", "Try to request it later")
 )
