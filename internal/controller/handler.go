@@ -42,9 +42,7 @@ type MailSender interface {
 }
 
 type Sessions interface {
-	GenerateSession(id int, ip, userAgent string) (string, error)
-	SetNewCookie(id int, c *gin.Context)
-	GetSession(c *gin.Context) *dao.Session
+	SetNewCookie(id int, c *gin.Context) error
 	GenerateSecretCode() string
 }
 
