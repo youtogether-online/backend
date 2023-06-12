@@ -28,7 +28,10 @@ func (h *Handler) signInByPassword(c *gin.Context, auth dto.EmailWithPassword) e
 		return errs.PasswordError.AddErr(err)
 	}
 
-	h.sess.SetNewCookie(customer.ID, c)
+	err = h.sess.SetNewCookie(customer.ID, c)
+	if err != nil {
+		return err
+	}
 
 	c.Status(http.StatusOK)
 	return nil
@@ -38,7 +41,7 @@ func (h *Handler) sendCodeToEmail(c *gin.Context, to dto.Email) error {
 
 	code := h.sess.GenerateSecretCode()
 	if err := h.auth.SetCodes(to.Email, code); err != nil {
-		return errs.ServerError.AddErr(err)
+		return err
 	}
 
 	if err := h.mail.SendEmail("Verify email for you-together account", code, "", to.Email); err != nil {
@@ -53,7 +56,7 @@ func (h *Handler) signInByEmail(c *gin.Context, auth dto.EmailWithCode) error {
 	if oki, err := h.auth.EqualsPopCode(auth.Email, auth.Code); err != nil {
 		return errs.ServerError.AddErr(err)
 	} else if !oki {
-		return errs.CodeError.AddErr(err)
+		return errs.MailCodeError.AddErr(err)
 	}
 
 	customer, err := h.auth.AuthUserByEmail(auth.Email)
@@ -71,7 +74,10 @@ func (h *Handler) signInByEmail(c *gin.Context, auth dto.EmailWithCode) error {
 			return err
 		}
 	}
-	h.sess.SetNewCookie(customer.ID, c)
+	err = h.sess.SetNewCookie(customer.ID, c)
+	if err != nil {
+		return err
+	}
 
 	c.Status(http.StatusOK)
 	return nil
