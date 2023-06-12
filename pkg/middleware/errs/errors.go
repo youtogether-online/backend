@@ -1,53 +1,34 @@
 package errs
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/redis/go-redis/v9"
+	"github.com/wtkeqrf0/you-together/ent"
 	"github.com/wtkeqrf0/you-together/pkg/log"
-	"net/http"
-)
-
-// Sign-in errors
-var (
-	CodeError        = newStandardError(http.StatusBadRequest, "Code is not correct", "Try to request a new one")
-	PasswordError    = newStandardError(http.StatusBadRequest, "Wrong password", "You can still sign in by your email!")
-	PasswordNotFound = newStandardError(http.StatusBadRequest, "You have not registered a password for you account", "Try change the password in your profile")
-)
-
-// ent error templates
-var (
-	EntNotFoundError    = newEntError(http.StatusBadRequest, "Entity is not found", "Try to find another entity")
-	EntValidError       = newEntError(http.StatusBadRequest, "", "")
-	EntConstraintError  = newEntError(http.StatusBadRequest, "Can't set this value", "Try to get another existing value")
-	EntNotSingularError = newEntError(http.StatusInternalServerError, "An object was expected, but several were found", "Try to look for something else")
-	EntNotLoadedError   = newEntError(http.StatusInternalServerError, "Can't load data", "Try to request it later")
-
-	RedisNilError = NewRedisError(http.StatusBadRequest, "Can't find value", "Maybe this value is not registered?")
-	RedisTxError  = NewRedisError(http.StatusInternalServerError, "Operation failed", "Try to request it later")
-)
-
-// Auth errors
-var (
-	UnAuthorized = newStandardError(http.StatusUnauthorized, "You are not logged in", "Click on the button below to sign in!")
-)
-
-// Server errors
-var (
-	ServerError = newStandardError(http.StatusInternalServerError, "Server exception was occurred", "Try to restart the page")
-	EmailError  = newStandardError(http.StatusInternalServerError, "Can't send message to your email", "Try to send it later")
 )
 
 type MyError interface {
 	GetInfo() *AbstractError
 }
 
+type ErrCode string
+
+const (
+	validErr    ErrCode = "validation"
+	authErr     ErrCode = "authorization"
+	serverErr   ErrCode = "server"
+	notFoundErr ErrCode = "not_found"
+)
+
 type AbstractError struct {
-	Status int               `json:"-"`
-	Msg    string            `json:"message,omitempty"`
-	Fields map[string]string `json:"fields,omitempty"`
-	Advice string            `json:"advice,omitempty"`
-	Err    error             `json:"-"`
+	Status      int               `json:"-"`
+	Code        ErrCode           `json:"type,omitempty"`
+	Description string            `json:"description,omitempty"`
+	Fields      map[string]string `json:"Fields,omitempty"`
+	Advice      string            `json:"Advice,omitempty"`
+	Err         error             `json:"-"`
 }
 
 type ErrHandler struct {
@@ -73,8 +54,21 @@ func (e *ErrHandler) HandleError(handler func(*gin.Context) error) gin.HandlerFu
 		} else if vErrs, ok := err.(validator.ValidationErrors); ok {
 			my = newValidError(vErrs).GetInfo()
 
-		} else if entErr, ok := err.(EntError); ok {
-			my = entErr.GetInfo()
+		} else if notFound, ok := err.(*ent.NotFoundError); ok {
+			my = EntNotFoundError.AddError(notFound).GetInfo()
+
+		} else if valid, ok := err.(*ent.ValidationError); ok {
+			my = EntValidError.AddError(valid).SetFields(
+				map[string]string{valid.Name: fmt.Sprintf("%s is incorrect", valid.Name)}).GetInfo()
+
+		} else if notSingular, ok := err.(*ent.NotSingularError); ok {
+			my = EntNotSingularError.AddError(notSingular).GetInfo()
+
+		} else if constraint, ok := err.(*ent.ConstraintError); ok {
+			my = EntConstraintError.AddError(constraint).GetInfo()
+
+		} else if notLoaded, ok := err.(*ent.NotLoadedError); ok {
+			my = EntNotLoadedError.AddError(notLoaded).GetInfo()
 
 		} else if redisErr, ok := err.(redis.Error); ok {
 			switch redisErr {
@@ -88,7 +82,7 @@ func (e *ErrHandler) HandleError(handler func(*gin.Context) error) gin.HandlerFu
 		entry := e.log.WithErr(err)
 
 		if my.Fields == nil {
-			entry.Err(my.Msg)
+			entry.Err(my.Description)
 		} else {
 			entry.Err(my.Fields)
 		}
