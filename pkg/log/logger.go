@@ -55,16 +55,16 @@ func getReportCaller() *runtime.Frame {
 	return &frame
 }
 
-func (l Logger) WithErr(err error) *Entry {
+func (l *Logger) WithErr(err error) *Entry {
 	return &Entry{
-		l:   &l,
+		l:   l,
 		err: err,
 	}
 }
 
-func (l Logger) Debug(args ...any) {
+func (l *Logger) Debug(args ...any) {
 	if l.level >= DebugLevel {
-		e := newEntry(&l, info)
+		e := newEntry(l, debug)
 		if l.reportCaller {
 			e.caller = getReportCaller()
 		}
@@ -72,9 +72,9 @@ func (l Logger) Debug(args ...any) {
 	}
 }
 
-func (l Logger) Debugf(format string, args ...any) {
+func (l *Logger) Debugf(format string, args ...any) {
 	if l.level >= DebugLevel {
-		e := newEntry(&l, info)
+		e := newEntry(l, debug)
 		if l.reportCaller {
 			e.caller = getReportCaller()
 		}
@@ -82,9 +82,9 @@ func (l Logger) Debugf(format string, args ...any) {
 	}
 }
 
-func (l Logger) Info(args ...any) {
+func (l *Logger) Info(args ...any) {
 	if l.level >= InfoLevel {
-		e := newEntry(&l, info)
+		e := newEntry(l, info)
 		if l.reportCaller {
 			e.caller = getReportCaller()
 		}
@@ -92,9 +92,9 @@ func (l Logger) Info(args ...any) {
 	}
 }
 
-func (l Logger) Infof(format string, args ...any) {
+func (l *Logger) Infof(format string, args ...any) {
 	if l.level >= InfoLevel {
-		e := newEntry(&l, info)
+		e := newEntry(l, info)
 		if l.reportCaller {
 			e.caller = getReportCaller()
 		}
@@ -102,9 +102,9 @@ func (l Logger) Infof(format string, args ...any) {
 	}
 }
 
-func (l Logger) Warn(args ...any) {
+func (l *Logger) Warn(args ...any) {
 	if l.level >= WarnLevel {
-		e := newEntry(&l, warning)
+		e := newEntry(l, warning)
 		if l.reportCaller {
 			e.caller = getReportCaller()
 		}
@@ -112,9 +112,9 @@ func (l Logger) Warn(args ...any) {
 	}
 }
 
-func (l Logger) Warnf(format string, args ...any) {
+func (l *Logger) Warnf(format string, args ...any) {
 	if l.level >= WarnLevel {
-		e := newEntry(&l, warning)
+		e := newEntry(l, warning)
 		if l.reportCaller {
 			e.caller = getReportCaller()
 		}
@@ -122,9 +122,9 @@ func (l Logger) Warnf(format string, args ...any) {
 	}
 }
 
-func (l Logger) Err(args ...any) {
+func (l *Logger) Err(args ...any) {
 	if l.level >= ErrLevel {
-		e := newEntry(&l, err)
+		e := newEntry(l, err)
 		if l.reportCaller {
 			e.caller = getReportCaller()
 		}
@@ -132,9 +132,9 @@ func (l Logger) Err(args ...any) {
 	}
 }
 
-func (l Logger) Errf(format string, args ...any) {
+func (l *Logger) Errf(format string, args ...any) {
 	if l.level >= ErrLevel {
-		e := newEntry(&l, err)
+		e := newEntry(l, err)
 		if l.reportCaller {
 			e.caller = getReportCaller()
 		}
@@ -142,24 +142,20 @@ func (l Logger) Errf(format string, args ...any) {
 	}
 }
 
-func (l Logger) Fatal(args ...any) {
-	if l.level == FatalLevel {
-		e := newEntry(&l, fatal)
-		if l.reportCaller {
-			e.caller = getReportCaller()
-		}
-		e.send(args...)
-		os.Exit(1)
+func (l *Logger) Fatal(args ...any) {
+	e := newEntry(l, fatal)
+	if l.reportCaller {
+		e.caller = getReportCaller()
 	}
+	e.send(args...)
+	os.Exit(1)
 }
 
-func (l Logger) Fatalf(format string, args ...any) {
-	if l.level == FatalLevel {
-		e := newEntry(&l, fatal)
-		if l.reportCaller {
-			e.caller = getReportCaller()
-		}
-		e.sendf(format, args...)
-		os.Exit(1)
+func (l *Logger) Fatalf(format string, args ...any) {
+	e := newEntry(l, fatal)
+	if l.reportCaller {
+		e.caller = getReportCaller()
 	}
+	e.sendf(format, args...)
+	os.Exit(1)
 }

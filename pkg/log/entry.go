@@ -124,23 +124,19 @@ func (e *Entry) Errf(format string, args ...any) {
 }
 
 func (e *Entry) Fatal(args ...any) {
-	if e.l.level == FatalLevel {
-		e.status = fatal
-		if e.l.reportCaller {
-			e.caller = getReportCaller()
-		}
-		e.send(args...)
-		os.Exit(1)
+	e.status = fatal
+	if e.l.reportCaller {
+		e.caller = getReportCaller()
 	}
+	e.send(args...)
+	os.Exit(1)
 }
 
 func (e *Entry) Fatalf(format string, args ...any) {
-	if e.l.level == FatalLevel {
-		e.status = fatal
-		if e.l.reportCaller {
-			e.caller = getReportCaller()
-		}
-		e.sendf(format, args...)
-		os.Exit(1)
+	e.status = fatal
+	if e.l.reportCaller {
+		e.caller = getReportCaller()
 	}
+	e.sendf(format, args...)
+	os.Exit(1)
 }
