@@ -24,7 +24,9 @@ func Open(username, password, host string, port int) *smtp.Client {
 	// only no SSL
 	if ok, _ := c.Extension("STARTTLS"); ok {
 		if err = c.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
-			c.Close()
+			if err = c.Close(); err != nil {
+				log.WithErr(err).Warn("can't close email connection")
+			}
 			log.WithErr(err).Warn("can't start email TLS connection")
 			return nil
 		}
@@ -43,7 +45,9 @@ func Open(username, password, host string, port int) *smtp.Client {
 	}
 
 	if err = c.Auth(auth); err != nil {
-		c.Close()
+		if err = c.Close(); err != nil {
+			log.WithErr(err).Warn("can't close email connection")
+		}
 		log.WithErr(err).Warn("can't authorize specified USER email")
 		return nil
 	}
