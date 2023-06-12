@@ -9,10 +9,10 @@ import (
 	"entgo.io/ent/schema/mixin"
 	"fmt"
 	loc "github.com/wtkeqrf0/you-together/ent"
-	"github.com/wtkeqrf0/you-together/ent/hook"
-	"github.com/wtkeqrf0/you-together/ent/room"
 	"github.com/wtkeqrf0/you-together/pkg/middleware/bind"
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/wtkeqrf0/you-together/ent/hook"
 )
 
 // User holds the schema definition for the User dto.
@@ -81,12 +81,6 @@ func (User) Hooks() []ent.Hook {
 				hook.HasOp(ent.OpUpdate|ent.OpUpdateOne|ent.OpCreate),
 			),
 		),
-		hook.If(roomNameCheck,
-			hook.And(
-				hook.HasFields("name"),
-				hook.HasOp(ent.OpUpdateOne|ent.OpUpdate|ent.OpCreate),
-			),
-		),
 	}
 }
 
@@ -104,23 +98,6 @@ func bcryptUserPassword(next ent.Mutator) ent.Mutator {
 
 		m.SetPasswordHash(hashedPassword)
 
-		return next.Mutate(ctx, m)
-	})
-}
-
-func roomNameCheck(next ent.Mutator) ent.Mutator {
-	return hook.UserFunc(func(ctx context.Context, m *loc.UserMutation) (ent.Value, error) {
-		username, ok := m.Name()
-		if !ok {
-			return nil, fmt.Errorf("username is not set")
-		}
-
-		if exist, err := m.Client().Room.Query().Where(room.Name(username)).Exist(ctx); err != nil {
-			return nil, err
-
-		} else if exist {
-			return nil, fmt.Errorf("name already exist")
-		}
 		return next.Mutate(ctx, m)
 	})
 }

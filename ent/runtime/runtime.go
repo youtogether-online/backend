@@ -17,7 +17,6 @@ func init() {
 	roomMixin := schema.Room{}.Mixin()
 	roomHooks := schema.Room{}.Hooks()
 	room.Hooks[0] = roomHooks[0]
-	room.Hooks[1] = roomHooks[1]
 	roomMixinFields0 := roomMixin[0].Fields()
 	_ = roomMixinFields0
 	roomFields := schema.Room{}.Fields()
@@ -73,7 +72,6 @@ func init() {
 	userMixin := schema.User{}.Mixin()
 	userHooks := schema.User{}.Hooks()
 	user.Hooks[0] = userHooks[0]
-	user.Hooks[1] = userHooks[1]
 	userMixinFields0 := userMixin[0].Fields()
 	_ = userMixinFields0
 	userFields := schema.User{}.Fields()
