@@ -77,7 +77,7 @@ func initMiddlewares(r *gin.Engine, qh QueryHandler) {
 	config := cors.Config{
 		AllowOrigins:     []string{"https://youtogether.frkam.dev", "https://youtogether-online.github.io", "http://localhost:3000", "http://localhost:80", "http://localhost"},
 		AllowMethods:     []string{http.MethodGet, http.MethodOptions, http.MethodPatch, http.MethodDelete, http.MethodPost},
-		AllowHeaders:     []string{"Content-Code", "Content-Length", "Cache-Control", "User-Agent", "Accept-Language", "Accept", "DomainName", "Accept-Encoding", "Connection", "Set-Cookie", "Cookie", "Date", "Postman-Token", "Host"},
+		AllowHeaders:     []string{"Content-Type", "Content-Length", "Cache-Control", "User-Agent", "Accept-Language", "Accept", "DomainName", "Accept-Encoding", "Connection", "Set-Cookie", "Cookie", "Date", "Postman-Token", "Host"},
 		AllowCredentials: true,
 		AllowWebSockets:  true,
 	}
