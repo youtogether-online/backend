@@ -26,8 +26,8 @@ type AbstractError struct {
 	Status      int               `json:"-"`
 	Code        ErrCode           `json:"type,omitempty"`
 	Description string            `json:"description,omitempty"`
-	Fields      map[string]string `json:"Fields,omitempty"`
-	Advice      string            `json:"Advice,omitempty"`
+	Fields      map[string]string `json:"fields,omitempty"`
+	Advice      string            `json:"advice,omitempty"`
 	Err         error             `json:"-"`
 }
 

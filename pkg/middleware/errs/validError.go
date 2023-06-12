@@ -26,7 +26,7 @@ func newValidError(errs validator.ValidationErrors) *validError {
 	fields := make(map[string]string)
 
 	for _, err := range errs {
-		field := err.Field()
+		field := strings.ToLower(err.Field())
 		switch err.Tag() {
 		case "email":
 			fields[field] = fmt.Sprintf("%s is not the correct email", field)
