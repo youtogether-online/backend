@@ -16,13 +16,13 @@ type Config struct {
 	Session struct {
 		CookieName string        `yaml:"cookie_name" env:"COOKIE_NAME" env-default:"session_id"`
 		CookiePath string        `yaml:"cookie_path" env:"COOKIE_PATH" env-default:"/api"`
+		Domain     string        `yaml:"domain_name" env:"DOMAIN_NAME" env-default:"localhost"`
 		Duration   time.Duration `yaml:"duration" env:"COOKIE_DURATION" env-default:"720h"`
 	} `yaml:"session"`
 
 	Listen struct {
-		QueryPath  string `yaml:"query_path" env:"QUERY_PATH" env-default:"/api"`
-		Port       int    `yaml:"port" env:"PORT" env-default:"3000"`
-		DomainName string `yaml:"domain_name" env:"DOMAIN_NAME" env-default:"localhost"`
+		QueryPath string `yaml:"query_path" env:"QUERY_PATH" env-default:"/api"`
+		Port      int    `yaml:"port" env:"PORT" env-default:"3000"`
 	} `yaml:"listen"`
 
 	DB struct {
@@ -39,7 +39,7 @@ type Config struct {
 			DbId int `yaml:"db_id" env:"REDIS_DB" env-default:"0"`
 			// if prod=1, host will always be "redis" (docker constant)
 			Host string `yaml:"host" env:"REDIS_HOST" env-default:"localhost"`
-			Port int    `yaml:"port" env:"REDIS_POST" env-default:"6379"`
+			Port int    `yaml:"port" env:"REDIS_PORT" env-default:"6379"`
 		} `yaml:"redis"`
 	} `yaml:"db"`
 

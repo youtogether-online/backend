@@ -94,7 +94,7 @@ func (a Auth) SetNewCookie(id int, c *gin.Context) error {
 
 	c.SetSameSite(http.SameSiteNoneMode)
 	c.SetCookie(a.cfg.Session.CookieName, session, int(a.cfg.Session.Duration.Seconds()),
-		a.cfg.Session.CookiePath, a.cfg.Listen.DomainName, true, true)
+		a.cfg.Session.CookiePath, a.cfg.Session.Domain, true, true)
 	return nil
 }
 
