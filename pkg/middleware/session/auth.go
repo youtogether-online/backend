@@ -7,7 +7,6 @@ import (
 	"github.com/mssola/useragent"
 	"github.com/wtkeqrf0/you-together/internal/controller/dao"
 	"github.com/wtkeqrf0/you-together/pkg/conf"
-	"github.com/wtkeqrf0/you-together/pkg/middleware/errs"
 	"math/rand"
 	"net/http"
 	"time"
@@ -77,28 +76,26 @@ func (a Auth) GenerateSession(id int, ip, userAgent string) (string, error) {
 func (a Auth) GetSession(c *gin.Context) *dao.Session {
 	get, ok := c.Get("user_info")
 	if !ok {
-		c.Error(fmt.Errorf("session not found in context"))
 		return nil
 	}
 
 	res, ok := get.(*dao.Session)
 	if !ok {
-		c.Error(fmt.Errorf("cannot parse session"))
 		return nil
 	}
 	return res
 }
 
-func (a Auth) SetNewCookie(id int, c *gin.Context) {
+func (a Auth) SetNewCookie(id int, c *gin.Context) error {
 	session, err := a.GenerateSession(id, c.ClientIP(), c.Request.UserAgent())
 	if err != nil {
-		c.Error(errs.ServerError.AddErr(err))
-		return
+		return err
 	}
 
-	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetSameSite(http.SameSiteNoneMode)
 	c.SetCookie(a.cfg.Session.CookieName, session, int(a.cfg.Session.Duration.Seconds()),
 		a.cfg.Session.CookiePath, a.cfg.Listen.DomainName, true, true)
+	return nil
 }
 
 // GenerateSecretCode for email auth
