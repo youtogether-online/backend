@@ -2,13 +2,11 @@ package postgres
 
 import (
 	"context"
-	"fmt"
 	"github.com/wtkeqrf0/you-together/ent"
 	"github.com/wtkeqrf0/you-together/ent/user"
 	"github.com/wtkeqrf0/you-together/internal/controller/dao"
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
 	"github.com/wtkeqrf0/you-together/pkg/log"
-	"github.com/wtkeqrf0/you-together/pkg/middleware/errs"
 )
 
 type UserStorage struct {
@@ -39,9 +37,6 @@ func (r *UserStorage) FindUserByUsername(ctx context.Context, username string) (
 	customer, err := r.userClient.Query().Where(user.Name(username)).
 		Select(user.FieldName, user.FieldBiography, user.FieldRole,
 			user.FieldFriendsIds, user.FieldFirstName, user.FieldLastName, user.FieldCreateTime).Only(ctx)
-
-	_, ok := err.(errs.EntError)
-	fmt.Println(ok)
 
 	if err == nil {
 		return dao.TransformToUser(customer), nil
