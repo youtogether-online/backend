@@ -17,6 +17,8 @@ servers:
     description: Backend local instance
   - url: https://youtogether.localhost/api
     description: Docker instance
+  - url: https://youtogether.frkam.dev/
+    description: Official website instance
 
 tags:
   - name: Auth
@@ -45,8 +47,6 @@ paths:
                 $ref: '#/components/schemas/Me'
         '401':
           $ref: '#/components/responses/401'
-        '404':
-          $ref: '#/components/responses/404'
         '500':
           $ref: '#/components/responses/500'
 
@@ -90,11 +90,9 @@ paths:
             Set-Cookie:
               schema:
                 type: string
-                example: session_id=f82f97fd-9930-4133-a6a7-1bccb3b933b4; Path=/api; Domain=localhost; SameSite=Lax; HttpOnly;
+                example: session_id=f82f97fd-9930-4133-a6a7-1bccb3b933b4; Path=/api; Domain=localhost; SameSite=None; Secure; HttpOnly;
         '400':
           $ref: '#/components/responses/400'
-        '404':
-          $ref: '#/components/responses/404'
         '500':
           $ref: '#/components/responses/500'
 
@@ -125,11 +123,9 @@ paths:
             Set-Cookie:
               schema:
                 type: string
-                example: session_id=f82f97fd-9930-4133-a6a7-1bccb3b933b4; Path=/api; Domain=localhost; SameSite=Lax; HttpOnly;
+                example: session_id=f82f97fd-9930-4133-a6a7-1bccb3b933b4; Path=/api; Domain=localhost; SameSite=None; Secure; HttpOnly;
         '400':
           $ref: '#/components/responses/400'
-        '404':
-          $ref: '#/components/responses/404'
         '500':
           $ref: '#/components/responses/500'
 
@@ -149,8 +145,6 @@ paths:
           description: OK
         '400':
           $ref: '#/components/responses/400'
-        '404':
-          $ref: '#/components/responses/404'
         '500':
           $ref: '#/components/responses/500'
   
@@ -174,8 +168,6 @@ paths:
                 $ref: '#/components/schemas/User'
         '400':
           $ref: '#/components/responses/400'
-        '404':
-          $ref: '#/components/responses/404'
         '500':
           $ref: '#/components/responses/500'
 
@@ -555,37 +547,29 @@ components:
       type: object
       readOnly: true
       required:
-        - message
-        - advice
+        - code
       properties:
-        message:
+        code:
           type: string
-          example: Exception was occurred
+          example: authorization
+          enum:
+            - validation
+            - authorization
+            - server
+            - not_found
+        description:
+          type: string
+          example: Wrong email or password
         advice:
           type: string
-          example: Try to send request later
-
-    ValidError:
-      type: object
-      readOnly: true
-      required:
-        - message
-        - advice
-        - fields
-      properties:
-        message:
-          type: string
-          example: Validation error
-        advice:
-          type: string
-          example: Try to enter the correct data
+          example: You can still sign in by your email!
         fields:
           type: object
           additionalProperties:
             type: string
           example:
-            Email: Email is not the correct email
-            Code: Code must have a length of 5
+            email: email is not the correct email
+            code: code must have a length of 5
 
   securitySchemes:
     cookieAuth:
@@ -596,13 +580,6 @@ components:
   responses:
     '500':
       description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
-    '404':
-      description: There is no such object
       content:
         application/json:
           schema:
@@ -620,5 +597,5 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ValidError'
+            $ref: '#/components/schemas/Error'
 
