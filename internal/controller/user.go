@@ -66,9 +66,9 @@ func (h *Handler) updateEmail(c *gin.Context, upd dto.UpdateEmail, info *dao.Ses
 func (h *Handler) updatePassword(c *gin.Context, upd dto.UpdatePassword, info *dao.Session) error {
 
 	if ok, err := h.auth.EqualsPopCode(upd.Email, upd.Code); err != nil {
-		return errs.ServerError.AddErr(err)
+		return err
 	} else if !ok {
-		return errs.CodeError.AddErr(err)
+		return errs.MailCodeError.AddErr(err)
 	}
 
 	if err := h.users.UpdatePassword([]byte(upd.NewPassword), info.ID); err != nil {
