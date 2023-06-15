@@ -544,6 +544,7 @@ components:
                     example: email_already_exists
                     enum:
                       - email_already_exists
+                      - invalid_password
                       - invalid_validation
               - $ref: "#/components/schemas/Error"
     
