@@ -120,13 +120,13 @@ paths:
         '500':
           description: Server error
   
-  /user/{username}:
+  /user/{name}:
     get:
       tags: [ User ]
       summary: Get user main info by username
       description: Returns user's main data by username, if exist
       parameters:
-        - $ref: "#/components/parameters/Username"
+        - $ref: "#/components/parameters/Name"
       responses:
         '200':
           $ref: '#/components/responses/UserGetByUsernameSuccess'
@@ -141,7 +141,7 @@ paths:
       summary: Check name on name already used
       description: Checks specified name on already exist
       parameters:
-        - $ref: "#/components/parameters/Username"
+        - $ref: "#/components/parameters/Name"
       responses:
         '200':
           $ref: '#/components/responses/UserCheckNameGetByUsernameSuccess'
@@ -305,7 +305,7 @@ components:
         - role
       properties:
         name:
-          $ref: "#/components/schemas/User"
+          $ref: "#/components/schemas/Name"
         firstName:
           $ref: "#/components/schemas/FirstName"
         lastName:
@@ -472,13 +472,13 @@ components:
                 maxLength: 20
 
   parameters:
-    Username:
+    Name:
       in: path
-      description: Username
-      name: username
+      description: Name
+      name: name
       required: true
       schema:
-        $ref: '#/components/schemas/Name'
+        $ref: "#/components/schemas/Name"
 
   responses:
     SessionGetSuccess:
