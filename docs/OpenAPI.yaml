@@ -40,15 +40,11 @@ paths:
         - cookieAuth: []
       responses:
         '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Me'
+          $ref: '#/components/responses/SessionGetSuccess'
         '401':
-          $ref: '#/components/responses/401'
+          $ref: '#/components/responses/SessionGetUnathorized'
         '500':
-          $ref: '#/components/responses/500'
+          description: Server error
 
     delete:
       tags: [ Auth ]
@@ -58,9 +54,9 @@ paths:
       description: Deletes user session and clear user session cookie
       responses:
         '200':
-          description: OK
+          $ref: "#/components/responses/SessionDeleteSuccess"
         '500':
-          $ref: '#/components/responses/500'
+          description: Server error
 
 
   /auth/email:
@@ -69,11 +65,7 @@ paths:
       summary: Authorization via email
       description: Authorize user with code that previously was sent to email. If user with specified email does not exist, create new user. Can be used for sign-in and sign-up.
       requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EmailWithCode'
+        $ref: "#/components/requestBodies/AuthEmailPost"
       parameters:
         - in: header
           name: Accept-Language
@@ -84,17 +76,12 @@ paths:
               - RU
             example: RU
       responses:
-        '200':
-          description: OK
-          headers:
-            Set-Cookie:
-              schema:
-                type: string
-                example: session_id=f82f97fd-9930-4133-a6a7-1bccb3b933b4; Path=/api; Domain=localhost; SameSite=None; Secure; HttpOnly;
+        '201':
+          $ref: "#/components/responses/AuthEmailSuccess"
         '400':
-          $ref: '#/components/responses/400'
+          $ref: "#/components/responses/AuthEmailFailed"
         '500':
-          $ref: '#/components/responses/500'
+          description: Server error
 
   /auth/password:
     post:
@@ -102,11 +89,7 @@ paths:
       summary: Authorization via email with password
       description: Authorize user with email and password. If user with specified email does not exist, create new user. Can be used for sign-in and sign-up.
       requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EmailWithPassword'
+        $ref: "#/components/requestBodies/AuthPasswordPost"
       parameters:
         - in: header
           name: Accept-Language
@@ -117,17 +100,12 @@ paths:
               - RU
             example: RU
       responses:
-        '200':
-          description: OK
-          headers:
-            Set-Cookie:
-              schema:
-                type: string
-                example: session_id=f82f97fd-9930-4133-a6a7-1bccb3b933b4; Path=/api; Domain=localhost; SameSite=None; Secure; HttpOnly;
+        '201':
+          $ref: '#/components/responses/AuthPasswordSuccess'
         '400':
-          $ref: '#/components/responses/400'
+          $ref: '#/components/responses/AuthPasswordFailed'
         '500':
-          $ref: '#/components/responses/500'
+          description: Server error
 
   /email/send-code:
     post:
@@ -135,18 +113,12 @@ paths:
       summary: Send secret authorization code to specified email
       description: Generates 5-digit string, saves it and sends it to specified email
       requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Email'
+        $ref: "#/components/requestBodies/EmailSendCodePost"
       responses:
         '200':
-          description: OK
-        '400':
-          $ref: '#/components/responses/400'
+          $ref: '#/components/responses/EmailSendCodeSuccess'
         '500':
-          $ref: '#/components/responses/500'
+          description: Server error
   
   /user/{username}:
     get:
@@ -154,22 +126,14 @@ paths:
       summary: Get user main info by username
       description: Returns user's main data by username, if exist
       parameters:
-        - in: path
-          name: username
-          required: true
-          schema:
-            $ref: '#/components/schemas/Name'
+        - $ref: "#/components/parameters/Username"
       responses:
         '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
+          $ref: '#/components/responses/UserGetByUsernameSuccess'
         '400':
-          $ref: '#/components/responses/400'
+          $ref: '#/components/responses/UserGetByUsernameFailed'
         '500':
-          $ref: '#/components/responses/500'
+          description: Server Error
 
   /user/check-name/{name}:
     get:
@@ -177,18 +141,14 @@ paths:
       summary: Check name on name already used
       description: Checks specified name on already exist
       parameters:
-        - in: path
-          name: name
-          required: true
-          schema:
-            $ref: '#/components/schemas/Name'
+        - $ref: "#/components/parameters/Username"
       responses:
         '200':
-          description: This name isn't in use
+          $ref: '#/components/responses/UserCheckNameGetByUsernameSuccess'
         '403':
-          description: This name already in use
+          $ref: '#/components/responses/UserCheckNameGetByUsernameFailed'
         '500':
-          $ref: '#/components/responses/500'
+          description: Server Error
 
   /user:
     patch:
@@ -198,20 +158,16 @@ paths:
       security:
         - cookieAuth: [ ]
       requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateUser'
+        $ref: "#/components/requestBodies/UserPatch"
       responses:
         '200':
-          description: OK
+          $ref: '#/components/responses/UserPatchSuccess'
         '400':
-          $ref: '#/components/responses/400'
+          $ref: '#/components/responses/UserPatchFailed'
         '401':
-          $ref: '#/components/responses/401'
+          $ref: '#/components/responses/UserPatchUnathorized'
         '500':
-          $ref: '#/components/responses/500'
+          description: Server error
 
   /user/password:
     patch:
@@ -221,20 +177,16 @@ paths:
       security:
         - cookieAuth: [ ]
       requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdatePassword'
+        $ref: "#/components/requestBodies/UserPasswordPatch"
       responses:
         '200':
-          description: OK
+          $ref: '#/components/responses/UserPasswordPatchSuccess'
         '400':
-          $ref: '#/components/responses/400'
+          $ref: '#/components/responses/UserPasswordPatchFailed'
         '401':
-          $ref: '#/components/responses/401'
+          $ref: '#/components/responses/UserPasswordPatchUnathorized'
         '500':
-          $ref: '#/components/responses/500'
+          description: Server error
 
   /user/email:
     patch:
@@ -244,20 +196,16 @@ paths:
       security:
         - cookieAuth: [ ]
       requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateEmail'
+        $ref: "#/components/requestBodies/UserEmailPatch"
       responses:
         '200':
-          description: OK
+          $ref: '#/components/responses/UserEmailPatchSuccess'
         '400':
-          $ref: '#/components/responses/400'
+          $ref: '#/components/responses/UserEmailPatchFailed'
         '401':
-          $ref: '#/components/responses/401'
+          $ref: '#/components/responses/UserEmailPatchUnathorized'
         '500':
-          $ref: '#/components/responses/500'
+          description: Server error
 
   /user/name:
     patch:
@@ -267,139 +215,51 @@ paths:
       security:
         - cookieAuth: [ ]
       requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateName'
+        $ref: "#/components/requestBodies/UserNamePatch"
       responses:
         '200':
           description: OK
         '400':
-          $ref: '#/components/responses/400'
+          $ref: '#/components/responses/UserNamePatchFailed'
         '401':
-          $ref: '#/components/responses/401'
+          $ref: '#/components/responses/UserNamePatchUnathorized'
         '500':
-          $ref: '#/components/responses/500'
+          description: Server Error
 
 components:
   schemas:
-    EmailWithCode:
-      type: object
-      writeOnly: true
-      required:
-        - email
-        - code
-      properties:
-        email:
-          type: string
-          pattern: ^\S+@\S+\.\S+$
-          example: example@example.com
-        code:
-          type: string
-          minLength: 5
-          maxLength: 5
-          example: HI9I3
+    FirstName:
+      type: string
+      example: Bomb
+      minLength: 3
+      maxLength: 32
+  
+    LastName:
+      type: string
+      example: Hodovaniuk
+      minLength: 3
+      maxLength: 32
 
-    EmailWithPassword:
-      type: object
-      writeOnly: true
-      required:
-        - email
-        - password
-      properties:
-        email:
-          type: string
-          pattern: ^\S+@\S+\.\S+$
-          example: example@example.com
-        password:
-          type: string
-          pattern: ^\P{Cc}\P{Cn}\P{Cs}$
-          example: Bob2020
+    Biography:
+      type: string
+      minLength: 1
+      maxLength: 140
+      example: 23 y.o designer from San Francisco
+        
+    Theme:
+      type: string
+      enum:
+        - DARK
+        - LIGHT
+        - SYSTEM
+      example: SYSTEM
 
-    UpdateName:
-      type: object
-      writeOnly: true
-      required:
-        - name
-      properties:
-        name:
-          type: string
-          pattern: ^[a-zA-Z][a-zA-Z0-9_]{3,18}([a-zA-Z0-9])$
-          example: user95
-          minLength: 5
-          maxLength: 20
-
-    UpdatePassword:
-      type: object
-      writeOnly: true
-      required:
-        - email
-        - code
-        - newPassword
-      properties:
-        email:
-          type: string
-          pattern: ^\S+@\S+\.\S+$
-          example: example@example.com
-        code:
-          type: string
-          minLength: 5
-          maxLength: 5
-          example: HI9I3
-        newPassword:
-          type: string
-          pattern: ^\P{Cc}\P{Cn}\P{Cs}$
-          example: Bob2020
-
-    UpdateEmail:
-      type: object
-      writeOnly: true
-      required:
-        - newEmail
-        - password
-      properties:
-        newEmail:
-          type: string
-          pattern: ^\S+@\S+\.\S+$
-          example: example@example.com
-        password:
-          type: string
-          pattern: ^\P{Cc}\P{Cn}\P{Cs}$
-          example: Bob2020
-
-    UpdateUser:
-      type: object
-      writeOnly: true
-      properties:
-        firstName:
-          type: string
-          example: Bomb
-          minLength: 3
-          maxLength: 32
-        lastName:
-          type: string
-          example: Hodovaniuk
-          minLength: 3
-          maxLength: 32
-        biography:
-          type: string
-          minLength: 1
-          maxLength: 140
-          example: 23 y.o designer from San Francisco
-        language:
-          type: string
-          enum:
-            - EN
-            - RU
-          example: RU
-        theme:
-          type: string
-          enum:
-            - DARK
-            - LIGHT
-            - SYSTEM
-          example: SYSTEM
+    Language:
+      type: string
+      enum:
+        - EN
+        - RU
+      example: RU
 
     Name:
       type: string
@@ -415,15 +275,27 @@ components:
           maxLength: 20
 
     Email:
-      type: object
-      writeOnly: true
-      required:
-        - email
-      properties:
-        email:
-          type: string
-          pattern: ^\S+@\S+\.\S+$
-          example: example@example.com
+      type: string
+      pattern: ^\S+@\S+\.\S+$
+      example: example@example.com
+
+    Password:
+      type: string
+      pattern: ^\P{Cc}\P{Cn}\P{Cs}$
+      example: Bob2020
+
+    Code:
+      type: string
+      minLength: 5
+      maxLength: 5
+      example: HI9I3
+
+    Role:
+      enum:
+        - USER
+        - ADMIN
+      type: string
+      example: USER
 
     User:
       type: object
@@ -433,44 +305,15 @@ components:
         - role
       properties:
         name:
-          type: string
-          pattern: ^[a-zA-Z][a-zA-Z0-9_]{3,18}([a-zA-Z0-9])$
-          example: user95
-          minLength: 5
-          maxLength: 20
+          $ref: "#/components/schemas/User"
         firstName:
-          type: string
-          example: Bomb
-          minLength: 3
-          maxLength: 32
+          $ref: "#/components/schemas/FirstName"
         lastName:
-          type: string
-          example: Hodovaniuk
-          minLength: 3
-          maxLength: 32
-        role:
-          enum:
-            - USER
-            - ADMIN
-          type: string
-          example: USER
+          $ref: "#/components/schemas/LastName"
+        role: 
+          $ref: "#/components/schemas/Role"
         biography:
-          type: string
-          minLength: 1
-          maxLength: 140
-          example: 23 y.o designer from San Francisco
-        friendsIds:
-          type: array
-          items:
-            type: integer
-          uniqueItems: true
-          example:
-            - 154
-            - 95848
-            - 5234
-            - 9774
-            - 4950
-            - 3495
+          $ref: "#/components/schemas/Biography"
 
     Me:
       type: object
@@ -478,70 +321,27 @@ components:
       required:
         - name
         - role
-        - email
         - language
         - theme
         - isEmailVerified
       properties:
         name:
-          type: string
-          pattern: ^[a-zA-Z][a-zA-Z0-9_]{3,18}([a-zA-Z0-9])$
-          example: user95
-          minLength: 5
-          maxLength: 20
+          $ref: "#/components/schemas/Name"
         firstName:
-          type: string
-          example: Bomb
-          minLength: 3
-          maxLength: 32
+          $ref: "#/components/schemas/FirstName"
         lastName:
-          type: string
-          example: Hodovaniuk
-          minLength: 3
-          maxLength: 32
+          $ref: "#/components/schemas/LastName"
         role:
-          enum:
-            - USER
-            - ADMIN
-          type: string
-          example: USER
-        biography:
-          type: string
-          minLength: 1
-          maxLength: 140
-          example: 23 y.o designer from San Francisco
+          $ref: "#/components/schemas/Role"
         email:
-          type: string
-          pattern: ^\S+@\S+\.\S+$
-          example: example@example.com
+          $ref: "#/components/schemas/Email"
         language:
-          type: string
-          enum:
-            - EN
-            - RU
-          example: RU
+          $ref: "#/components/schemas/Language"
         theme:
-          type: string
-          enum:
-            - DARK
-            - LIGHT
-            - SYSTEM
-          example: SYSTEM
+          $ref: "#/components/schemas/Theme"
         isEmailVerified:
           type: boolean
           example: false
-        friendsIds:
-          type: array
-          items:
-            type: integer
-          uniqueItems: true
-          example:
-            - 154
-            - 95848
-            - 5234
-            - 9774
-            - 4950
-            - 3495
 
     Error:
       type: object
@@ -549,14 +349,6 @@ components:
       required:
         - code
       properties:
-        code:
-          type: string
-          example: authorization
-          enum:
-            - validation
-            - authorization
-            - server
-            - not_found
         description:
           type: string
           example: Wrong email or password
@@ -571,31 +363,315 @@ components:
             email: email is not the correct email
             code: code must have a length of 5
 
+  requestBodies:
+    AuthEmailPost:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - email
+              - code
+            properties:
+              email:
+                $ref: "#/components/schemas/Email"
+              code:
+                $ref: "#/components/schemas/Code"
+    
+    AuthPasswordPost:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - email
+              - password
+            properties:
+              email:
+                $ref: "#/components/schemas/Email"
+              password: 
+                $ref: "#/components/schemas/Password"
+    
+    EmailSendCodePost:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - email
+            properties:
+              email: 
+                $ref: "#/components/schemas/Email"
+
+    UserPatch:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              firstName:
+                $ref: "#/components/schemas/FirstName"
+              lastName:
+                $ref: "#/components/schemas/LastName"
+              biography:
+                $ref: "#/components/schemas/Biography"
+              theme:
+                $ref: "#/components/schemas/Theme"
+              language:
+                $ref: "#/components/schemas/Language"
+
+    UserPasswordPatch:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - oldPassword
+              - newPassword
+            properties:
+              oldPassword:
+                $ref: "#/components/schemas/Password"
+              newPassword:
+                $ref: "#/components/schemas/Password"
+
+    UserEmailPatch:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - newEmail
+              - password
+            properties:
+              newEmail:
+                $ref: "#/components/schemas/Email"
+              password:
+                $ref: "#/components/schemas/Password"
+
+    UserNamePatch:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            writeOnly: true
+            required:
+              - name
+            properties:
+              name:
+                type: string
+                pattern: ^[a-zA-Z][a-zA-Z0-9_]{3,18}([a-zA-Z0-9])$
+                example: user95
+                minLength: 5
+                maxLength: 20
+
+  parameters:
+    Username:
+      in: path
+      description: Username
+      name: username
+      required: true
+      schema:
+        $ref: '#/components/schemas/Name'
+
+  responses:
+    SessionGetSuccess:
+      description: Session exists
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Me'
+
+    SessionGetUnathorized: 
+      description: Failed to get session, maybe cookie is expired
+
+    SessionDeleteSuccess:
+      description: Session deleted
+
+    AuthEmailSuccess:
+      description: OK, user created
+      headers:
+        Set-Cookie:
+          schema:
+            type: string
+            example: session_id=f82f97fd-9930-4133-a6a7-1bccb3b933b4; Path=/api; Domain=localhost; SameSite=None; Secure; HttpOnly;
+
+    AuthEmailFailed: 
+      description: Check or recover your credentials
+      content:
+        application/json:
+          schema:
+            allOf:
+              - required:
+                  - "code"
+                properties:
+                  code:
+                    type: object
+                    example: email_already_exists
+                    enum:
+                      - email_already_exists
+                      - invalid_validation
+                      - code_invalid_or_expired
+                      - email_already_activated
+              - $ref: "#/components/schemas/Error"
+            
+      
+    AuthPasswordSuccess:
+      description: OK
+      headers:
+        Set-Cookie:
+          schema:
+            type: string
+            example: session_id=f82f97fd-9930-4133-a6a7-1bccb3b933b4; Path=/api; Domain=localhost; SameSite=None; Secure; HttpOnly;
+    
+    AuthPasswordFailed:
+      description: Check or recover your credentials
+      content:
+        application/json:
+          schema:
+            allOf:
+              - required:
+                  - "code"
+                properties:
+                  code:
+                    type: object
+                    example: email_already_exists
+                    enum:
+                      - email_already_exists
+                      - invalid_validation
+              - $ref: "#/components/schemas/Error"
+    
+    EmailSendCodeSuccess:
+      description: Email was successfully sent
+
+    UserGetByUsernameSuccess:
+      description: User was successfully got
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/User"
+
+    UserGetByUsernameFailed:
+      description: Failed to get user
+      content:
+        application/json:
+          schema:
+            allOf:
+              - required:
+                  - "code"
+                properties:
+                  code:
+                    type: object
+                    example: user_not_found
+                enum:
+                  - user_not_found
+              - $ref: "#/components/schemas/Error"
+
+    UserCheckNameGetByUsernameSuccess:
+      description: This name isn't in use
+
+    UserCheckNameGetByUsernameFailed:
+      description: This name already in use
+
+    UserPatchSuccess:
+      description: User data updated
+
+    UserPatchFailed:
+      description: Failed to edit user data 
+      content:
+        application/json:
+          schema:
+            allOf:
+              - required:
+                  - "code"
+                properties:
+                  code:
+                    type: object
+                    example: invalid_validation
+                    enum:
+                      - invalid_validation
+              - $ref: "#/components/schemas/Error"
+
+    UserPatchUnathorized:
+      description: User unathorized to send this request
+
+    UserPasswordPatchSuccess:
+      description: Successfully edited user password
+
+    UserPasswordPatchFailed:
+      description: Failed to edit user password
+      content:
+        application/json:
+          schema:
+            allOf:
+              - required:
+                  - "code"
+                properties:
+                  code:
+                    type: object
+                    example: incorrect_old_password
+                    enum:
+                      - invalid_validation
+                      - incorrect_old_password
+              - $ref: "#/components/schemas/Error"
+    
+    UserPasswordPatchUnathorized:
+      description: User unathorized to send this request
+
+    UserEmailPatchFailed:
+      description: Failed to edit user email
+      content:
+        application/json:
+          schema:
+            allOf:
+              - required:
+                  - "code"
+                properties:
+                  code:
+                    type: object
+                    example: email_already_exists
+                    enum:
+                      - invalid_validation
+                      - code_invalid_or_expired
+              - $ref: "#/components/schemas/Error"
+    
+    UserEmailPatchSuccess:
+      description: Email was successfully changed
+
+    UserEmailPatchUnathorized:
+      description: User unathorized to send this request
+
+    UserNamePatchSuccess:
+      description: Name was successfully changed
+
+    UserNamePatchFailed:
+      description: Failed to edit user name
+      content:
+        application/json:
+          schema:
+            allOf:
+              - required:
+                  - "code"
+                properties:
+                  code:
+                    type: object
+                    example: user_name_already_taken
+                    enum:
+                      - invalid_validation
+                      - user_name_already_taken
+              - $ref: "#/components/schemas/Error"
+
+    UserNamePatchUnathorized:
+      description: User unathorized to send this request
+
   securitySchemes:
     cookieAuth:
       type: apiKey
       in: cookie
       name: session_id
-
-  responses:
-    '500':
-      description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
-    '401':
-      description: User is not logged in
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
-    '400':
-      description: Invalid data
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
