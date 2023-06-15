@@ -512,14 +512,14 @@ components:
                   - "code"
                 properties:
                   code:
-                    type: object
+                    type: string
                     example: email_already_exists
                     enum:
-                      - email_already_exists
-                      - invalid_validation
-                      - code_invalid_or_expired
-                      - email_already_activated
-              - $ref: "#/components/schemas/Error"
+                      - "email_already_exists"
+                      - "invalid_validation"
+                      - "code_invalid_or_expired"
+                      - "email_already_activated"
+              # - $ref: "#/components/schemas/Error"
             
       
     AuthPasswordSuccess:
@@ -540,7 +540,7 @@ components:
                   - "code"
                 properties:
                   code:
-                    type: object
+                    type: string
                     example: email_already_exists
                     enum:
                       - email_already_exists
@@ -568,7 +568,7 @@ components:
                   - "code"
                 properties:
                   code:
-                    type: object
+                    type: string
                     example: user_not_found
                 enum:
                   - user_not_found
@@ -593,7 +593,7 @@ components:
                   - "code"
                 properties:
                   code:
-                    type: object
+                    type: string
                     example: invalid_validation
                     enum:
                       - invalid_validation
@@ -615,7 +615,7 @@ components:
                   - "code"
                 properties:
                   code:
-                    type: object
+                    type: string
                     example: incorrect_old_password
                     enum:
                       - invalid_validation
@@ -635,7 +635,7 @@ components:
                   - "code"
                 properties:
                   code:
-                    type: object
+                    type: string
                     example: email_already_exists
                     enum:
                       - invalid_validation
@@ -661,7 +661,7 @@ components:
                   - "code"
                 properties:
                   code:
-                    type: object
+                    type: string
                     example: user_name_already_taken
                     enum:
                       - invalid_validation
