@@ -4,3 +4,10 @@ docs/swagger.yaml
 
 # git
 .github
+.gitignore
+
+# docs
+.env.sample
+LICENSE
+README.md
+CHANGELOG.md
