@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/wtkeqrf0/you-together/ent"
 	"github.com/wtkeqrf0/you-together/internal/controller/dao"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthPostgres interface {
@@ -96,4 +97,8 @@ func (a *AuthService) EqualsPopCode(email string, code string) (bool, error) {
 // SetCodes or add it to existing key
 func (a *AuthService) SetCodes(key string, value ...any) error {
 	return a.redis.SetCodes(context.Background(), key, value...)
+}
+
+func (a *AuthService) CompareHashAndPassword(old, new []byte) error {
+	return bcrypt.CompareHashAndPassword(old, new)
 }

@@ -5,7 +5,6 @@ import (
 	"github.com/wtkeqrf0/you-together/internal/controller/dao"
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
 	"github.com/wtkeqrf0/you-together/pkg/middleware/errs"
-	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"strconv"
 )
@@ -24,7 +23,7 @@ func (h *Handler) signInByPassword(c *gin.Context, auth dto.EmailWithPassword) e
 		return errs.PasswordNotFound
 	}
 
-	if err = bcrypt.CompareHashAndPassword(*customer.PasswordHash, []byte(auth.Password)); err != nil {
+	if err = h.auth.CompareHashAndPassword(*customer.PasswordHash, []byte(auth.Password)); err != nil {
 		return errs.PasswordError.AddErr(err)
 	}
 
