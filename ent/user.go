@@ -22,7 +22,7 @@ type User struct {
 	// UpdateTime holds the value of the "update_time" field.
 	UpdateTime time.Time `json:"update_time,omitempty"`
 	// Name holds the value of the "name" field.
-	Name string `json:"name,omitempty" validate:"omitempty,name"`
+	Name string `json:"name,omitempty" validate:"omitempty,gte=5,lte=20,name"`
 	// Email holds the value of the "email" field.
 	Email string `json:"email,omitempty" validate:"required,email"`
 	// IsEmailVerified holds the value of the "is_email_verified" field.
@@ -47,7 +47,8 @@ type User struct {
 	Sessions []string `json:"-"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.
-	Edges UserEdges `json:"edges"`
+	Edges     UserEdges `json:"edges"`
+	chat_user *int
 }
 
 // UserEdges holds the relations/edges for other nodes in the graph.
@@ -83,6 +84,8 @@ func (*User) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullString)
 		case user.FieldCreateTime, user.FieldUpdateTime:
 			values[i] = new(sql.NullTime)
+		case user.ForeignKeys[0]: // chat_user
+			values[i] = new(sql.NullInt64)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type User", columns[i])
 		}
@@ -194,6 +197,13 @@ func (u *User) assignValues(columns []string, values []any) error {
 				if err := json.Unmarshal(*value, &u.Sessions); err != nil {
 					return fmt.Errorf("unmarshal field sessions: %w", err)
 				}
+			}
+		case user.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field chat_user", value)
+			} else if value.Valid {
+				u.chat_user = new(int)
+				*u.chat_user = int(value.Int64)
 			}
 		}
 	}

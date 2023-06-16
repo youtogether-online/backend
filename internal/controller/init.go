@@ -16,7 +16,7 @@ type ErrHandler interface {
 }
 
 type SessionHandler interface {
-	Session(handler func(ctx *gin.Context, session *dao.Session) error) func(c *gin.Context) error
+	Session(handler func(*gin.Context, *dao.Session) error) func(c *gin.Context) error
 	SessionFunc(c *gin.Context) (*dao.Session, error)
 }
 
@@ -65,6 +65,10 @@ func (h *Handler) InitRoutes(s *Setter) {
 		user.GET("/check-name/:name", s.erh.HandleError(bind.HandleParam(h.checkUsername, "name", "required,gte=5,lte=20,name", s.valid)))
 	}
 
+	room := rg.Group("/room")
+	{
+		room.POST("", s.erh.HandleError(session.HandleBody(h.createRoom, s.sess.SessionFunc, s.valid)))
+	}
 	if s.mailSet {
 		email := rg.Group("/email")
 		{
@@ -74,7 +78,7 @@ func (h *Handler) InitRoutes(s *Setter) {
 }
 
 func initMiddlewares(r *gin.Engine, qh QueryHandler) {
-	config := cors.Config{
+	corsConfig := cors.Config{
 		AllowOrigins:     []string{"https://youtogether.frkam.dev", "https://youtogether-online.github.io", "http://localhost:3000", "http://localhost:80", "http://localhost"},
 		AllowMethods:     []string{http.MethodGet, http.MethodOptions, http.MethodPatch, http.MethodDelete, http.MethodPost},
 		AllowHeaders:     []string{"Content-Type", "Content-Length", "Cache-Control", "User-Agent", "Accept-Language", "Accept", "DomainName", "Accept-Encoding", "Connection", "Set-Cookie", "Cookie", "Date", "Postman-Token", "Host"},
@@ -82,7 +86,7 @@ func initMiddlewares(r *gin.Engine, qh QueryHandler) {
 		AllowWebSockets:  true,
 	}
 
-	r.Use(qh.HandleQueries(), cors.New(config), gin.Recovery())
+	r.Use(qh.HandleQueries(), cors.New(corsConfig), gin.Recovery())
 
 	if err := r.SetTrustedProxies([]string{"95.140.155.222"}); err != nil {
 		log.WithErr(err).Fatal("can't set trusted proxies")

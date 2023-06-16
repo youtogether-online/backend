@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"github.com/wtkeqrf0/you-together/ent/chat"
 	"github.com/wtkeqrf0/you-together/ent/room"
 )
 
@@ -20,32 +21,33 @@ type Room struct {
 	CreateTime time.Time `json:"create_time,omitempty"`
 	// UpdateTime holds the value of the "update_time" field.
 	UpdateTime time.Time `json:"update_time,omitempty"`
-	// Name holds the value of the "name" field.
-	Name string `json:"name,omitempty" validate:"omitempty,name"`
 	// CustomName holds the value of the "custom_name" field.
 	CustomName *string `json:"customName,omitempty" validate:"omitempty,gte=3,lte=32"`
 	// OwnerID holds the value of the "owner_id" field.
-	OwnerID int `json:"-"`
+	OwnerID int `json:"owner_id,omitempty"`
 	// Privacy holds the value of the "privacy" field.
 	Privacy string `json:"privacy,omitempty" validate:"omitempty,enum=PUBLIC*PRIVATE*FRIENDS"`
 	// PasswordHash holds the value of the "password_hash" field.
 	PasswordHash *[]byte `json:"-" validate:"-"`
-	// HasChat holds the value of the "has_chat" field.
-	HasChat bool `json:"has_chat,omitempty"`
+	// SetChat holds the value of the "set_chat" field.
+	SetChat bool `json:"set_chat,omitempty"`
 	// Description holds the value of the "description" field.
 	Description *string `json:"description,omitempty" validate:"omitempty,lte=140"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RoomQuery when eager-loading is set.
-	Edges RoomEdges `json:"edges"`
+	Edges     RoomEdges `json:"edges"`
+	room_chat *int
 }
 
 // RoomEdges holds the relations/edges for other nodes in the graph.
 type RoomEdges struct {
 	// Users holds the value of the users edge.
 	Users []*User `json:"users,omitempty"`
+	// Chat holds the value of the chat edge.
+	Chat *Chat `json:"chat,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // UsersOrErr returns the Users value or an error if the edge
@@ -57,6 +59,19 @@ func (e RoomEdges) UsersOrErr() ([]*User, error) {
 	return nil, &NotLoadedError{edge: "users"}
 }
 
+// ChatOrErr returns the Chat value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e RoomEdges) ChatOrErr() (*Chat, error) {
+	if e.loadedTypes[1] {
+		if e.Chat == nil {
+			// Edge was loaded but was not found.
+			return nil, &NotFoundError{label: chat.Label}
+		}
+		return e.Chat, nil
+	}
+	return nil, &NotLoadedError{edge: "chat"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Room) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -64,14 +79,16 @@ func (*Room) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case room.FieldPasswordHash:
 			values[i] = new([]byte)
-		case room.FieldHasChat:
+		case room.FieldSetChat:
 			values[i] = new(sql.NullBool)
 		case room.FieldID, room.FieldOwnerID:
 			values[i] = new(sql.NullInt64)
-		case room.FieldName, room.FieldCustomName, room.FieldPrivacy, room.FieldDescription:
+		case room.FieldCustomName, room.FieldPrivacy, room.FieldDescription:
 			values[i] = new(sql.NullString)
 		case room.FieldCreateTime, room.FieldUpdateTime:
 			values[i] = new(sql.NullTime)
+		case room.ForeignKeys[0]: // room_chat
+			values[i] = new(sql.NullInt64)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Room", columns[i])
 		}
@@ -105,12 +122,6 @@ func (r *Room) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				r.UpdateTime = value.Time
 			}
-		case room.FieldName:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field name", values[i])
-			} else if value.Valid {
-				r.Name = value.String
-			}
 		case room.FieldCustomName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field custom_name", values[i])
@@ -136,11 +147,11 @@ func (r *Room) assignValues(columns []string, values []any) error {
 			} else if value != nil {
 				r.PasswordHash = value
 			}
-		case room.FieldHasChat:
+		case room.FieldSetChat:
 			if value, ok := values[i].(*sql.NullBool); !ok {
-				return fmt.Errorf("unexpected type %T for field has_chat", values[i])
+				return fmt.Errorf("unexpected type %T for field set_chat", values[i])
 			} else if value.Valid {
-				r.HasChat = value.Bool
+				r.SetChat = value.Bool
 			}
 		case room.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -148,6 +159,13 @@ func (r *Room) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				r.Description = new(string)
 				*r.Description = value.String
+			}
+		case room.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field room_chat", value)
+			} else if value.Valid {
+				r.room_chat = new(int)
+				*r.room_chat = int(value.Int64)
 			}
 		}
 	}
@@ -157,6 +175,11 @@ func (r *Room) assignValues(columns []string, values []any) error {
 // QueryUsers queries the "users" edge of the Room entity.
 func (r *Room) QueryUsers() *UserQuery {
 	return NewRoomClient(r.config).QueryUsers(r)
+}
+
+// QueryChat queries the "chat" edge of the Room entity.
+func (r *Room) QueryChat() *ChatQuery {
+	return NewRoomClient(r.config).QueryChat(r)
 }
 
 // Update returns a builder for updating this Room.
@@ -188,9 +211,6 @@ func (r *Room) String() string {
 	builder.WriteString("update_time=")
 	builder.WriteString(r.UpdateTime.Format(time.ANSIC))
 	builder.WriteString(", ")
-	builder.WriteString("name=")
-	builder.WriteString(r.Name)
-	builder.WriteString(", ")
 	if v := r.CustomName; v != nil {
 		builder.WriteString("custom_name=")
 		builder.WriteString(*v)
@@ -204,8 +224,8 @@ func (r *Room) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("password_hash=<sensitive>")
 	builder.WriteString(", ")
-	builder.WriteString("has_chat=")
-	builder.WriteString(fmt.Sprintf("%v", r.HasChat))
+	builder.WriteString("set_chat=")
+	builder.WriteString(fmt.Sprintf("%v", r.SetChat))
 	builder.WriteString(", ")
 	if v := r.Description; v != nil {
 		builder.WriteString("description=")

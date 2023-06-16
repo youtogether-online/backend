@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/wtkeqrf0/you-together/ent/chat"
 	"github.com/wtkeqrf0/you-together/ent/predicate"
 	"github.com/wtkeqrf0/you-together/ent/room"
 	"github.com/wtkeqrf0/you-together/ent/user"
@@ -24,6 +25,8 @@ type RoomQuery struct {
 	inters     []Interceptor
 	predicates []predicate.Room
 	withUsers  *UserQuery
+	withChat   *ChatQuery
+	withFKs    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -75,6 +78,28 @@ func (rq *RoomQuery) QueryUsers() *UserQuery {
 			sqlgraph.From(room.Table, room.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, true, room.UsersTable, room.UsersPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryChat chains the current query on the "chat" edge.
+func (rq *RoomQuery) QueryChat() *ChatQuery {
+	query := (&ChatClient{config: rq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := rq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := rq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(room.Table, room.FieldID, selector),
+			sqlgraph.To(chat.Table, chat.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, room.ChatTable, room.ChatColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
 		return fromU, nil
@@ -275,6 +300,7 @@ func (rq *RoomQuery) Clone() *RoomQuery {
 		inters:     append([]Interceptor{}, rq.inters...),
 		predicates: append([]predicate.Room{}, rq.predicates...),
 		withUsers:  rq.withUsers.Clone(),
+		withChat:   rq.withChat.Clone(),
 		// clone intermediate query.
 		sql:  rq.sql.Clone(),
 		path: rq.path,
@@ -289,6 +315,17 @@ func (rq *RoomQuery) WithUsers(opts ...func(*UserQuery)) *RoomQuery {
 		opt(query)
 	}
 	rq.withUsers = query
+	return rq
+}
+
+// WithChat tells the query-builder to eager-load the nodes that are connected to
+// the "chat" edge. The optional arguments are used to configure the query builder of the edge.
+func (rq *RoomQuery) WithChat(opts ...func(*ChatQuery)) *RoomQuery {
+	query := (&ChatClient{config: rq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	rq.withChat = query
 	return rq
 }
 
@@ -369,11 +406,19 @@ func (rq *RoomQuery) prepareQuery(ctx context.Context) error {
 func (rq *RoomQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Room, error) {
 	var (
 		nodes       = []*Room{}
+		withFKs     = rq.withFKs
 		_spec       = rq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			rq.withUsers != nil,
+			rq.withChat != nil,
 		}
 	)
+	if rq.withChat != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, room.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Room).scanValues(nil, columns)
 	}
@@ -396,6 +441,12 @@ func (rq *RoomQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Room, e
 		if err := rq.loadUsers(ctx, query, nodes,
 			func(n *Room) { n.Edges.Users = []*User{} },
 			func(n *Room, e *User) { n.Edges.Users = append(n.Edges.Users, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := rq.withChat; query != nil {
+		if err := rq.loadChat(ctx, query, nodes, nil,
+			func(n *Room, e *Chat) { n.Edges.Chat = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -459,6 +510,38 @@ func (rq *RoomQuery) loadUsers(ctx context.Context, query *UserQuery, nodes []*R
 		}
 		for kn := range nodes {
 			assign(kn, n)
+		}
+	}
+	return nil
+}
+func (rq *RoomQuery) loadChat(ctx context.Context, query *ChatQuery, nodes []*Room, init func(*Room), assign func(*Room, *Chat)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Room)
+	for i := range nodes {
+		if nodes[i].room_chat == nil {
+			continue
+		}
+		fk := *nodes[i].room_chat
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(chat.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "room_chat" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
 		}
 	}
 	return nil

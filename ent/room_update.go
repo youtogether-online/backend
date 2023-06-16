@@ -35,12 +35,6 @@ func (ru *RoomUpdate) SetUpdateTime(t time.Time) *RoomUpdate {
 	return ru
 }
 
-// SetName sets the "name" field.
-func (ru *RoomUpdate) SetName(s string) *RoomUpdate {
-	ru.mutation.SetName(s)
-	return ru
-}
-
 // SetCustomName sets the "custom_name" field.
 func (ru *RoomUpdate) SetCustomName(s string) *RoomUpdate {
 	ru.mutation.SetCustomName(s)
@@ -97,20 +91,6 @@ func (ru *RoomUpdate) SetPasswordHash(b []byte) *RoomUpdate {
 // ClearPasswordHash clears the value of the "password_hash" field.
 func (ru *RoomUpdate) ClearPasswordHash() *RoomUpdate {
 	ru.mutation.ClearPasswordHash()
-	return ru
-}
-
-// SetHasChat sets the "has_chat" field.
-func (ru *RoomUpdate) SetHasChat(b bool) *RoomUpdate {
-	ru.mutation.SetHasChat(b)
-	return ru
-}
-
-// SetNillableHasChat sets the "has_chat" field if the given value is not nil.
-func (ru *RoomUpdate) SetNillableHasChat(b *bool) *RoomUpdate {
-	if b != nil {
-		ru.SetHasChat(*b)
-	}
 	return ru
 }
 
@@ -219,11 +199,6 @@ func (ru *RoomUpdate) defaults() error {
 
 // check runs all checks and user-defined validators on the builder.
 func (ru *RoomUpdate) check() error {
-	if v, ok := ru.mutation.Name(); ok {
-		if err := room.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Room.name": %w`, err)}
-		}
-	}
 	if v, ok := ru.mutation.CustomName(); ok {
 		if err := room.CustomNameValidator(v); err != nil {
 			return &ValidationError{Name: "custom_name", err: fmt.Errorf(`ent: validator failed for field "Room.custom_name": %w`, err)}
@@ -257,9 +232,6 @@ func (ru *RoomUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := ru.mutation.UpdateTime(); ok {
 		_spec.SetField(room.FieldUpdateTime, field.TypeTime, value)
 	}
-	if value, ok := ru.mutation.Name(); ok {
-		_spec.SetField(room.FieldName, field.TypeString, value)
-	}
 	if value, ok := ru.mutation.CustomName(); ok {
 		_spec.SetField(room.FieldCustomName, field.TypeString, value)
 	}
@@ -280,9 +252,6 @@ func (ru *RoomUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if ru.mutation.PasswordHashCleared() {
 		_spec.ClearField(room.FieldPasswordHash, field.TypeBytes)
-	}
-	if value, ok := ru.mutation.HasChat(); ok {
-		_spec.SetField(room.FieldHasChat, field.TypeBool, value)
 	}
 	if value, ok := ru.mutation.Description(); ok {
 		_spec.SetField(room.FieldDescription, field.TypeString, value)
@@ -370,12 +339,6 @@ func (ruo *RoomUpdateOne) SetUpdateTime(t time.Time) *RoomUpdateOne {
 	return ruo
 }
 
-// SetName sets the "name" field.
-func (ruo *RoomUpdateOne) SetName(s string) *RoomUpdateOne {
-	ruo.mutation.SetName(s)
-	return ruo
-}
-
 // SetCustomName sets the "custom_name" field.
 func (ruo *RoomUpdateOne) SetCustomName(s string) *RoomUpdateOne {
 	ruo.mutation.SetCustomName(s)
@@ -432,20 +395,6 @@ func (ruo *RoomUpdateOne) SetPasswordHash(b []byte) *RoomUpdateOne {
 // ClearPasswordHash clears the value of the "password_hash" field.
 func (ruo *RoomUpdateOne) ClearPasswordHash() *RoomUpdateOne {
 	ruo.mutation.ClearPasswordHash()
-	return ruo
-}
-
-// SetHasChat sets the "has_chat" field.
-func (ruo *RoomUpdateOne) SetHasChat(b bool) *RoomUpdateOne {
-	ruo.mutation.SetHasChat(b)
-	return ruo
-}
-
-// SetNillableHasChat sets the "has_chat" field if the given value is not nil.
-func (ruo *RoomUpdateOne) SetNillableHasChat(b *bool) *RoomUpdateOne {
-	if b != nil {
-		ruo.SetHasChat(*b)
-	}
 	return ruo
 }
 
@@ -567,11 +516,6 @@ func (ruo *RoomUpdateOne) defaults() error {
 
 // check runs all checks and user-defined validators on the builder.
 func (ruo *RoomUpdateOne) check() error {
-	if v, ok := ruo.mutation.Name(); ok {
-		if err := room.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Room.name": %w`, err)}
-		}
-	}
 	if v, ok := ruo.mutation.CustomName(); ok {
 		if err := room.CustomNameValidator(v); err != nil {
 			return &ValidationError{Name: "custom_name", err: fmt.Errorf(`ent: validator failed for field "Room.custom_name": %w`, err)}
@@ -622,9 +566,6 @@ func (ruo *RoomUpdateOne) sqlSave(ctx context.Context) (_node *Room, err error) 
 	if value, ok := ruo.mutation.UpdateTime(); ok {
 		_spec.SetField(room.FieldUpdateTime, field.TypeTime, value)
 	}
-	if value, ok := ruo.mutation.Name(); ok {
-		_spec.SetField(room.FieldName, field.TypeString, value)
-	}
 	if value, ok := ruo.mutation.CustomName(); ok {
 		_spec.SetField(room.FieldCustomName, field.TypeString, value)
 	}
@@ -645,9 +586,6 @@ func (ruo *RoomUpdateOne) sqlSave(ctx context.Context) (_node *Room, err error) 
 	}
 	if ruo.mutation.PasswordHashCleared() {
 		_spec.ClearField(room.FieldPasswordHash, field.TypeBytes)
-	}
-	if value, ok := ruo.mutation.HasChat(); ok {
-		_spec.SetField(room.FieldHasChat, field.TypeBool, value)
 	}
 	if value, ok := ruo.mutation.Description(); ok {
 		_spec.SetField(room.FieldDescription, field.TypeString, value)

@@ -17,8 +17,6 @@ const (
 	FieldCreateTime = "create_time"
 	// FieldUpdateTime holds the string denoting the update_time field in the database.
 	FieldUpdateTime = "update_time"
-	// FieldName holds the string denoting the name field in the database.
-	FieldName = "name"
 	// FieldCustomName holds the string denoting the custom_name field in the database.
 	FieldCustomName = "custom_name"
 	// FieldOwnerID holds the string denoting the owner_id field in the database.
@@ -27,12 +25,14 @@ const (
 	FieldPrivacy = "privacy"
 	// FieldPasswordHash holds the string denoting the password_hash field in the database.
 	FieldPasswordHash = "password_hash"
-	// FieldHasChat holds the string denoting the has_chat field in the database.
-	FieldHasChat = "has_chat"
+	// FieldSetChat holds the string denoting the set_chat field in the database.
+	FieldSetChat = "set_chat"
 	// FieldDescription holds the string denoting the description field in the database.
 	FieldDescription = "description"
 	// EdgeUsers holds the string denoting the users edge name in mutations.
 	EdgeUsers = "users"
+	// EdgeChat holds the string denoting the chat edge name in mutations.
+	EdgeChat = "chat"
 	// Table holds the table name of the room in the database.
 	Table = "rooms"
 	// UsersTable is the table that holds the users relation/edge. The primary key declared below.
@@ -40,6 +40,13 @@ const (
 	// UsersInverseTable is the table name for the User entity.
 	// It exists in this package in order to avoid circular dependency with the "user" package.
 	UsersInverseTable = "users"
+	// ChatTable is the table that holds the chat relation/edge.
+	ChatTable = "rooms"
+	// ChatInverseTable is the table name for the Chat entity.
+	// It exists in this package in order to avoid circular dependency with the "chat" package.
+	ChatInverseTable = "chats"
+	// ChatColumn is the table column denoting the chat relation/edge.
+	ChatColumn = "room_chat"
 )
 
 // Columns holds all SQL columns for room fields.
@@ -47,13 +54,18 @@ var Columns = []string{
 	FieldID,
 	FieldCreateTime,
 	FieldUpdateTime,
-	FieldName,
 	FieldCustomName,
 	FieldOwnerID,
 	FieldPrivacy,
 	FieldPasswordHash,
-	FieldHasChat,
+	FieldSetChat,
 	FieldDescription,
+}
+
+// ForeignKeys holds the SQL foreign-keys that are owned by the "rooms"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"room_chat",
 }
 
 var (
@@ -66,6 +78,11 @@ var (
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -85,16 +102,14 @@ var (
 	DefaultUpdateTime func() time.Time
 	// UpdateDefaultUpdateTime holds the default value on update for the "update_time" field.
 	UpdateDefaultUpdateTime func() time.Time
-	// NameValidator is a validator for the "name" field. It is called by the builders before save.
-	NameValidator func(string) error
 	// CustomNameValidator is a validator for the "custom_name" field. It is called by the builders before save.
 	CustomNameValidator func(string) error
 	// OwnerIDValidator is a validator for the "owner_id" field. It is called by the builders before save.
 	OwnerIDValidator func(int) error
 	// DefaultPrivacy holds the default value on creation for the "privacy" field.
 	DefaultPrivacy string
-	// DefaultHasChat holds the default value on creation for the "has_chat" field.
-	DefaultHasChat bool
+	// DefaultSetChat holds the default value on creation for the "set_chat" field.
+	DefaultSetChat bool
 	// DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
 	DescriptionValidator func(string) error
 )

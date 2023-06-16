@@ -67,6 +67,33 @@ func (f TraverseFunc) Traverse(ctx context.Context, q ent.Query) error {
 	return f(ctx, query)
 }
 
+// The ChatFunc type is an adapter to allow the use of ordinary function as a Querier.
+type ChatFunc func(context.Context, *ent.ChatQuery) (ent.Value, error)
+
+// Query calls f(ctx, q).
+func (f ChatFunc) Query(ctx context.Context, q ent.Query) (ent.Value, error) {
+	if q, ok := q.(*ent.ChatQuery); ok {
+		return f(ctx, q)
+	}
+	return nil, fmt.Errorf("unexpected query type %T. expect *ent.ChatQuery", q)
+}
+
+// The TraverseChat type is an adapter to allow the use of ordinary function as Traverser.
+type TraverseChat func(context.Context, *ent.ChatQuery) error
+
+// Intercept is a dummy implementation of Intercept that returns the next Querier in the pipeline.
+func (f TraverseChat) Intercept(next ent.Querier) ent.Querier {
+	return next
+}
+
+// Traverse calls f(ctx, q).
+func (f TraverseChat) Traverse(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.ChatQuery); ok {
+		return f(ctx, q)
+	}
+	return fmt.Errorf("unexpected query type %T. expect *ent.ChatQuery", q)
+}
+
 // The RoomFunc type is an adapter to allow the use of ordinary function as a Querier.
 type RoomFunc func(context.Context, *ent.RoomQuery) (ent.Value, error)
 
@@ -124,6 +151,8 @@ func (f TraverseUser) Traverse(ctx context.Context, q ent.Query) error {
 // NewQuery returns the generic Query interface for the given typed query.
 func NewQuery(q ent.Query) (Query, error) {
 	switch q := q.(type) {
+	case *ent.ChatQuery:
+		return &query[*ent.ChatQuery, predicate.Chat]{typ: ent.TypeChat, tq: q}, nil
 	case *ent.RoomQuery:
 		return &query[*ent.RoomQuery, predicate.Room]{typ: ent.TypeRoom, tq: q}, nil
 	case *ent.UserQuery:

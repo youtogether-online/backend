@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/wtkeqrf0/you-together/ent/chat"
 	"github.com/wtkeqrf0/you-together/ent/room"
 	"github.com/wtkeqrf0/you-together/ent/user"
 )
@@ -46,12 +47,6 @@ func (rc *RoomCreate) SetNillableUpdateTime(t *time.Time) *RoomCreate {
 	if t != nil {
 		rc.SetUpdateTime(*t)
 	}
-	return rc
-}
-
-// SetName sets the "name" field.
-func (rc *RoomCreate) SetName(s string) *RoomCreate {
-	rc.mutation.SetName(s)
 	return rc
 }
 
@@ -95,16 +90,16 @@ func (rc *RoomCreate) SetPasswordHash(b []byte) *RoomCreate {
 	return rc
 }
 
-// SetHasChat sets the "has_chat" field.
-func (rc *RoomCreate) SetHasChat(b bool) *RoomCreate {
-	rc.mutation.SetHasChat(b)
+// SetSetChat sets the "set_chat" field.
+func (rc *RoomCreate) SetSetChat(b bool) *RoomCreate {
+	rc.mutation.SetSetChat(b)
 	return rc
 }
 
-// SetNillableHasChat sets the "has_chat" field if the given value is not nil.
-func (rc *RoomCreate) SetNillableHasChat(b *bool) *RoomCreate {
+// SetNillableSetChat sets the "set_chat" field if the given value is not nil.
+func (rc *RoomCreate) SetNillableSetChat(b *bool) *RoomCreate {
 	if b != nil {
-		rc.SetHasChat(*b)
+		rc.SetSetChat(*b)
 	}
 	return rc
 }
@@ -136,6 +131,25 @@ func (rc *RoomCreate) AddUsers(u ...*User) *RoomCreate {
 		ids[i] = u[i].ID
 	}
 	return rc.AddUserIDs(ids...)
+}
+
+// SetChatID sets the "chat" edge to the Chat entity by ID.
+func (rc *RoomCreate) SetChatID(id int) *RoomCreate {
+	rc.mutation.SetChatID(id)
+	return rc
+}
+
+// SetNillableChatID sets the "chat" edge to the Chat entity by ID if the given value is not nil.
+func (rc *RoomCreate) SetNillableChatID(id *int) *RoomCreate {
+	if id != nil {
+		rc = rc.SetChatID(*id)
+	}
+	return rc
+}
+
+// SetChat sets the "chat" edge to the Chat entity.
+func (rc *RoomCreate) SetChat(c *Chat) *RoomCreate {
+	return rc.SetChatID(c.ID)
 }
 
 // Mutation returns the RoomMutation object of the builder.
@@ -193,9 +207,9 @@ func (rc *RoomCreate) defaults() error {
 		v := room.DefaultPrivacy
 		rc.mutation.SetPrivacy(v)
 	}
-	if _, ok := rc.mutation.HasChat(); !ok {
-		v := room.DefaultHasChat
-		rc.mutation.SetHasChat(v)
+	if _, ok := rc.mutation.SetChat(); !ok {
+		v := room.DefaultSetChat
+		rc.mutation.SetSetChat(v)
 	}
 	return nil
 }
@@ -207,11 +221,6 @@ func (rc *RoomCreate) check() error {
 	}
 	if _, ok := rc.mutation.UpdateTime(); !ok {
 		return &ValidationError{Name: "update_time", err: errors.New(`ent: missing required field "Room.update_time"`)}
-	}
-	if v, ok := rc.mutation.Name(); ok {
-		if err := room.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Room.name": %w`, err)}
-		}
 	}
 	if v, ok := rc.mutation.CustomName(); ok {
 		if err := room.CustomNameValidator(v); err != nil {
@@ -229,8 +238,8 @@ func (rc *RoomCreate) check() error {
 	if _, ok := rc.mutation.Privacy(); !ok {
 		return &ValidationError{Name: "privacy", err: errors.New(`ent: missing required field "Room.privacy"`)}
 	}
-	if _, ok := rc.mutation.HasChat(); !ok {
-		return &ValidationError{Name: "has_chat", err: errors.New(`ent: missing required field "Room.has_chat"`)}
+	if _, ok := rc.mutation.SetChat(); !ok {
+		return &ValidationError{Name: "set_chat", err: errors.New(`ent: missing required field "Room.set_chat"`)}
 	}
 	if v, ok := rc.mutation.Description(); ok {
 		if err := room.DescriptionValidator(v); err != nil {
@@ -271,10 +280,6 @@ func (rc *RoomCreate) createSpec() (*Room, *sqlgraph.CreateSpec) {
 		_spec.SetField(room.FieldUpdateTime, field.TypeTime, value)
 		_node.UpdateTime = value
 	}
-	if value, ok := rc.mutation.Name(); ok {
-		_spec.SetField(room.FieldName, field.TypeString, value)
-		_node.Name = value
-	}
 	if value, ok := rc.mutation.CustomName(); ok {
 		_spec.SetField(room.FieldCustomName, field.TypeString, value)
 		_node.CustomName = &value
@@ -291,9 +296,9 @@ func (rc *RoomCreate) createSpec() (*Room, *sqlgraph.CreateSpec) {
 		_spec.SetField(room.FieldPasswordHash, field.TypeBytes, value)
 		_node.PasswordHash = &value
 	}
-	if value, ok := rc.mutation.HasChat(); ok {
-		_spec.SetField(room.FieldHasChat, field.TypeBool, value)
-		_node.HasChat = value
+	if value, ok := rc.mutation.SetChat(); ok {
+		_spec.SetField(room.FieldSetChat, field.TypeBool, value)
+		_node.SetChat = value
 	}
 	if value, ok := rc.mutation.Description(); ok {
 		_spec.SetField(room.FieldDescription, field.TypeString, value)
@@ -316,6 +321,26 @@ func (rc *RoomCreate) createSpec() (*Room, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := rc.mutation.ChatIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   room.ChatTable,
+			Columns: []string{room.ChatColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: chat.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.room_chat = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

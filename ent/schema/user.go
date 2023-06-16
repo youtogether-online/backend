@@ -7,7 +7,6 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/mixin"
-	"fmt"
 	loc "github.com/wtkeqrf0/you-together/ent"
 	"github.com/wtkeqrf0/you-together/pkg/middleware/bind"
 	"golang.org/x/crypto/bcrypt"
@@ -25,7 +24,7 @@ func (User) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("name").Unique().Match(bind.NameRegexp).Annotations(
 			entsql.DefaultExpr("'user' || setval(pg_get_serial_sequence('users','id'),nextval(pg_get_serial_sequence('users','id'))-1)")).
-			StructTag(`json:"name,omitempty" validate:"omitempty,name"`),
+			StructTag(`json:"name,omitempty" validate:"omitempty,gte=5,lte=20,name"`),
 
 		field.String("email").Unique().Match(bind.EmailRegexp).
 			StructTag(`json:"email,omitempty" validate:"required,email"`),
@@ -86,10 +85,7 @@ func (User) Hooks() []ent.Hook {
 
 func bcryptUserPassword(next ent.Mutator) ent.Mutator {
 	return hook.UserFunc(func(ctx context.Context, m *loc.UserMutation) (ent.Value, error) {
-		password, ok := m.PasswordHash()
-		if !ok {
-			return nil, fmt.Errorf("password_hash is not set")
-		}
+		password, _ := m.PasswordHash()
 
 		hashedPassword, err := bcrypt.GenerateFromPassword(password, 12)
 		if err != nil {
