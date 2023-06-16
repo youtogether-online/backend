@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"
-	"entgo.io/ent/dialect/sql/schema"
 	"fmt"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/wtkeqrf0/you-together/ent"
@@ -34,7 +33,7 @@ func Open(username, password, host string, port int, DBName string) *ent.Client 
 
 	client.Intercept(queryLogger(log.NewLogger(log.InfoLevel, &log.TextFormatter{}, false)))
 
-	if err = client.Schema.Create(context.Background(), schema.WithGlobalUniqueID(true)); err != nil {
+	if err = client.Schema.Create(context.Background()); err != nil {
 		log.WithErr(err).Fatal("tables initialization failed")
 	}
 
