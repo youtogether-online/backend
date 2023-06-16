@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/wtkeqrf0/you-together/ent/chat"
 	"github.com/wtkeqrf0/you-together/ent/room"
 	"github.com/wtkeqrf0/you-together/ent/user"
 )
@@ -66,6 +67,7 @@ type OrderFunc func(*sql.Selector)
 // columnChecker returns a function indicates if the column exists in the given column.
 func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
+		chat.Table: chat.ValidColumn,
 		room.Table: room.ValidColumn,
 		user.Table: user.ValidColumn,
 	}
