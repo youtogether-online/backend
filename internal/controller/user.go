@@ -11,7 +11,7 @@ import (
 
 func (h *Handler) getMe(c *gin.Context, info *dao.Session) error {
 
-	user, err := h.users.FindMe(info.ID)
+	user, err := h.user.FindMe(info.ID)
 	if err != nil {
 		return err
 	}
@@ -22,7 +22,7 @@ func (h *Handler) getMe(c *gin.Context, info *dao.Session) error {
 
 func (h *Handler) getUserByUsername(c *gin.Context, username string) error {
 
-	user, err := h.users.FindUserByUsername(username)
+	user, err := h.user.FindUserByUsername(username)
 	if err != nil {
 		return err
 	}
@@ -33,7 +33,7 @@ func (h *Handler) getUserByUsername(c *gin.Context, username string) error {
 
 func (h *Handler) updateUser(c *gin.Context, upd dto.UpdateUser, info *dao.Session) error {
 
-	if err := h.users.UpdateUser(&upd, info.ID); err != nil {
+	if err := h.user.UpdateUser(upd, info.ID); err != nil {
 		return err
 	}
 
@@ -43,7 +43,7 @@ func (h *Handler) updateUser(c *gin.Context, upd dto.UpdateUser, info *dao.Sessi
 
 func (h *Handler) updateEmail(c *gin.Context, upd dto.UpdateEmail, info *dao.Session) error {
 
-	user, err := h.users.FindUserByID(info.ID)
+	user, err := h.user.FindUserByID(info.ID)
 
 	if err != nil {
 		return err
@@ -55,7 +55,7 @@ func (h *Handler) updateEmail(c *gin.Context, upd dto.UpdateEmail, info *dao.Ses
 		return errs.PasswordNotFound.AddErr(err)
 	}
 
-	if err = h.users.UpdateEmail(upd.NewEmail, info.ID); err != nil {
+	if err = h.user.UpdateEmail(upd.NewEmail, info.ID); err != nil {
 		return err
 	}
 
@@ -65,13 +65,17 @@ func (h *Handler) updateEmail(c *gin.Context, upd dto.UpdateEmail, info *dao.Ses
 
 func (h *Handler) updatePassword(c *gin.Context, upd dto.UpdatePassword, info *dao.Session) error {
 
-	if ok, err := h.auth.EqualsPopCode(upd.Email, upd.Code); err != nil {
+	user, err := h.user.FindUserByID(info.ID)
+	if err != nil {
 		return err
-	} else if !ok {
-		return errs.MailCodeError.AddErr(err)
+	}
+	if user.PasswordHash != nil {
+		if err = h.auth.CompareHashAndPassword(*user.PasswordHash, []byte(upd.OldPassword)); err != nil {
+			return errs.PasswordError.AddErr(err)
+		}
 	}
 
-	if err := h.users.UpdatePassword([]byte(upd.NewPassword), info.ID); err != nil {
+	if err = h.user.UpdatePassword([]byte(upd.NewPassword), info.ID); err != nil {
 		return err
 	}
 
@@ -81,7 +85,7 @@ func (h *Handler) updatePassword(c *gin.Context, upd dto.UpdatePassword, info *d
 
 func (h *Handler) updateUsername(c *gin.Context, upd dto.UpdateName, info *dao.Session) error {
 
-	if err := h.users.UpdateUsername(upd.NewName, info.ID); err != nil {
+	if err := h.user.UpdateUsername(upd.NewName, info.ID); err != nil {
 		return err
 	}
 
@@ -90,7 +94,7 @@ func (h *Handler) updateUsername(c *gin.Context, upd dto.UpdateName, info *dao.S
 }
 
 func (h *Handler) checkUsername(c *gin.Context, name string) error {
-	if ok, err := h.users.UsernameExist(name); err != nil {
+	if ok, err := h.user.UsernameExist(name); err != nil {
 		return err
 	} else if ok {
 		c.Status(http.StatusForbidden)

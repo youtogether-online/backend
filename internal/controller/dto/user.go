@@ -15,26 +15,9 @@ type UpdateEmail struct {
 
 type UpdatePassword struct {
 	NewPassword string `json:"newPassword,omitempty" validate:"required,gte=4,lte=20,password"`
-	Email       string `json:"email,omitempty" validate:"required,email"`
-	Code        string `json:"code,omitempty" validate:"required,len=5"`
+	OldPassword string `json:"oldPassword,omitempty" validate:"required,gte=4,lte=20,password"`
 }
 
 type UpdateName struct {
 	NewName string `json:"newName,omitempty" validate:"required,gte=5,lte=20,name"`
-}
-
-type Email struct {
-	Email string `json:"email,omitempty" validate:"required,email"`
-}
-
-type EmailWithPassword struct {
-	Email    string  `json:"email,omitempty" header:"-" validate:"required,email"`
-	Password string  `json:"password,omitempty" header:"-" validate:"required,gte=4,lte=20,password"`
-	Language *string `json:"-" header:"Accept-Language" validate:"omitempty,enum=EN*RU"`
-}
-
-type EmailWithCode struct {
-	Email    string  `json:"email,omitempty" validate:"required,email"`
-	Code     string  `json:"code,omitempty" validate:"required,len=5"`
-	Language *string `json:"-" header:"Accept-Language" validate:"omitempty,enum=EN*RU"`
 }

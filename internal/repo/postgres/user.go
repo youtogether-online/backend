@@ -49,7 +49,7 @@ func (r *UserStorage) FindUserByID(ctx context.Context, id int) (*ent.User, erro
 	return r.userClient.Get(ctx, id)
 }
 
-func (r *UserStorage) UpdateUser(ctx context.Context, customer *dto.UpdateUser, id int) error {
+func (r *UserStorage) UpdateUser(ctx context.Context, customer dto.UpdateUser, id int) error {
 	res, err := r.userClient.UpdateOneID(id).
 		SetNillableBiography(customer.Biography).
 		SetNillableLanguage(customer.Language).

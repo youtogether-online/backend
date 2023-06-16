@@ -13,7 +13,7 @@ type UserPostgres interface {
 	FindMe(ctx context.Context, id int) (*dao.Me, error)
 	FindUserByUsername(ctx context.Context, username string) (*dao.User, error)
 	FindUserByID(ctx context.Context, id int) (*ent.User, error)
-	UpdateUser(ctx context.Context, customer *dto.UpdateUser, id int) error
+	UpdateUser(ctx context.Context, customer dto.UpdateUser, id int) error
 	UpdatePassword(ctx context.Context, newPassword []byte, id int) error
 	UpdateEmail(ctx context.Context, email string, id int) error
 	UpdateUsername(ctx context.Context, newUsername string, id int) error
@@ -47,7 +47,7 @@ func (u *UserService) FindMe(id int) (*dao.Me, error) {
 	return user, err
 }
 
-func (u *UserService) UpdateUser(customer *dto.UpdateUser, id int) error {
+func (u *UserService) UpdateUser(customer dto.UpdateUser, id int) error {
 	return u.postgres.UpdateUser(context.Background(), customer, id)
 }
 
