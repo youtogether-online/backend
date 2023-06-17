@@ -57,7 +57,7 @@ func (h *Handler) InitRoutes(s *Setter) {
 
 	user := rg.Group("/user")
 	{
-		user.GET("/:username", s.erh.HandleError(bind.HandleParam(h.getUserByUsername, "username", "required,gte=5,lte=20,name", s.valid)))
+		user.GET("/:name", s.erh.HandleError(bind.HandleParam(h.getUserByUsername, "name", "required,gte=5,lte=20,name", s.valid)))
 		user.PATCH("", s.erh.HandleError(session.HandleBody(h.updateUser, s.sess.SessionFunc, s.valid)))
 		user.PATCH("/email", s.erh.HandleError(session.HandleBody(h.updateEmail, s.sess.SessionFunc, s.valid)))
 		user.PATCH("/password", s.erh.HandleError(session.HandleBody(h.updatePassword, s.sess.SessionFunc, s.valid)))

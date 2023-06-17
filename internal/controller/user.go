@@ -20,9 +20,9 @@ func (h *Handler) getMe(c *gin.Context, info *dao.Session) error {
 	return nil
 }
 
-func (h *Handler) getUserByUsername(c *gin.Context, username string) error {
+func (h *Handler) getUserByUsername(c *gin.Context, name string) error {
 
-	user, err := h.user.FindUserByUsername(username)
+	user, err := h.user.FindUserByUsername(name)
 	if err != nil {
 		return err
 	}
@@ -52,7 +52,7 @@ func (h *Handler) updateEmail(c *gin.Context, upd dto.UpdateEmail, info *dao.Ses
 	}
 
 	if err = bcrypt.CompareHashAndPassword(*user.PasswordHash, []byte(upd.Password)); err != nil {
-		return errs.PasswordNotFound.AddErr(err)
+		return errs.InvalidPassword.AddErr(err)
 	}
 
 	if err = h.user.UpdateEmail(upd.NewEmail, info.ID); err != nil {
@@ -71,7 +71,7 @@ func (h *Handler) updatePassword(c *gin.Context, upd dto.UpdatePassword, info *d
 	}
 	if user.PasswordHash != nil {
 		if err = h.auth.CompareHashAndPassword(*user.PasswordHash, []byte(upd.OldPassword)); err != nil {
-			return errs.PasswordError.AddErr(err)
+			return errs.InvalidPassword.AddErr(err)
 		}
 	}
 
