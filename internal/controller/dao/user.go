@@ -9,7 +9,7 @@ import (
 type Me struct {
 	Name            string    `json:"name,omitempty" sql:"name"`
 	Email           string    `json:"email,omitempty" sql:"email"`
-	IsEmailVerified bool      `json:"isEmailVerified,omitempty" sql:"is_email_verified"`
+	IsEmailVerified bool      `json:"isEmailVerified" sql:"is_email_verified"`
 	Biography       *string   `json:"biography,omitempty" sql:"biography"`
 	Role            string    `json:"role,omitempty" sql:"role"`
 	FriendsIds      []string  `json:"friendsIds,omitempty" sql:"friends_ids"`
@@ -17,7 +17,6 @@ type Me struct {
 	Theme           string    `json:"theme,omitempty" sql:"theme"`
 	FirstName       *string   `json:"firstName,omitempty" sql:"first_name"`
 	LastName        *string   `json:"lastName,omitempty" sql:"last_name"`
-	Sessions        []string  `json:"sessions,omitempty" sql:"sessions"`
 	CreateTime      time.Time `json:"createTime,omitempty" sql:"create_time"`
 }
 
@@ -33,7 +32,6 @@ func TransformToMe(user *ent.User) *Me {
 		FriendsIds:      user.FriendsIds,
 		FirstName:       user.FirstName,
 		LastName:        user.LastName,
-		Sessions:        user.Sessions,
 		CreateTime:      user.CreateTime,
 	}
 }

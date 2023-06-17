@@ -23,7 +23,7 @@ func (r *UserStorage) FindMe(ctx context.Context, id int) (*dao.Me, error) {
 		Select(user.FieldName, user.FieldEmail, user.FieldIsEmailVerified,
 			user.FieldBiography, user.FieldRole, user.FieldFriendsIds,
 			user.FieldLanguage, user.FieldTheme, user.FieldFirstName,
-			user.FieldLastName, user.FieldSessions, user.FieldCreateTime).Only(ctx)
+			user.FieldLastName, user.FieldCreateTime).Only(ctx)
 
 	if err == nil {
 		return dao.TransformToMe(customer), nil
