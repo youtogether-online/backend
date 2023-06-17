@@ -7,25 +7,24 @@ type StandardError struct {
 	status      int
 	code        ErrCode
 	Description string
-	Advice      string
 	err         error
 }
 
 // Sign-in errors
 var (
-	MailCodeError    = newStandardError(http.StatusBadRequest, authErr, "Code is not correct", "Try to request a new one")
-	PasswordError    = newStandardError(http.StatusBadRequest, authErr, "Wrong email or password", "You can still sign in by your email!")
-	PasswordNotFound = newStandardError(http.StatusBadRequest, authErr, "You have not registered a password for your account", "Set it in your profile after authorization")
+	MailCodeError    = newStandardError(http.StatusBadRequest, codeInvalidOrExpired, "Code is not correct, used or expired")
+	InvalidPassword  = newStandardError(http.StatusBadRequest, invalidPassword, "Wrong email or password")
+	PasswordNotFound = newStandardError(http.StatusBadRequest, passwordNotSet, "You have not registered a password for your account")
 )
 
 var (
-	UnAuthorized = newStandardError(http.StatusUnauthorized, authErr, "You are not logged in", "Click on the button below to sign in!")
+	UnAuthorized = newStandardError(http.StatusUnauthorized, "", "You are not logged in")
 )
 
 // Server errors
 var (
-	ServerError = newStandardError(http.StatusInternalServerError, serverErr, "Server exception was occurred", "Try to restart the page")
-	EmailError  = newStandardError(http.StatusInternalServerError, serverErr, "Can't send message to your email", "Try to send it later")
+	ServerError = newStandardError(http.StatusInternalServerError, serverError, "Server exception was occurred")
+	EmailError  = newStandardError(http.StatusInternalServerError, cantSendMail, "Can't send message to your email")
 )
 
 // Error implements the Error type
@@ -34,11 +33,10 @@ func (e StandardError) Error() string {
 }
 
 // newStandardError creates a new StandardError and returns it
-func newStandardError(status int, code ErrCode, description, advice string) StandardError {
+func newStandardError(status int, code ErrCode, description string) StandardError {
 	return StandardError{
 		status:      status,
 		Description: description,
-		Advice:      advice,
 		code:        code,
 	}
 }
@@ -54,7 +52,6 @@ func (e StandardError) GetInfo() *AbstractError {
 		Status:      e.status,
 		Code:        e.code,
 		Description: e.Description,
-		Advice:      e.Advice,
 		Err:         e.err,
 	}
 }
