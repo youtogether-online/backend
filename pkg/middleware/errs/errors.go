@@ -15,19 +15,28 @@ type MyError interface {
 
 type ErrCode string
 
+// 400
 const (
-	validErr    ErrCode = "validation"
-	authErr     ErrCode = "authorization"
-	serverErr   ErrCode = "server"
-	notFoundErr ErrCode = "not_found"
+	invalidValidation    ErrCode = "invalid_validation"
+	codeInvalidOrExpired ErrCode = "code_invalid_or_expired"
+	invalidPassword      ErrCode = "invalid_password"
+	notFound             ErrCode = "not_found"
+	alreadyExist         ErrCode = "already_exist"
+	passwordNotSet       ErrCode = "password_not_set"
+)
+
+// 500
+const (
+	cantSendMail ErrCode = "cant_send_mail"
+	txFailed     ErrCode = "transaction_failed"
+	serverError  ErrCode = "server_error"
 )
 
 type AbstractError struct {
 	Status      int               `json:"-"`
-	Code        ErrCode           `json:"type,omitempty"`
+	Code        ErrCode           `json:"code,omitempty"`
 	Description string            `json:"description,omitempty"`
 	Fields      map[string]string `json:"fields,omitempty"`
-	Advice      string            `json:"advice,omitempty"`
 	Err         error             `json:"-"`
 }
 
@@ -48,34 +57,35 @@ func (e *ErrHandler) HandleError(handler func(*gin.Context) error) gin.HandlerFu
 
 		my := ServerError.GetInfo()
 
-		if myErr, ok := err.(MyError); ok {
-			my = myErr.GetInfo()
+		switch err.(type) {
+		case MyError:
+			my = err.(MyError).GetInfo()
 
-		} else if vErrs, ok := err.(validator.ValidationErrors); ok {
-			my = newValidError(vErrs).GetInfo()
+		case validator.ValidationErrors:
+			my = newValidError(err.(validator.ValidationErrors))
 
-		} else if notFound, ok := err.(*ent.NotFoundError); ok {
-			my = EntNotFoundError.AddError(notFound).GetInfo()
+		case *ent.NotFoundError:
+			my = EntNotFoundError.AddError(err.(*ent.NotFoundError)).GetInfo()
 
-		} else if valid, ok := err.(*ent.ValidationError); ok {
+		case *ent.ValidationError:
+			valid := err.(*ent.ValidationError)
 			my = EntValidError.AddError(valid).SetFields(
 				map[string]string{valid.Name: fmt.Sprintf("%s is incorrect", valid.Name)}).GetInfo()
 
-		} else if notSingular, ok := err.(*ent.NotSingularError); ok {
-			my = EntNotSingularError.AddError(notSingular).GetInfo()
+		case *ent.ConstraintError:
+			my = EntConstraintError.AddError(err).GetInfo()
 
-		} else if constraint, ok := err.(*ent.ConstraintError); ok {
-			my = EntConstraintError.AddError(constraint).GetInfo()
+		case redis.Error:
+			redisErr := err.(redis.Error)
 
-		} else if notLoaded, ok := err.(*ent.NotLoadedError); ok {
-			my = EntNotLoadedError.AddError(notLoaded).GetInfo()
-
-		} else if redisErr, ok := err.(redis.Error); ok {
-			switch redisErr {
-			case redis.Nil:
+			if redisErr == redis.Nil {
 				my = RedisNilError.AddError(err).GetInfo()
-			default:
+
+			} else if redisErr == redis.TxFailedErr {
 				my = RedisTxError.AddError(err).GetInfo()
+
+			} else {
+				my = RedisError.AddError(err).GetInfo()
 			}
 		}
 
