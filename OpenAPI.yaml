@@ -44,7 +44,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
         '500':
-          description: Server error
+          $ref: '#/components/responses/SessionGetError'
 
     delete:
       tags: [ Auth ]
@@ -58,7 +58,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
         '500':
-          description: Server error
+          $ref: '#/components/responses/SessionDeleteError'
 
 
   /auth/email:
@@ -302,7 +302,7 @@ components:
       properties:
         description:
           type: string
-          example: Wrong email or password
+          example: You are not logged in
         fields:
           type: object
           additionalProperties:
@@ -379,6 +379,10 @@ components:
       items:
         type: integer
         uniqueItems: true
+        example:
+          - 17
+          - 884
+          - 6789
 
     Biography:
       type: string
@@ -527,11 +531,45 @@ components:
 
   responses:
     SessionGetSuccess:
-      description: User's full info by session
+      description: User's info by session
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Me'
+
+    SessionGetError:
+      description: Lost connection to Redis
+      content:
+        application/json:
+          schema:
+            allOf:
+              - required:
+                  - code
+                properties:
+                  code:
+                    type: string
+                    example: transaction_failed
+                    enum:
+                      - server_error
+                      - transaction_failed
+              - $ref: "#/components/schemas/Error"
+
+    SessionDeleteError:
+      description: Lost connection to Redis
+      content:
+        application/json:
+          schema:
+            allOf:
+              - required:
+                  - code
+                properties:
+                  code:
+                    type: string
+                    example: transaction_failed
+                    enum:
+                      - server_error
+                      - transaction_failed
+              - $ref: "#/components/schemas/Error"
 
     AuthSuccess:
       description: OK
@@ -594,7 +632,7 @@ components:
               - $ref: "#/components/schemas/Error"
 
     AuthByPasswordError:
-      description: Can't use PostgreSQL connection
+      description: Lost connection to Postgresql
       content:
         application/json:
           schema:
@@ -628,7 +666,7 @@ components:
               - $ref: "#/components/schemas/Error"
 
     CheckNameError:
-      description: Can't use PostgreSQL connection
+      description: Lost connection to PostgreSQL
       content:
         application/json:
           schema:
@@ -660,7 +698,7 @@ components:
               - $ref: "#/components/schemas/Error"
 
     SendCodeError:
-      description: Can't use PostgreSQL connection
+      description: Can't submit data
       content:
         application/json:
           schema:
@@ -702,7 +740,7 @@ components:
               - $ref: "#/components/schemas/Error"
 
     UserGetByUsernameError:
-      description: Can't use PostgreSQL connection
+      description: Lost connection to PostgreSQL
       content:
         application/json:
           schema:
@@ -734,7 +772,7 @@ components:
               - $ref: "#/components/schemas/Error"
 
     UserPatchError:
-      description: Can't use PostgreSQL connection
+      description: Lost connection to PostgreSQL
       content:
         application/json:
           schema:
@@ -767,7 +805,7 @@ components:
               - $ref: "#/components/schemas/Error"
 
     UserPasswordPatchError:
-      description: Can't use PostgreSQL connection
+      description: Lost connection to PostgreSQL
       content:
         application/json:
           schema:
@@ -802,7 +840,7 @@ components:
               - $ref: "#/components/schemas/Error"
 
     UserEmailPatchError:
-      description: Can't use PostgreSQL connection
+      description: Lost connection to PostgreSQL
       content:
         application/json:
           schema:
@@ -835,7 +873,7 @@ components:
               - $ref: "#/components/schemas/Error"
 
     UserNamePatchError:
-      description: Can't use PostgreSQL connection
+      description: Lost connection to PostgreSQL
       content:
         application/json:
           schema:
