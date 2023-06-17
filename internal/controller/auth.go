@@ -24,7 +24,7 @@ func (h *Handler) signInByPassword(c *gin.Context, auth dto.EmailWithPassword) e
 	}
 
 	if err = h.auth.CompareHashAndPassword(*customer.PasswordHash, []byte(auth.Password)); err != nil {
-		return errs.PasswordError.AddErr(err)
+		return errs.InvalidPassword.AddErr(err)
 	}
 
 	err = h.sess.SetNewCookie(customer.ID, c)
@@ -32,7 +32,7 @@ func (h *Handler) signInByPassword(c *gin.Context, auth dto.EmailWithPassword) e
 		return err
 	}
 
-	c.Status(http.StatusOK)
+	c.Status(http.StatusCreated)
 	return nil
 }
 
@@ -78,7 +78,7 @@ func (h *Handler) signInByEmail(c *gin.Context, auth dto.EmailWithCode) error {
 		return err
 	}
 
-	c.Status(http.StatusOK)
+	c.Status(http.StatusCreated)
 	return nil
 }
 
