@@ -4,8 +4,9 @@ import "net/http"
 
 // Database errors (templates)
 var (
-	RedisNilError = newRedisError(http.StatusBadRequest, notFoundErr, "Can't find value", "Register, please")
-	RedisTxError  = newRedisError(http.StatusInternalServerError, serverErr, "Operation failed", "Try to request it later")
+	RedisNilError = newRedisError(http.StatusBadRequest, notFound, "Can't find value")
+	RedisTxError  = newRedisError(http.StatusInternalServerError, txFailed, "Operation failed")
+	RedisError    = newRedisError(http.StatusInternalServerError, serverError, "Can't perform query")
 )
 
 // redisError describes all server-known errors
@@ -13,12 +14,11 @@ type redisError struct {
 	status      int
 	code        ErrCode
 	Description string
-	Advice      string
 	err         error
 }
 
-func newRedisError(status int, code ErrCode, description string, advice string) redisError {
-	return redisError{status: status, code: code, Description: description, Advice: advice}
+func newRedisError(status int, code ErrCode, description string) redisError {
+	return redisError{status: status, code: code, Description: description}
 }
 
 func (r redisError) AddError(err error) redisError {
@@ -37,7 +37,6 @@ func (r redisError) GetInfo() *AbstractError {
 		Status:      r.status,
 		Code:        r.code,
 		Description: r.Description,
-		Advice:      r.Advice,
 		Err:         r.err,
 	}
 }
