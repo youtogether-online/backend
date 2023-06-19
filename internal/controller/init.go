@@ -1,14 +1,12 @@
 package controller
 
 import (
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/wtkeqrf0/you-together/internal/controller/dao"
 	"github.com/wtkeqrf0/you-together/pkg/log"
 	"github.com/wtkeqrf0/you-together/pkg/middleware/bind"
 	"github.com/wtkeqrf0/you-together/pkg/middleware/session"
-	"net/http"
 )
 
 type ErrHandler interface {
@@ -69,6 +67,7 @@ func (h *Handler) InitRoutes(s *Setter) {
 	{
 		room.POST("", s.erh.HandleError(session.HandleBody(h.createRoom, s.sess.SessionFunc, s.valid)))
 	}
+
 	if s.mailSet {
 		email := rg.Group("/email")
 		{
@@ -78,15 +77,8 @@ func (h *Handler) InitRoutes(s *Setter) {
 }
 
 func initMiddlewares(r *gin.Engine, qh QueryHandler) {
-	corsConfig := cors.Config{
-		AllowOrigins:     []string{"https://youtogether.frkam.dev", "https://youtogether-online.github.io", "http://localhost:3000", "http://localhost:80", "http://localhost"},
-		AllowMethods:     []string{http.MethodGet, http.MethodOptions, http.MethodPatch, http.MethodDelete, http.MethodPost},
-		AllowHeaders:     []string{"Content-Type", "Content-Length", "Cache-Control", "User-Agent", "Accept-Language", "Accept", "DomainName", "Accept-Encoding", "Connection", "Set-Cookie", "Cookie", "Date", "Postman-Token", "Host"},
-		AllowCredentials: true,
-		AllowWebSockets:  true,
-	}
 
-	r.Use(qh.HandleQueries(), cors.New(corsConfig), gin.Recovery())
+	r.Use(qh.HandleQueries(), gin.Recovery())
 
 	if err := r.SetTrustedProxies([]string{"95.140.155.222"}); err != nil {
 		log.WithErr(err).Fatal("can't set trusted proxies")
