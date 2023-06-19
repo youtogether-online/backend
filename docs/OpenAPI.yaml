@@ -734,9 +734,9 @@ components:
                   code:
                     type: string
                     example: not_found
-                enum:
-                  - not_found
-                  - invalid_validation
+                    enum:
+                      - not_found
+                      - invalid_validation
               - $ref: "#/components/schemas/Error"
 
     UserGetByUsernameError:
