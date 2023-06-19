@@ -1,4 +1,4 @@
-openapi: 3.0.3
+xopenapi: 3.0.3
 info:
   title: YouTogether API
   description: |-
@@ -660,9 +660,9 @@ components:
                   code:
                     type: string
                     example: already_exist
-                enum:
-                  - already_exist
-                  - invalid_validation
+                    enum:
+                      - already_exist
+                      - invalid_validation
               - $ref: "#/components/schemas/Error"
 
     CheckNameError:
