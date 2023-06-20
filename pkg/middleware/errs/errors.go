@@ -23,6 +23,7 @@ const (
 	notFound             ErrCode = "not_found"
 	alreadyExist         ErrCode = "already_exist"
 	passwordNotSet       ErrCode = "password_not_set"
+	websocketExcepted    ErrCode = "websocket_excepted"
 )
 
 // 500

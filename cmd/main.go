@@ -19,6 +19,7 @@ import (
 	"github.com/wtkeqrf0/you-together/pkg/middleware/errs"
 	"github.com/wtkeqrf0/you-together/pkg/middleware/query"
 	"github.com/wtkeqrf0/you-together/pkg/middleware/session"
+	"github.com/wtkeqrf0/you-together/pkg/ws"
 	"net/http"
 	"net/smtp"
 	"os"
@@ -104,6 +105,7 @@ func initHandler(pClient *ent.Client, rClient *redis.Client, mailClient *smtp.Cl
 	pRoom := postgres.NewRoomStorage(pClient.Room)
 	rConn := redisRepo.NewRClient(rClient)
 	mailSender := service.NewEmailSender(mailClient)
+	webSocket := ws.NewManager(context.Background(), rConn)
 
 	user := service.NewUserService(pUser, rConn)
 	room := service.NewRoomService(pRoom)
@@ -115,6 +117,7 @@ func initHandler(pClient *ent.Client, rClient *redis.Client, mailClient *smtp.Cl
 		auth,
 		mailSender,
 		session.NewAuth(auth, cfg),
+		webSocket,
 	)
 }
 

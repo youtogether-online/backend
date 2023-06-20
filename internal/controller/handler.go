@@ -5,6 +5,7 @@ import (
 	"github.com/wtkeqrf0/you-together/ent"
 	"github.com/wtkeqrf0/you-together/internal/controller/dao"
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
+	"net/http"
 )
 
 type UserService interface {
@@ -44,14 +45,19 @@ type Session interface {
 	GenerateSecretCode() string
 }
 
+type WebSocket interface {
+	Connect(w http.ResponseWriter, r *http.Request) error
+}
+
 type Handler struct {
 	user UserService
 	room RoomService
 	auth AuthService
 	mail MailSender
 	sess Session
+	ws   WebSocket
 }
 
-func NewHandler(user UserService, room RoomService, auth AuthService, mail MailSender, sess Session) *Handler {
-	return &Handler{user: user, room: room, auth: auth, mail: mail, sess: sess}
+func NewHandler(user UserService, room RoomService, auth AuthService, mail MailSender, sess Session, ws WebSocket) *Handler {
+	return &Handler{user: user, room: room, auth: auth, mail: mail, sess: sess, ws: ws}
 }

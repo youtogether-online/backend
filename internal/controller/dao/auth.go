@@ -7,3 +7,7 @@ type Session struct {
 	Browser string `json:"browser" redis:"Browser"`
 	Updated int64  `json:"updated" redis:"Updated"`
 }
+
+type OTP struct {
+	OTP string `json:"otp"`
+}

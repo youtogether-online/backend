@@ -17,9 +17,13 @@ var (
 	PasswordNotFound = newStandardError(http.StatusBadRequest, passwordNotSet, "You have not registered a password for your account")
 )
 
+// Web Socket errors
 var (
-	UnAuthorized = newStandardError(http.StatusUnauthorized, "", "You are not logged in")
+	WebsocketNotFound = newStandardError(http.StatusBadRequest, websocketExcepted, "Web socket connection excepted")
 )
+
+// UnAuthorized error
+var UnAuthorized = newStandardError(http.StatusUnauthorized, "", "You are not logged in")
 
 // Server errors
 var (

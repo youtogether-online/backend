@@ -66,6 +66,7 @@ func (h *Handler) InitRoutes(s *Setter) {
 	room := rg.Group("/room")
 	{
 		room.POST("", s.erh.HandleError(session.HandleBody(h.createRoom, s.sess.SessionFunc, s.valid)))
+		room.GET("", s.erh.HandleError(h.joinRoom))
 	}
 
 	if s.mailSet {

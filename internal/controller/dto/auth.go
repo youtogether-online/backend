@@ -21,3 +21,7 @@ type EmailWithCode struct {
 	Code     string  `json:"code,omitempty" validate:"required,len=5"`
 	Language *string `json:"-" header:"Accept-Language" validate:"omitempty,enum=EN*RU"`
 }
+
+type Password struct {
+	Password string `json:"password,omitempty"`
+}
