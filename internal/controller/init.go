@@ -4,7 +4,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/wtkeqrf0/you-together/internal/controller/dao"
-	"github.com/wtkeqrf0/you-together/pkg/log"
 	"github.com/wtkeqrf0/you-together/pkg/middleware/bind"
 	"github.com/wtkeqrf0/you-together/pkg/middleware/session"
 )
@@ -78,10 +77,5 @@ func (h *Handler) InitRoutes(s *Setter) {
 }
 
 func initMiddlewares(r *gin.Engine, qh QueryHandler) {
-
 	r.Use(qh.HandleQueries(), gin.Recovery())
-
-	if err := r.SetTrustedProxies([]string{"95.140.155.222"}); err != nil {
-		log.WithErr(err).Fatal("can't set trusted proxies")
-	}
 }
