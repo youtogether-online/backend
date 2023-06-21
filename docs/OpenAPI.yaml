@@ -321,7 +321,6 @@ components:
 
     Email:
       type: string
-      pattern: ^\S+@\S+\.\S+$
       format: email
       example: example@example.com
 
@@ -329,7 +328,6 @@ components:
       writeOnly: true
       type: string
       format: password
-      pattern: ^\P{Cc}\P{Cn}\P{Cs}$
       example: Bob2020
 
     Code:
