@@ -328,6 +328,7 @@ components:
       writeOnly: true
       type: string
       format: password
+      pattern: ^\P{Cc}\P{Cn}\P{Cs}$
       example: Bob2020
 
     Code:
