@@ -45,7 +45,7 @@ func (h *Handler) InitRoutes(s *Setter) {
 		auth.POST("/password", s.erh.HandleError(bind.HandleBodyWithHeader(h.signInByPassword, s.valid)))
 		auth.POST("/email", s.erh.HandleError(bind.HandleBodyWithHeader(h.signInByEmail, s.valid)))
 
-		sess := rg.Group("/session")
+		sess := auth.Group("/session")
 		{
 			sess.GET("", s.erh.HandleError(s.sess.Session(h.getMe)))
 			sess.DELETE("", s.erh.HandleError(s.sess.Session(h.signOut)))
