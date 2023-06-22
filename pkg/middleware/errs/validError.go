@@ -3,6 +3,7 @@ package errs
 import (
 	"fmt"
 	"github.com/go-playground/validator/v10"
+	"github.com/wtkeqrf0/you-together/ent"
 	"net/http"
 	"strings"
 )
@@ -40,8 +41,16 @@ func newValidError(errs validator.ValidationErrors) *AbstractError {
 	}
 
 	return &AbstractError{
-		Status: http.StatusBadRequest,
-		Code:   invalidValidation,
+		Status: http.StatusUnprocessableEntity,
 		Fields: fields,
+	}
+}
+
+func createValidErrEnt(v *ent.ValidationError) *AbstractError {
+	return &AbstractError{
+		Status: http.StatusUnprocessableEntity,
+		Fields: map[string]string{
+			v.Name: fmt.Sprintf("%s is incorrect", v.Name),
+		},
 	}
 }

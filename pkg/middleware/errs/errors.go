@@ -1,7 +1,6 @@
 package errs
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/redis/go-redis/v9"
@@ -17,7 +16,6 @@ type ErrCode string
 
 // 400
 const (
-	invalidValidation    ErrCode = "invalid_validation"
 	codeInvalidOrExpired ErrCode = "code_invalid_or_expired"
 	invalidPassword      ErrCode = "invalid_password"
 	notFound             ErrCode = "not_found"
@@ -65,13 +63,11 @@ func (e *ErrHandler) HandleError(handler func(*gin.Context) error) gin.HandlerFu
 		case validator.ValidationErrors:
 			my = newValidError(err.(validator.ValidationErrors))
 
+		case *ent.ValidationError:
+			my = createValidErrEnt(err.(*ent.ValidationError))
+
 		case *ent.NotFoundError:
 			my = EntNotFoundError.AddError(err.(*ent.NotFoundError)).GetInfo()
-
-		case *ent.ValidationError:
-			valid := err.(*ent.ValidationError)
-			my = EntValidError.AddError(valid).SetFields(
-				map[string]string{valid.Name: fmt.Sprintf("%s is incorrect", valid.Name)}).GetInfo()
 
 		case *ent.ConstraintError:
 			my = EntConstraintError.AddError(err).GetInfo()
