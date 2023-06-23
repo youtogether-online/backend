@@ -14,17 +14,16 @@ func NewRoomStorage(roomClient *ent.RoomClient) *RoomStorage {
 	return &RoomStorage{roomClient: roomClient}
 }
 
-func (r *RoomStorage) Create(ctx context.Context, rm dto.Room, creatorId int) (*ent.Room, error) {
+func (r *RoomStorage) UpsertRoom(ctx context.Context, rm dto.Room, creatorId int) error {
 	cl := r.roomClient.Create().
-		SetNillableCustomName(rm.CustomName).
-		SetNillableDescription(rm.Description).
+		SetOwnerID(creatorId).
 		SetNillablePrivacy(rm.Privacy).
-		SetNillableSetChat(rm.HasChat).
-		SetOwnerID(creatorId)
+		SetNillableDescription(rm.Description).
+		SetTitle(rm.Title)
 
 	if rm.Password != nil {
 		cl.SetPasswordHash([]byte(*rm.Password))
 	}
 
-	return cl.Save(ctx)
+	return cl.OnConflict().UpdateNewValues().Exec(ctx)
 }

@@ -13,7 +13,7 @@ func (h *Handler) createRoom(c *gin.Context, r dto.Room, info *dao.Session) erro
 
 	log.Infof("websocket connection: %v", c.IsWebsocket())
 
-	room, err := h.room.Create(r, info.ID)
+	err := h.room.UpsertRoom(r, info.ID)
 	if err != nil {
 		return err
 	}
@@ -34,7 +34,7 @@ func (h *Handler) createRoom(c *gin.Context, r dto.Room, info *dao.Session) erro
 		return errs.WebsocketNotFound.AddErr(err)
 	}
 
-	c.JSON(http.StatusOK, room)
+	c.Status(http.StatusOK)
 	return nil
 }
 

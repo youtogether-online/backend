@@ -2,12 +2,11 @@ package service
 
 import (
 	"context"
-	"github.com/wtkeqrf0/you-together/ent"
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
 )
 
 type RoomPostgres interface {
-	Create(ctx context.Context, rm dto.Room, creatorId int) (*ent.Room, error)
+	UpsertRoom(ctx context.Context, rm dto.Room, creatorId int) error
 }
 
 type RoomService struct {
@@ -18,6 +17,6 @@ func NewRoomService(postgres RoomPostgres) *RoomService {
 	return &RoomService{postgres: postgres}
 }
 
-func (r *RoomService) Create(rm dto.Room, creatorId int) (*ent.Room, error) {
-	return r.postgres.Create(context.Background(), rm, creatorId)
+func (r *RoomService) UpsertRoom(rm dto.Room, creatorId int) error {
+	return r.postgres.UpsertRoom(context.Background(), rm, creatorId)
 }
