@@ -33,13 +33,13 @@ type User struct {
 	// Biography holds the value of the "biography" field.
 	Biography *string `json:"biography,omitempty" validate:"omitempty,lte=512"`
 	// Role holds the value of the "role" field.
-	Role string `json:"role,omitempty" validate:"omitempty,enum=USER*ADMIN"`
+	Role string `json:"role,omitempty" validate:"omitempty,enum=user*admin"`
 	// FriendsIds holds the value of the "friends_ids" field.
 	FriendsIds []string `json:"friendsIds,omitempty"`
 	// Language holds the value of the "language" field.
-	Language string `json:"language,omitempty" validate:"omitempty,enum=EN*RU"`
+	Language string `json:"language,omitempty" validate:"omitempty,enum=en*ru"`
 	// Theme holds the value of the "theme" field.
-	Theme string `json:"theme,omitempty" validate:"omitempty,enum=SYSTEM*WHITE*DARK"`
+	Theme string `json:"theme,omitempty" validate:"omitempty,enum=system*light*dark"`
 	// FirstName holds the value of the "first_name" field.
 	FirstName *string `json:"firstName,omitempty" validate:"omitempty,gte=3,lte=32"`
 	// LastName holds the value of the "last_name" field.

@@ -3,7 +3,7 @@ package dto
 type UpdateUser struct {
 	Biography *string `json:"biography,omitempty" sql:"biography" validate:"omitempty,lte=512"`
 	Language  *string `json:"language,omitempty" sql:"language" validate:"omitempty,enum=EN*RU"`
-	Theme     *string `json:"theme,omitempty" sql:"theme" validate:"omitempty,enum=SYSTEM*WHITE*DARK"`
+	Theme     *string `json:"theme,omitempty" sql:"theme" validate:"omitempty,enum=system*light*dark"`
 	FirstName *string `json:"firstName,omitempty" sql:"first_name" validate:"omitempty,gte=3,lte=32"`
 	LastName  *string `json:"lastName,omitempty" sql:"last_name" validate:"omitempty,gte=3,lte=32"`
 }

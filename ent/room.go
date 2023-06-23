@@ -24,7 +24,7 @@ type Room struct {
 	// Title holds the value of the "title" field.
 	Title string `json:"title,omitempty" validate:"omitempty,gte=3,lte=32"`
 	// Privacy holds the value of the "privacy" field.
-	Privacy string `json:"privacy,omitempty" validate:"omitempty,enum=PUBLIC*PRIVATE*FRIENDS"`
+	Privacy string `json:"privacy,omitempty" validate:"omitempty,enum=public*private*friends"`
 	// PasswordHash holds the value of the "password_hash" field.
 	PasswordHash *[]byte `json:"-" validate:"-"`
 	// Description holds the value of the "description" field.

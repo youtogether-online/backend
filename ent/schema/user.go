@@ -38,16 +38,16 @@ func (User) Fields() []ent.Field {
 			StructTag(`json:"biography,omitempty" validate:"omitempty,lte=512"`),
 
 		field.String("role").Default("USER").
-			StructTag(`json:"role,omitempty" validate:"omitempty,enum=USER*ADMIN"`),
+			StructTag(`json:"role,omitempty" validate:"omitempty,enum=user*admin"`),
 
 		field.Strings("friends_ids").Optional().
 			StructTag(`json:"friendsIds,omitempty"`),
 
-		field.String("language").Default("EN").
-			StructTag(`json:"language,omitempty" validate:"omitempty,enum=EN*RU"`),
+		field.String("language").Default("en").
+			StructTag(`json:"language,omitempty" validate:"omitempty,enum=en*ru"`),
 
-		field.String("theme").Default("SYSTEM").
-			StructTag(`json:"theme,omitempty" validate:"omitempty,enum=SYSTEM*WHITE*DARK"`),
+		field.String("theme").Default("system").
+			StructTag(`json:"theme,omitempty" validate:"omitempty,enum=system*light*dark"`),
 
 		field.String("first_name").Optional().MinLen(3).MaxLen(32).Nillable().
 			StructTag(`json:"firstName,omitempty" validate:"omitempty,gte=3,lte=32"`),

@@ -25,8 +25,8 @@ func (Room) Fields() []ent.Field {
 			Annotations(entsql.DefaultExpr("'room' || setval(pg_get_serial_sequence('rooms','id'),nextval(pg_get_serial_sequence('rooms','id'))-1)")).
 			StructTag(`json:"title,omitempty" validate:"omitempty,gte=3,lte=32"`),
 
-		field.String("privacy").Default("FRIENDS").
-			StructTag(`json:"privacy,omitempty" validate:"omitempty,enum=PUBLIC*PRIVATE*FRIENDS"`),
+		field.String("privacy").Default("friends").
+			StructTag(`json:"privacy,omitempty" validate:"omitempty,enum=public*private*friends"`),
 
 		field.Bytes("password_hash").Optional().Sensitive().Nillable(),
 
