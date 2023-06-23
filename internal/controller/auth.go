@@ -1,12 +1,11 @@
 package controller
 
 import (
+	"context"
 	"github.com/gin-gonic/gin"
-	"github.com/wtkeqrf0/you-together/internal/controller/dao"
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
 	"github.com/wtkeqrf0/you-together/pkg/middleware/errs"
 	"net/http"
-	"strconv"
 )
 
 func (h *Handler) signInByPassword(c *gin.Context, auth dto.EmailWithPassword) error {
@@ -14,7 +13,7 @@ func (h *Handler) signInByPassword(c *gin.Context, auth dto.EmailWithPassword) e
 	customer, err := h.auth.AuthUserByEmail(auth.Email)
 
 	if err != nil {
-		customer, err = h.auth.CreateUserWithPassword(auth.Email, []byte(auth.Password), auth.Language)
+		customer, err = h.auth.CreateUserWithPassword(auth)
 
 		if err != nil {
 			return err
@@ -52,6 +51,8 @@ func (h *Handler) sendCodeToEmail(c *gin.Context, to dto.Email) error {
 }
 
 func (h *Handler) signInByEmail(c *gin.Context, auth dto.EmailWithCode) error {
+	auth.Language = h.auth.FormatLanguage(auth.Language)
+
 	if oki, err := h.auth.EqualsPopCode(auth.Email, auth.Code); err != nil {
 		return errs.ServerError.AddErr(err)
 	} else if !oki {
@@ -82,8 +83,29 @@ func (h *Handler) signInByEmail(c *gin.Context, auth dto.EmailWithCode) error {
 	return nil
 }
 
-func (h *Handler) signOut(c *gin.Context, info *dao.Session) error {
-	h.auth.DelKeys(strconv.Itoa(info.ID))
+func (h *Handler) signOut(c *gin.Context, cookieName string) error {
+	session, _ := c.Cookie(cookieName)
+	info, _, err := h.sess.ValidateSession(session)
+	if err != nil {
+		return errs.UnAuthorized.AddErr(err)
+	}
+
+	h.auth.DelKeys(session)
+
+	user, err := h.user.FindUserByID(info.ID)
+	if err != nil {
+		return err
+	}
+
+	for i, v := range user.Sessions {
+		if v == session {
+			if err = user.Update().SetSessions(append(user.Sessions[:i], user.Sessions[i+1:]...)).
+				Exec(context.Background()); err != nil {
+				return err
+			}
+		}
+	}
+
 	c.Status(http.StatusOK)
 	return nil
 }
