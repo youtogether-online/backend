@@ -30,7 +30,7 @@ func NewAuth(auth AuthService, cfg *conf.Config) *Auth {
 }
 
 // ValidateSession and identify the user in redis. Returns true, if session was expanded.
-func (a Auth) ValidateSession(sessionId string) (info *dao.Session, ok bool, err error) {
+func (a *Auth) ValidateSession(sessionId string) (info *dao.Session, ok bool, err error) {
 	if sessionId == "" {
 		return nil, false, fmt.Errorf("session id is not found")
 	}
@@ -53,8 +53,8 @@ func (a Auth) ValidateSession(sessionId string) (info *dao.Session, ok bool, err
 	return
 }
 
-// GenerateSession and save it to redis
-func (a Auth) GenerateSession(id int, ip, userAgent string) (string, error) {
+// generateSession and save it to redis
+func (a *Auth) generateSession(id int, ip, userAgent string) (string, error) {
 	ua := useragent.New(userAgent)
 	name, ver := ua.Browser()
 	sessionId := uuid.NewString()
@@ -73,7 +73,7 @@ func (a Auth) GenerateSession(id int, ip, userAgent string) (string, error) {
 	})
 }
 
-func (a Auth) GetSession(c *gin.Context) *dao.Session {
+func (a *Auth) getSession(c *gin.Context) *dao.Session {
 	get, ok := c.Get("user_info")
 	if !ok {
 		return nil
@@ -86,8 +86,8 @@ func (a Auth) GetSession(c *gin.Context) *dao.Session {
 	return res
 }
 
-func (a Auth) SetNewCookie(id int, c *gin.Context) error {
-	session, err := a.GenerateSession(id, c.ClientIP(), c.Request.UserAgent())
+func (a *Auth) SetNewCookie(id int, c *gin.Context) error {
+	session, err := a.generateSession(id, c.ClientIP(), c.Request.UserAgent())
 	if err != nil {
 		return err
 	}
@@ -99,7 +99,7 @@ func (a Auth) SetNewCookie(id int, c *gin.Context) error {
 }
 
 // GenerateSecretCode for email auth
-func (a Auth) GenerateSecretCode() string {
+func (a *Auth) GenerateSecretCode() string {
 	b := make([]rune, 5)
 	for i := range b {
 		b[i] = rand.Int31n(26) + 65

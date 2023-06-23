@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-func (a Auth) Session(handler func(*gin.Context, *dao.Session) error) func(c *gin.Context) error {
+func (a *Auth) Session(handler func(*gin.Context, *dao.Session) error) func(c *gin.Context) error {
 	return func(c *gin.Context) error {
 		session, _ := c.Cookie(a.cfg.Session.CookieName)
 		info, ok, err := a.ValidateSession(session)
@@ -26,7 +26,7 @@ func (a Auth) Session(handler func(*gin.Context, *dao.Session) error) func(c *gi
 	}
 }
 
-func (a Auth) SessionFunc(c *gin.Context) (*dao.Session, error) {
+func (a *Auth) SessionFunc(c *gin.Context) (*dao.Session, error) {
 	session, _ := c.Cookie(a.cfg.Session.CookieName)
 	info, ok, err := a.ValidateSession(session)
 	if err != nil {
