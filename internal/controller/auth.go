@@ -9,6 +9,7 @@ import (
 )
 
 func (h *Handler) signInByPassword(c *gin.Context, auth dto.EmailWithPassword) error {
+	auth.Language = h.auth.FormatLanguage(auth.Language)
 
 	customer, err := h.auth.AuthUserByEmail(auth.Email)
 

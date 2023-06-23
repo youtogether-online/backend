@@ -6,6 +6,7 @@ import (
 	"github.com/wtkeqrf0/you-together/internal/controller/dao"
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
 	"golang.org/x/crypto/bcrypt"
+	"strings"
 )
 
 type AuthPostgres interface {
@@ -105,10 +106,12 @@ func (a *AuthService) CompareHashAndPassword(old, new []byte) error {
 }
 
 func (a *AuthService) FormatLanguage(header string) string {
-	switch header[:1] {
+	parts := strings.SplitN(header, ";", 1)
+	languages := strings.SplitN(parts[0], ",", 1)
+	switch languages[0] {
 	case "ru":
-		return "RU"
+		return languages[0]
 	default:
-		return "EN"
+		return "en"
 	}
 }
