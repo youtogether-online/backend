@@ -23,8 +23,7 @@ type UserQuery struct {
 	order      []OrderFunc
 	inters     []Interceptor
 	predicates []predicate.User
-	withRooms  *RoomQuery
-	withFKs    bool
+	withRoom   *RoomQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -61,8 +60,8 @@ func (uq *UserQuery) Order(o ...OrderFunc) *UserQuery {
 	return uq
 }
 
-// QueryRooms chains the current query on the "rooms" edge.
-func (uq *UserQuery) QueryRooms() *RoomQuery {
+// QueryRoom chains the current query on the "room" edge.
+func (uq *UserQuery) QueryRoom() *RoomQuery {
 	query := (&RoomClient{config: uq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := uq.prepareQuery(ctx); err != nil {
@@ -75,7 +74,7 @@ func (uq *UserQuery) QueryRooms() *RoomQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(room.Table, room.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, user.RoomsTable, user.RoomsPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.O2O, false, user.RoomTable, user.RoomColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
 		return fromU, nil
@@ -275,21 +274,21 @@ func (uq *UserQuery) Clone() *UserQuery {
 		order:      append([]OrderFunc{}, uq.order...),
 		inters:     append([]Interceptor{}, uq.inters...),
 		predicates: append([]predicate.User{}, uq.predicates...),
-		withRooms:  uq.withRooms.Clone(),
+		withRoom:   uq.withRoom.Clone(),
 		// clone intermediate query.
 		sql:  uq.sql.Clone(),
 		path: uq.path,
 	}
 }
 
-// WithRooms tells the query-builder to eager-load the nodes that are connected to
-// the "rooms" edge. The optional arguments are used to configure the query builder of the edge.
-func (uq *UserQuery) WithRooms(opts ...func(*RoomQuery)) *UserQuery {
+// WithRoom tells the query-builder to eager-load the nodes that are connected to
+// the "room" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithRoom(opts ...func(*RoomQuery)) *UserQuery {
 	query := (&RoomClient{config: uq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	uq.withRooms = query
+	uq.withRoom = query
 	return uq
 }
 
@@ -370,15 +369,11 @@ func (uq *UserQuery) prepareQuery(ctx context.Context) error {
 func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, error) {
 	var (
 		nodes       = []*User{}
-		withFKs     = uq.withFKs
 		_spec       = uq.querySpec()
 		loadedTypes = [1]bool{
-			uq.withRooms != nil,
+			uq.withRoom != nil,
 		}
 	)
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, user.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*User).scanValues(nil, columns)
 	}
@@ -397,74 +392,40 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := uq.withRooms; query != nil {
-		if err := uq.loadRooms(ctx, query, nodes,
-			func(n *User) { n.Edges.Rooms = []*Room{} },
-			func(n *User, e *Room) { n.Edges.Rooms = append(n.Edges.Rooms, e) }); err != nil {
+	if query := uq.withRoom; query != nil {
+		if err := uq.loadRoom(ctx, query, nodes, nil,
+			func(n *User, e *Room) { n.Edges.Room = e }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (uq *UserQuery) loadRooms(ctx context.Context, query *RoomQuery, nodes []*User, init func(*User), assign func(*User, *Room)) error {
-	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[int]*User)
-	nids := make(map[int]map[*User]struct{})
-	for i, node := range nodes {
-		edgeIDs[i] = node.ID
-		byID[node.ID] = node
-		if init != nil {
-			init(node)
-		}
+func (uq *UserQuery) loadRoom(ctx context.Context, query *RoomQuery, nodes []*User, init func(*User), assign func(*User, *Room)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
 	}
-	query.Where(func(s *sql.Selector) {
-		joinT := sql.Table(user.RoomsTable)
-		s.Join(joinT).On(s.C(room.FieldID), joinT.C(user.RoomsPrimaryKey[1]))
-		s.Where(sql.InValues(joinT.C(user.RoomsPrimaryKey[0]), edgeIDs...))
-		columns := s.SelectedColumns()
-		s.Select(joinT.C(user.RoomsPrimaryKey[0]))
-		s.AppendSelect(columns...)
-		s.SetDistinct(false)
-	})
-	if err := query.prepareQuery(ctx); err != nil {
-		return err
-	}
-	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
-		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
-			assign := spec.Assign
-			values := spec.ScanValues
-			spec.ScanValues = func(columns []string) ([]any, error) {
-				values, err := values(columns[1:])
-				if err != nil {
-					return nil, err
-				}
-				return append([]any{new(sql.NullInt64)}, values...), nil
-			}
-			spec.Assign = func(columns []string, values []any) error {
-				outValue := int(values[0].(*sql.NullInt64).Int64)
-				inValue := int(values[1].(*sql.NullInt64).Int64)
-				if nids[inValue] == nil {
-					nids[inValue] = map[*User]struct{}{byID[outValue]: {}}
-					return assign(columns[1:], values[1:])
-				}
-				nids[inValue][byID[outValue]] = struct{}{}
-				return nil
-			}
-		})
-	})
-	neighbors, err := withInterceptors[[]*Room](ctx, query, qr, query.inters)
+	query.withFKs = true
+	query.Where(predicate.Room(func(s *sql.Selector) {
+		s.Where(sql.InValues(user.RoomColumn, fks...))
+	}))
+	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		nodes, ok := nids[n.ID]
+		fk := n.user_room
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "user_room" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected "rooms" node returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "user_room" returned %v for node %v`, *fk, n.ID)
 		}
-		for kn := range nodes {
-			assign(kn, n)
-		}
+		assign(node, n)
 	}
 	return nil
 }

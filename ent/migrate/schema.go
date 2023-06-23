@@ -8,31 +8,16 @@ import (
 )
 
 var (
-	// ChatsColumns holds the columns for the "chats" table.
-	ChatsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "create_time", Type: field.TypeTime},
-		{Name: "update_time", Type: field.TypeTime},
-		{Name: "message", Type: field.TypeString, Size: 1024},
-	}
-	// ChatsTable holds the schema information for the "chats" table.
-	ChatsTable = &schema.Table{
-		Name:       "chats",
-		Columns:    ChatsColumns,
-		PrimaryKey: []*schema.Column{ChatsColumns[0]},
-	}
 	// RoomsColumns holds the columns for the "rooms" table.
 	RoomsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
-		{Name: "custom_name", Type: field.TypeString, Nullable: true, Size: 32},
-		{Name: "owner_id", Type: field.TypeInt, Unique: true},
-		{Name: "privacy", Type: field.TypeString, Default: "PUBLIC"},
+		{Name: "title", Type: field.TypeString, Size: 32, Default: schema.Expr("'room' || setval(pg_get_serial_sequence('rooms','id'),nextval(pg_get_serial_sequence('rooms','id'))-1)")},
+		{Name: "privacy", Type: field.TypeString, Default: "FRIENDS"},
 		{Name: "password_hash", Type: field.TypeBytes, Nullable: true},
-		{Name: "set_chat", Type: field.TypeBool, Default: false},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 140},
-		{Name: "room_chat", Type: field.TypeInt, Nullable: true},
+		{Name: "user_room", Type: field.TypeInt, Unique: true},
 	}
 	// RoomsTable holds the schema information for the "rooms" table.
 	RoomsTable = &schema.Table{
@@ -41,10 +26,10 @@ var (
 		PrimaryKey: []*schema.Column{RoomsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "rooms_chats_chat",
-				Columns:    []*schema.Column{RoomsColumns[9]},
-				RefColumns: []*schema.Column{ChatsColumns[0]},
-				OnDelete:   schema.SetNull,
+				Symbol:     "rooms_users_room",
+				Columns:    []*schema.Column{RoomsColumns[7]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
 			},
 		},
 	}
@@ -65,59 +50,20 @@ var (
 		{Name: "first_name", Type: field.TypeString, Nullable: true, Size: 32},
 		{Name: "last_name", Type: field.TypeString, Nullable: true, Size: 32},
 		{Name: "sessions", Type: field.TypeJSON, Nullable: true},
-		{Name: "chat_user", Type: field.TypeInt, Nullable: true},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{
 		Name:       "users",
 		Columns:    UsersColumns,
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "users_chats_user",
-				Columns:    []*schema.Column{UsersColumns[15]},
-				RefColumns: []*schema.Column{ChatsColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-		},
-	}
-	// UserRoomsColumns holds the columns for the "user_rooms" table.
-	UserRoomsColumns = []*schema.Column{
-		{Name: "user_id", Type: field.TypeInt},
-		{Name: "room_id", Type: field.TypeInt},
-	}
-	// UserRoomsTable holds the schema information for the "user_rooms" table.
-	UserRoomsTable = &schema.Table{
-		Name:       "user_rooms",
-		Columns:    UserRoomsColumns,
-		PrimaryKey: []*schema.Column{UserRoomsColumns[0], UserRoomsColumns[1]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "user_rooms_user_id",
-				Columns:    []*schema.Column{UserRoomsColumns[0]},
-				RefColumns: []*schema.Column{UsersColumns[0]},
-				OnDelete:   schema.Cascade,
-			},
-			{
-				Symbol:     "user_rooms_room_id",
-				Columns:    []*schema.Column{UserRoomsColumns[1]},
-				RefColumns: []*schema.Column{RoomsColumns[0]},
-				OnDelete:   schema.Cascade,
-			},
-		},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
-		ChatsTable,
 		RoomsTable,
 		UsersTable,
-		UserRoomsTable,
 	}
 )
 
 func init() {
-	RoomsTable.ForeignKeys[0].RefTable = ChatsTable
-	UsersTable.ForeignKeys[0].RefTable = ChatsTable
-	UserRoomsTable.ForeignKeys[0].RefTable = UsersTable
-	UserRoomsTable.ForeignKeys[1].RefTable = RoomsTable
+	RoomsTable.ForeignKeys[0].RefTable = UsersTable
 }

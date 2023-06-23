@@ -41,15 +41,17 @@ const (
 	FieldLastName = "last_name"
 	// FieldSessions holds the string denoting the sessions field in the database.
 	FieldSessions = "sessions"
-	// EdgeRooms holds the string denoting the rooms edge name in mutations.
-	EdgeRooms = "rooms"
+	// EdgeRoom holds the string denoting the room edge name in mutations.
+	EdgeRoom = "room"
 	// Table holds the table name of the user in the database.
 	Table = "users"
-	// RoomsTable is the table that holds the rooms relation/edge. The primary key declared below.
-	RoomsTable = "user_rooms"
-	// RoomsInverseTable is the table name for the Room entity.
+	// RoomTable is the table that holds the room relation/edge.
+	RoomTable = "rooms"
+	// RoomInverseTable is the table name for the Room entity.
 	// It exists in this package in order to avoid circular dependency with the "room" package.
-	RoomsInverseTable = "rooms"
+	RoomInverseTable = "rooms"
+	// RoomColumn is the table column denoting the room relation/edge.
+	RoomColumn = "user_room"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -71,27 +73,10 @@ var Columns = []string{
 	FieldSessions,
 }
 
-// ForeignKeys holds the SQL foreign-keys that are owned by the "users"
-// table and are not defined as standalone fields in the schema.
-var ForeignKeys = []string{
-	"chat_user",
-}
-
-var (
-	// RoomsPrimaryKey and RoomsColumn2 are the table columns denoting the
-	// primary key for the rooms relation (M2M).
-	RoomsPrimaryKey = []string{"user_id", "room_id"}
-)
-
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
-			return true
-		}
-	}
-	for i := range ForeignKeys {
-		if column == ForeignKeys[i] {
 			return true
 		}
 	}

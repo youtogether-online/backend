@@ -212,19 +212,23 @@ func (uu *UserUpdate) ClearSessions() *UserUpdate {
 	return uu
 }
 
-// AddRoomIDs adds the "rooms" edge to the Room entity by IDs.
-func (uu *UserUpdate) AddRoomIDs(ids ...int) *UserUpdate {
-	uu.mutation.AddRoomIDs(ids...)
+// SetRoomID sets the "room" edge to the Room entity by ID.
+func (uu *UserUpdate) SetRoomID(id int) *UserUpdate {
+	uu.mutation.SetRoomID(id)
 	return uu
 }
 
-// AddRooms adds the "rooms" edges to the Room entity.
-func (uu *UserUpdate) AddRooms(r ...*Room) *UserUpdate {
-	ids := make([]int, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+// SetNillableRoomID sets the "room" edge to the Room entity by ID if the given value is not nil.
+func (uu *UserUpdate) SetNillableRoomID(id *int) *UserUpdate {
+	if id != nil {
+		uu = uu.SetRoomID(*id)
 	}
-	return uu.AddRoomIDs(ids...)
+	return uu
+}
+
+// SetRoom sets the "room" edge to the Room entity.
+func (uu *UserUpdate) SetRoom(r *Room) *UserUpdate {
+	return uu.SetRoomID(r.ID)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -232,25 +236,10 @@ func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
 }
 
-// ClearRooms clears all "rooms" edges to the Room entity.
-func (uu *UserUpdate) ClearRooms() *UserUpdate {
-	uu.mutation.ClearRooms()
+// ClearRoom clears the "room" edge to the Room entity.
+func (uu *UserUpdate) ClearRoom() *UserUpdate {
+	uu.mutation.ClearRoom()
 	return uu
-}
-
-// RemoveRoomIDs removes the "rooms" edge to Room entities by IDs.
-func (uu *UserUpdate) RemoveRoomIDs(ids ...int) *UserUpdate {
-	uu.mutation.RemoveRoomIDs(ids...)
-	return uu
-}
-
-// RemoveRooms removes "rooms" edges to Room entities.
-func (uu *UserUpdate) RemoveRooms(r ...*Room) *UserUpdate {
-	ids := make([]int, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
-	}
-	return uu.RemoveRoomIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -404,12 +393,12 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if uu.mutation.SessionsCleared() {
 		_spec.ClearField(user.FieldSessions, field.TypeJSON)
 	}
-	if uu.mutation.RoomsCleared() {
+	if uu.mutation.RoomCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
-			Table:   user.RoomsTable,
-			Columns: user.RoomsPrimaryKey,
+			Table:   user.RoomTable,
+			Columns: []string{user.RoomColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -420,31 +409,12 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uu.mutation.RemovedRoomsIDs(); len(nodes) > 0 && !uu.mutation.RoomsCleared() {
+	if nodes := uu.mutation.RoomIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
-			Table:   user.RoomsTable,
-			Columns: user.RoomsPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
-					Column: room.FieldID,
-				},
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := uu.mutation.RoomsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   user.RoomsTable,
-			Columns: user.RoomsPrimaryKey,
+			Table:   user.RoomTable,
+			Columns: []string{user.RoomColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -660,19 +630,23 @@ func (uuo *UserUpdateOne) ClearSessions() *UserUpdateOne {
 	return uuo
 }
 
-// AddRoomIDs adds the "rooms" edge to the Room entity by IDs.
-func (uuo *UserUpdateOne) AddRoomIDs(ids ...int) *UserUpdateOne {
-	uuo.mutation.AddRoomIDs(ids...)
+// SetRoomID sets the "room" edge to the Room entity by ID.
+func (uuo *UserUpdateOne) SetRoomID(id int) *UserUpdateOne {
+	uuo.mutation.SetRoomID(id)
 	return uuo
 }
 
-// AddRooms adds the "rooms" edges to the Room entity.
-func (uuo *UserUpdateOne) AddRooms(r ...*Room) *UserUpdateOne {
-	ids := make([]int, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+// SetNillableRoomID sets the "room" edge to the Room entity by ID if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableRoomID(id *int) *UserUpdateOne {
+	if id != nil {
+		uuo = uuo.SetRoomID(*id)
 	}
-	return uuo.AddRoomIDs(ids...)
+	return uuo
+}
+
+// SetRoom sets the "room" edge to the Room entity.
+func (uuo *UserUpdateOne) SetRoom(r *Room) *UserUpdateOne {
+	return uuo.SetRoomID(r.ID)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -680,25 +654,10 @@ func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
 }
 
-// ClearRooms clears all "rooms" edges to the Room entity.
-func (uuo *UserUpdateOne) ClearRooms() *UserUpdateOne {
-	uuo.mutation.ClearRooms()
+// ClearRoom clears the "room" edge to the Room entity.
+func (uuo *UserUpdateOne) ClearRoom() *UserUpdateOne {
+	uuo.mutation.ClearRoom()
 	return uuo
-}
-
-// RemoveRoomIDs removes the "rooms" edge to Room entities by IDs.
-func (uuo *UserUpdateOne) RemoveRoomIDs(ids ...int) *UserUpdateOne {
-	uuo.mutation.RemoveRoomIDs(ids...)
-	return uuo
-}
-
-// RemoveRooms removes "rooms" edges to Room entities.
-func (uuo *UserUpdateOne) RemoveRooms(r ...*Room) *UserUpdateOne {
-	ids := make([]int, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
-	}
-	return uuo.RemoveRoomIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -882,12 +841,12 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if uuo.mutation.SessionsCleared() {
 		_spec.ClearField(user.FieldSessions, field.TypeJSON)
 	}
-	if uuo.mutation.RoomsCleared() {
+	if uuo.mutation.RoomCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
-			Table:   user.RoomsTable,
-			Columns: user.RoomsPrimaryKey,
+			Table:   user.RoomTable,
+			Columns: []string{user.RoomColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -898,31 +857,12 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uuo.mutation.RemovedRoomsIDs(); len(nodes) > 0 && !uuo.mutation.RoomsCleared() {
+	if nodes := uuo.mutation.RoomIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
-			Table:   user.RoomsTable,
-			Columns: user.RoomsPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
-					Column: room.FieldID,
-				},
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := uuo.mutation.RoomsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   user.RoomsTable,
-			Columns: user.RoomsPrimaryKey,
+			Table:   user.RoomTable,
+			Columns: []string{user.RoomColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{

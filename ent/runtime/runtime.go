@@ -5,7 +5,6 @@ package runtime
 import (
 	"time"
 
-	"github.com/wtkeqrf0/you-together/ent/chat"
 	"github.com/wtkeqrf0/you-together/ent/room"
 	"github.com/wtkeqrf0/you-together/ent/schema"
 	"github.com/wtkeqrf0/you-together/ent/user"
@@ -15,39 +14,6 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
-	chatMixin := schema.Chat{}.Mixin()
-	chatMixinFields0 := chatMixin[0].Fields()
-	_ = chatMixinFields0
-	chatFields := schema.Chat{}.Fields()
-	_ = chatFields
-	// chatDescCreateTime is the schema descriptor for create_time field.
-	chatDescCreateTime := chatMixinFields0[0].Descriptor()
-	// chat.DefaultCreateTime holds the default value on creation for the create_time field.
-	chat.DefaultCreateTime = chatDescCreateTime.Default.(func() time.Time)
-	// chatDescUpdateTime is the schema descriptor for update_time field.
-	chatDescUpdateTime := chatMixinFields0[1].Descriptor()
-	// chat.DefaultUpdateTime holds the default value on creation for the update_time field.
-	chat.DefaultUpdateTime = chatDescUpdateTime.Default.(func() time.Time)
-	// chat.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
-	chat.UpdateDefaultUpdateTime = chatDescUpdateTime.UpdateDefault.(func() time.Time)
-	// chatDescMessage is the schema descriptor for message field.
-	chatDescMessage := chatFields[0].Descriptor()
-	// chat.MessageValidator is a validator for the "message" field. It is called by the builders before save.
-	chat.MessageValidator = func() func(string) error {
-		validators := chatDescMessage.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(message string) error {
-			for _, fn := range fns {
-				if err := fn(message); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
 	roomMixin := schema.Room{}.Mixin()
 	roomHooks := schema.Room{}.Hooks()
 	room.Hooks[0] = roomHooks[0]
@@ -65,38 +31,30 @@ func init() {
 	room.DefaultUpdateTime = roomDescUpdateTime.Default.(func() time.Time)
 	// room.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
 	room.UpdateDefaultUpdateTime = roomDescUpdateTime.UpdateDefault.(func() time.Time)
-	// roomDescCustomName is the schema descriptor for custom_name field.
-	roomDescCustomName := roomFields[0].Descriptor()
-	// room.CustomNameValidator is a validator for the "custom_name" field. It is called by the builders before save.
-	room.CustomNameValidator = func() func(string) error {
-		validators := roomDescCustomName.Validators
+	// roomDescTitle is the schema descriptor for title field.
+	roomDescTitle := roomFields[0].Descriptor()
+	// room.TitleValidator is a validator for the "title" field. It is called by the builders before save.
+	room.TitleValidator = func() func(string) error {
+		validators := roomDescTitle.Validators
 		fns := [...]func(string) error{
 			validators[0].(func(string) error),
 			validators[1].(func(string) error),
 		}
-		return func(custom_name string) error {
+		return func(title string) error {
 			for _, fn := range fns {
-				if err := fn(custom_name); err != nil {
+				if err := fn(title); err != nil {
 					return err
 				}
 			}
 			return nil
 		}
 	}()
-	// roomDescOwnerID is the schema descriptor for owner_id field.
-	roomDescOwnerID := roomFields[1].Descriptor()
-	// room.OwnerIDValidator is a validator for the "owner_id" field. It is called by the builders before save.
-	room.OwnerIDValidator = roomDescOwnerID.Validators[0].(func(int) error)
 	// roomDescPrivacy is the schema descriptor for privacy field.
-	roomDescPrivacy := roomFields[2].Descriptor()
+	roomDescPrivacy := roomFields[1].Descriptor()
 	// room.DefaultPrivacy holds the default value on creation for the privacy field.
 	room.DefaultPrivacy = roomDescPrivacy.Default.(string)
-	// roomDescSetChat is the schema descriptor for set_chat field.
-	roomDescSetChat := roomFields[4].Descriptor()
-	// room.DefaultSetChat holds the default value on creation for the set_chat field.
-	room.DefaultSetChat = roomDescSetChat.Default.(bool)
 	// roomDescDescription is the schema descriptor for description field.
-	roomDescDescription := roomFields[5].Descriptor()
+	roomDescDescription := roomFields[3].Descriptor()
 	// room.DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
 	room.DescriptionValidator = roomDescDescription.Validators[0].(func(string) error)
 	userMixin := schema.User{}.Mixin()

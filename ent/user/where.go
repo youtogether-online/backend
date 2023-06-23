@@ -825,24 +825,24 @@ func SessionsNotNil() predicate.User {
 	return predicate.User(sql.FieldNotNull(FieldSessions))
 }
 
-// HasRooms applies the HasEdge predicate on the "rooms" edge.
-func HasRooms() predicate.User {
+// HasRoom applies the HasEdge predicate on the "room" edge.
+func HasRoom() predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, RoomsTable, RoomsPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.O2O, false, RoomTable, RoomColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasRoomsWith applies the HasEdge predicate on the "rooms" edge with a given conditions (other predicates).
-func HasRoomsWith(preds ...predicate.Room) predicate.User {
+// HasRoomWith applies the HasEdge predicate on the "room" edge with a given conditions (other predicates).
+func HasRoomWith(preds ...predicate.Room) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(RoomsInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, RoomsTable, RoomsPrimaryKey...),
+			sqlgraph.To(RoomInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, RoomTable, RoomColumn),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
