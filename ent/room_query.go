@@ -4,14 +4,12 @@ package ent
 
 import (
 	"context"
-	"database/sql/driver"
 	"fmt"
 	"math"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/wtkeqrf0/you-together/ent/chat"
 	"github.com/wtkeqrf0/you-together/ent/predicate"
 	"github.com/wtkeqrf0/you-together/ent/room"
 	"github.com/wtkeqrf0/you-together/ent/user"
@@ -24,8 +22,7 @@ type RoomQuery struct {
 	order      []OrderFunc
 	inters     []Interceptor
 	predicates []predicate.Room
-	withUsers  *UserQuery
-	withChat   *ChatQuery
+	withOwner  *UserQuery
 	withFKs    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -63,8 +60,8 @@ func (rq *RoomQuery) Order(o ...OrderFunc) *RoomQuery {
 	return rq
 }
 
-// QueryUsers chains the current query on the "users" edge.
-func (rq *RoomQuery) QueryUsers() *UserQuery {
+// QueryOwner chains the current query on the "owner" edge.
+func (rq *RoomQuery) QueryOwner() *UserQuery {
 	query := (&UserClient{config: rq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := rq.prepareQuery(ctx); err != nil {
@@ -77,29 +74,7 @@ func (rq *RoomQuery) QueryUsers() *UserQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(room.Table, room.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, room.UsersTable, room.UsersPrimaryKey...),
-		)
-		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// QueryChat chains the current query on the "chat" edge.
-func (rq *RoomQuery) QueryChat() *ChatQuery {
-	query := (&ChatClient{config: rq.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := rq.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := rq.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(room.Table, room.FieldID, selector),
-			sqlgraph.To(chat.Table, chat.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, room.ChatTable, room.ChatColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, room.OwnerTable, room.OwnerColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
 		return fromU, nil
@@ -299,33 +274,21 @@ func (rq *RoomQuery) Clone() *RoomQuery {
 		order:      append([]OrderFunc{}, rq.order...),
 		inters:     append([]Interceptor{}, rq.inters...),
 		predicates: append([]predicate.Room{}, rq.predicates...),
-		withUsers:  rq.withUsers.Clone(),
-		withChat:   rq.withChat.Clone(),
+		withOwner:  rq.withOwner.Clone(),
 		// clone intermediate query.
 		sql:  rq.sql.Clone(),
 		path: rq.path,
 	}
 }
 
-// WithUsers tells the query-builder to eager-load the nodes that are connected to
-// the "users" edge. The optional arguments are used to configure the query builder of the edge.
-func (rq *RoomQuery) WithUsers(opts ...func(*UserQuery)) *RoomQuery {
+// WithOwner tells the query-builder to eager-load the nodes that are connected to
+// the "owner" edge. The optional arguments are used to configure the query builder of the edge.
+func (rq *RoomQuery) WithOwner(opts ...func(*UserQuery)) *RoomQuery {
 	query := (&UserClient{config: rq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	rq.withUsers = query
-	return rq
-}
-
-// WithChat tells the query-builder to eager-load the nodes that are connected to
-// the "chat" edge. The optional arguments are used to configure the query builder of the edge.
-func (rq *RoomQuery) WithChat(opts ...func(*ChatQuery)) *RoomQuery {
-	query := (&ChatClient{config: rq.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	rq.withChat = query
+	rq.withOwner = query
 	return rq
 }
 
@@ -408,12 +371,11 @@ func (rq *RoomQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Room, e
 		nodes       = []*Room{}
 		withFKs     = rq.withFKs
 		_spec       = rq.querySpec()
-		loadedTypes = [2]bool{
-			rq.withUsers != nil,
-			rq.withChat != nil,
+		loadedTypes = [1]bool{
+			rq.withOwner != nil,
 		}
 	)
-	if rq.withChat != nil {
+	if rq.withOwner != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -437,91 +399,23 @@ func (rq *RoomQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Room, e
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := rq.withUsers; query != nil {
-		if err := rq.loadUsers(ctx, query, nodes,
-			func(n *Room) { n.Edges.Users = []*User{} },
-			func(n *Room, e *User) { n.Edges.Users = append(n.Edges.Users, e) }); err != nil {
-			return nil, err
-		}
-	}
-	if query := rq.withChat; query != nil {
-		if err := rq.loadChat(ctx, query, nodes, nil,
-			func(n *Room, e *Chat) { n.Edges.Chat = e }); err != nil {
+	if query := rq.withOwner; query != nil {
+		if err := rq.loadOwner(ctx, query, nodes, nil,
+			func(n *Room, e *User) { n.Edges.Owner = e }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (rq *RoomQuery) loadUsers(ctx context.Context, query *UserQuery, nodes []*Room, init func(*Room), assign func(*Room, *User)) error {
-	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[int]*Room)
-	nids := make(map[int]map[*Room]struct{})
-	for i, node := range nodes {
-		edgeIDs[i] = node.ID
-		byID[node.ID] = node
-		if init != nil {
-			init(node)
-		}
-	}
-	query.Where(func(s *sql.Selector) {
-		joinT := sql.Table(room.UsersTable)
-		s.Join(joinT).On(s.C(user.FieldID), joinT.C(room.UsersPrimaryKey[0]))
-		s.Where(sql.InValues(joinT.C(room.UsersPrimaryKey[1]), edgeIDs...))
-		columns := s.SelectedColumns()
-		s.Select(joinT.C(room.UsersPrimaryKey[1]))
-		s.AppendSelect(columns...)
-		s.SetDistinct(false)
-	})
-	if err := query.prepareQuery(ctx); err != nil {
-		return err
-	}
-	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
-		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
-			assign := spec.Assign
-			values := spec.ScanValues
-			spec.ScanValues = func(columns []string) ([]any, error) {
-				values, err := values(columns[1:])
-				if err != nil {
-					return nil, err
-				}
-				return append([]any{new(sql.NullInt64)}, values...), nil
-			}
-			spec.Assign = func(columns []string, values []any) error {
-				outValue := int(values[0].(*sql.NullInt64).Int64)
-				inValue := int(values[1].(*sql.NullInt64).Int64)
-				if nids[inValue] == nil {
-					nids[inValue] = map[*Room]struct{}{byID[outValue]: {}}
-					return assign(columns[1:], values[1:])
-				}
-				nids[inValue][byID[outValue]] = struct{}{}
-				return nil
-			}
-		})
-	})
-	neighbors, err := withInterceptors[[]*User](ctx, query, qr, query.inters)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		nodes, ok := nids[n.ID]
-		if !ok {
-			return fmt.Errorf(`unexpected "users" node returned %v`, n.ID)
-		}
-		for kn := range nodes {
-			assign(kn, n)
-		}
-	}
-	return nil
-}
-func (rq *RoomQuery) loadChat(ctx context.Context, query *ChatQuery, nodes []*Room, init func(*Room), assign func(*Room, *Chat)) error {
+func (rq *RoomQuery) loadOwner(ctx context.Context, query *UserQuery, nodes []*Room, init func(*Room), assign func(*Room, *User)) error {
 	ids := make([]int, 0, len(nodes))
 	nodeids := make(map[int][]*Room)
 	for i := range nodes {
-		if nodes[i].room_chat == nil {
+		if nodes[i].user_room == nil {
 			continue
 		}
-		fk := *nodes[i].room_chat
+		fk := *nodes[i].user_room
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -530,7 +424,7 @@ func (rq *RoomQuery) loadChat(ctx context.Context, query *ChatQuery, nodes []*Ro
 	if len(ids) == 0 {
 		return nil
 	}
-	query.Where(chat.IDIn(ids...))
+	query.Where(user.IDIn(ids...))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
@@ -538,7 +432,7 @@ func (rq *RoomQuery) loadChat(ctx context.Context, query *ChatQuery, nodes []*Ro
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "room_chat" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "user_room" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)

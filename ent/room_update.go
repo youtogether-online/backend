@@ -13,7 +13,6 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/wtkeqrf0/you-together/ent/predicate"
 	"github.com/wtkeqrf0/you-together/ent/room"
-	"github.com/wtkeqrf0/you-together/ent/user"
 )
 
 // RoomUpdate is the builder for updating Room entities.
@@ -35,36 +34,9 @@ func (ru *RoomUpdate) SetUpdateTime(t time.Time) *RoomUpdate {
 	return ru
 }
 
-// SetCustomName sets the "custom_name" field.
-func (ru *RoomUpdate) SetCustomName(s string) *RoomUpdate {
-	ru.mutation.SetCustomName(s)
-	return ru
-}
-
-// SetNillableCustomName sets the "custom_name" field if the given value is not nil.
-func (ru *RoomUpdate) SetNillableCustomName(s *string) *RoomUpdate {
-	if s != nil {
-		ru.SetCustomName(*s)
-	}
-	return ru
-}
-
-// ClearCustomName clears the value of the "custom_name" field.
-func (ru *RoomUpdate) ClearCustomName() *RoomUpdate {
-	ru.mutation.ClearCustomName()
-	return ru
-}
-
-// SetOwnerID sets the "owner_id" field.
-func (ru *RoomUpdate) SetOwnerID(i int) *RoomUpdate {
-	ru.mutation.ResetOwnerID()
-	ru.mutation.SetOwnerID(i)
-	return ru
-}
-
-// AddOwnerID adds i to the "owner_id" field.
-func (ru *RoomUpdate) AddOwnerID(i int) *RoomUpdate {
-	ru.mutation.AddOwnerID(i)
+// SetTitle sets the "title" field.
+func (ru *RoomUpdate) SetTitle(s string) *RoomUpdate {
+	ru.mutation.SetTitle(s)
 	return ru
 }
 
@@ -114,45 +86,9 @@ func (ru *RoomUpdate) ClearDescription() *RoomUpdate {
 	return ru
 }
 
-// AddUserIDs adds the "users" edge to the User entity by IDs.
-func (ru *RoomUpdate) AddUserIDs(ids ...int) *RoomUpdate {
-	ru.mutation.AddUserIDs(ids...)
-	return ru
-}
-
-// AddUsers adds the "users" edges to the User entity.
-func (ru *RoomUpdate) AddUsers(u ...*User) *RoomUpdate {
-	ids := make([]int, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
-	}
-	return ru.AddUserIDs(ids...)
-}
-
 // Mutation returns the RoomMutation object of the builder.
 func (ru *RoomUpdate) Mutation() *RoomMutation {
 	return ru.mutation
-}
-
-// ClearUsers clears all "users" edges to the User entity.
-func (ru *RoomUpdate) ClearUsers() *RoomUpdate {
-	ru.mutation.ClearUsers()
-	return ru
-}
-
-// RemoveUserIDs removes the "users" edge to User entities by IDs.
-func (ru *RoomUpdate) RemoveUserIDs(ids ...int) *RoomUpdate {
-	ru.mutation.RemoveUserIDs(ids...)
-	return ru
-}
-
-// RemoveUsers removes "users" edges to User entities.
-func (ru *RoomUpdate) RemoveUsers(u ...*User) *RoomUpdate {
-	ids := make([]int, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
-	}
-	return ru.RemoveUserIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -199,20 +135,18 @@ func (ru *RoomUpdate) defaults() error {
 
 // check runs all checks and user-defined validators on the builder.
 func (ru *RoomUpdate) check() error {
-	if v, ok := ru.mutation.CustomName(); ok {
-		if err := room.CustomNameValidator(v); err != nil {
-			return &ValidationError{Name: "custom_name", err: fmt.Errorf(`ent: validator failed for field "Room.custom_name": %w`, err)}
-		}
-	}
-	if v, ok := ru.mutation.OwnerID(); ok {
-		if err := room.OwnerIDValidator(v); err != nil {
-			return &ValidationError{Name: "owner_id", err: fmt.Errorf(`ent: validator failed for field "Room.owner_id": %w`, err)}
+	if v, ok := ru.mutation.Title(); ok {
+		if err := room.TitleValidator(v); err != nil {
+			return &ValidationError{Name: "title", err: fmt.Errorf(`ent: validator failed for field "Room.title": %w`, err)}
 		}
 	}
 	if v, ok := ru.mutation.Description(); ok {
 		if err := room.DescriptionValidator(v); err != nil {
 			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "Room.description": %w`, err)}
 		}
+	}
+	if _, ok := ru.mutation.OwnerID(); ru.mutation.OwnerCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Room.owner"`)
 	}
 	return nil
 }
@@ -232,17 +166,8 @@ func (ru *RoomUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := ru.mutation.UpdateTime(); ok {
 		_spec.SetField(room.FieldUpdateTime, field.TypeTime, value)
 	}
-	if value, ok := ru.mutation.CustomName(); ok {
-		_spec.SetField(room.FieldCustomName, field.TypeString, value)
-	}
-	if ru.mutation.CustomNameCleared() {
-		_spec.ClearField(room.FieldCustomName, field.TypeString)
-	}
-	if value, ok := ru.mutation.OwnerID(); ok {
-		_spec.SetField(room.FieldOwnerID, field.TypeInt, value)
-	}
-	if value, ok := ru.mutation.AddedOwnerID(); ok {
-		_spec.AddField(room.FieldOwnerID, field.TypeInt, value)
+	if value, ok := ru.mutation.Title(); ok {
+		_spec.SetField(room.FieldTitle, field.TypeString, value)
 	}
 	if value, ok := ru.mutation.Privacy(); ok {
 		_spec.SetField(room.FieldPrivacy, field.TypeString, value)
@@ -258,60 +183,6 @@ func (ru *RoomUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if ru.mutation.DescriptionCleared() {
 		_spec.ClearField(room.FieldDescription, field.TypeString)
-	}
-	if ru.mutation.UsersCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
-			Table:   room.UsersTable,
-			Columns: room.UsersPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
-					Column: user.FieldID,
-				},
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := ru.mutation.RemovedUsersIDs(); len(nodes) > 0 && !ru.mutation.UsersCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
-			Table:   room.UsersTable,
-			Columns: room.UsersPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
-					Column: user.FieldID,
-				},
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := ru.mutation.UsersIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
-			Table:   room.UsersTable,
-			Columns: room.UsersPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
-					Column: user.FieldID,
-				},
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, ru.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -339,36 +210,9 @@ func (ruo *RoomUpdateOne) SetUpdateTime(t time.Time) *RoomUpdateOne {
 	return ruo
 }
 
-// SetCustomName sets the "custom_name" field.
-func (ruo *RoomUpdateOne) SetCustomName(s string) *RoomUpdateOne {
-	ruo.mutation.SetCustomName(s)
-	return ruo
-}
-
-// SetNillableCustomName sets the "custom_name" field if the given value is not nil.
-func (ruo *RoomUpdateOne) SetNillableCustomName(s *string) *RoomUpdateOne {
-	if s != nil {
-		ruo.SetCustomName(*s)
-	}
-	return ruo
-}
-
-// ClearCustomName clears the value of the "custom_name" field.
-func (ruo *RoomUpdateOne) ClearCustomName() *RoomUpdateOne {
-	ruo.mutation.ClearCustomName()
-	return ruo
-}
-
-// SetOwnerID sets the "owner_id" field.
-func (ruo *RoomUpdateOne) SetOwnerID(i int) *RoomUpdateOne {
-	ruo.mutation.ResetOwnerID()
-	ruo.mutation.SetOwnerID(i)
-	return ruo
-}
-
-// AddOwnerID adds i to the "owner_id" field.
-func (ruo *RoomUpdateOne) AddOwnerID(i int) *RoomUpdateOne {
-	ruo.mutation.AddOwnerID(i)
+// SetTitle sets the "title" field.
+func (ruo *RoomUpdateOne) SetTitle(s string) *RoomUpdateOne {
+	ruo.mutation.SetTitle(s)
 	return ruo
 }
 
@@ -418,45 +262,9 @@ func (ruo *RoomUpdateOne) ClearDescription() *RoomUpdateOne {
 	return ruo
 }
 
-// AddUserIDs adds the "users" edge to the User entity by IDs.
-func (ruo *RoomUpdateOne) AddUserIDs(ids ...int) *RoomUpdateOne {
-	ruo.mutation.AddUserIDs(ids...)
-	return ruo
-}
-
-// AddUsers adds the "users" edges to the User entity.
-func (ruo *RoomUpdateOne) AddUsers(u ...*User) *RoomUpdateOne {
-	ids := make([]int, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
-	}
-	return ruo.AddUserIDs(ids...)
-}
-
 // Mutation returns the RoomMutation object of the builder.
 func (ruo *RoomUpdateOne) Mutation() *RoomMutation {
 	return ruo.mutation
-}
-
-// ClearUsers clears all "users" edges to the User entity.
-func (ruo *RoomUpdateOne) ClearUsers() *RoomUpdateOne {
-	ruo.mutation.ClearUsers()
-	return ruo
-}
-
-// RemoveUserIDs removes the "users" edge to User entities by IDs.
-func (ruo *RoomUpdateOne) RemoveUserIDs(ids ...int) *RoomUpdateOne {
-	ruo.mutation.RemoveUserIDs(ids...)
-	return ruo
-}
-
-// RemoveUsers removes "users" edges to User entities.
-func (ruo *RoomUpdateOne) RemoveUsers(u ...*User) *RoomUpdateOne {
-	ids := make([]int, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
-	}
-	return ruo.RemoveUserIDs(ids...)
 }
 
 // Where appends a list predicates to the RoomUpdate builder.
@@ -516,20 +324,18 @@ func (ruo *RoomUpdateOne) defaults() error {
 
 // check runs all checks and user-defined validators on the builder.
 func (ruo *RoomUpdateOne) check() error {
-	if v, ok := ruo.mutation.CustomName(); ok {
-		if err := room.CustomNameValidator(v); err != nil {
-			return &ValidationError{Name: "custom_name", err: fmt.Errorf(`ent: validator failed for field "Room.custom_name": %w`, err)}
-		}
-	}
-	if v, ok := ruo.mutation.OwnerID(); ok {
-		if err := room.OwnerIDValidator(v); err != nil {
-			return &ValidationError{Name: "owner_id", err: fmt.Errorf(`ent: validator failed for field "Room.owner_id": %w`, err)}
+	if v, ok := ruo.mutation.Title(); ok {
+		if err := room.TitleValidator(v); err != nil {
+			return &ValidationError{Name: "title", err: fmt.Errorf(`ent: validator failed for field "Room.title": %w`, err)}
 		}
 	}
 	if v, ok := ruo.mutation.Description(); ok {
 		if err := room.DescriptionValidator(v); err != nil {
 			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "Room.description": %w`, err)}
 		}
+	}
+	if _, ok := ruo.mutation.OwnerID(); ruo.mutation.OwnerCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Room.owner"`)
 	}
 	return nil
 }
@@ -566,17 +372,8 @@ func (ruo *RoomUpdateOne) sqlSave(ctx context.Context) (_node *Room, err error) 
 	if value, ok := ruo.mutation.UpdateTime(); ok {
 		_spec.SetField(room.FieldUpdateTime, field.TypeTime, value)
 	}
-	if value, ok := ruo.mutation.CustomName(); ok {
-		_spec.SetField(room.FieldCustomName, field.TypeString, value)
-	}
-	if ruo.mutation.CustomNameCleared() {
-		_spec.ClearField(room.FieldCustomName, field.TypeString)
-	}
-	if value, ok := ruo.mutation.OwnerID(); ok {
-		_spec.SetField(room.FieldOwnerID, field.TypeInt, value)
-	}
-	if value, ok := ruo.mutation.AddedOwnerID(); ok {
-		_spec.AddField(room.FieldOwnerID, field.TypeInt, value)
+	if value, ok := ruo.mutation.Title(); ok {
+		_spec.SetField(room.FieldTitle, field.TypeString, value)
 	}
 	if value, ok := ruo.mutation.Privacy(); ok {
 		_spec.SetField(room.FieldPrivacy, field.TypeString, value)
@@ -592,60 +389,6 @@ func (ruo *RoomUpdateOne) sqlSave(ctx context.Context) (_node *Room, err error) 
 	}
 	if ruo.mutation.DescriptionCleared() {
 		_spec.ClearField(room.FieldDescription, field.TypeString)
-	}
-	if ruo.mutation.UsersCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
-			Table:   room.UsersTable,
-			Columns: room.UsersPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
-					Column: user.FieldID,
-				},
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := ruo.mutation.RemovedUsersIDs(); len(nodes) > 0 && !ruo.mutation.UsersCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
-			Table:   room.UsersTable,
-			Columns: room.UsersPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
-					Column: user.FieldID,
-				},
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := ruo.mutation.UsersIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
-			Table:   room.UsersTable,
-			Columns: room.UsersPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
-					Column: user.FieldID,
-				},
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Room{config: ruo.config}
 	_spec.Assign = _node.assignValues

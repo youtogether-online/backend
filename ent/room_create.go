@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/wtkeqrf0/you-together/ent/chat"
 	"github.com/wtkeqrf0/you-together/ent/room"
 	"github.com/wtkeqrf0/you-together/ent/user"
 )
@@ -20,6 +20,7 @@ type RoomCreate struct {
 	config
 	mutation *RoomMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetCreateTime sets the "create_time" field.
@@ -50,23 +51,9 @@ func (rc *RoomCreate) SetNillableUpdateTime(t *time.Time) *RoomCreate {
 	return rc
 }
 
-// SetCustomName sets the "custom_name" field.
-func (rc *RoomCreate) SetCustomName(s string) *RoomCreate {
-	rc.mutation.SetCustomName(s)
-	return rc
-}
-
-// SetNillableCustomName sets the "custom_name" field if the given value is not nil.
-func (rc *RoomCreate) SetNillableCustomName(s *string) *RoomCreate {
-	if s != nil {
-		rc.SetCustomName(*s)
-	}
-	return rc
-}
-
-// SetOwnerID sets the "owner_id" field.
-func (rc *RoomCreate) SetOwnerID(i int) *RoomCreate {
-	rc.mutation.SetOwnerID(i)
+// SetTitle sets the "title" field.
+func (rc *RoomCreate) SetTitle(s string) *RoomCreate {
+	rc.mutation.SetTitle(s)
 	return rc
 }
 
@@ -90,20 +77,6 @@ func (rc *RoomCreate) SetPasswordHash(b []byte) *RoomCreate {
 	return rc
 }
 
-// SetSetChat sets the "set_chat" field.
-func (rc *RoomCreate) SetSetChat(b bool) *RoomCreate {
-	rc.mutation.SetSetChat(b)
-	return rc
-}
-
-// SetNillableSetChat sets the "set_chat" field if the given value is not nil.
-func (rc *RoomCreate) SetNillableSetChat(b *bool) *RoomCreate {
-	if b != nil {
-		rc.SetSetChat(*b)
-	}
-	return rc
-}
-
 // SetDescription sets the "description" field.
 func (rc *RoomCreate) SetDescription(s string) *RoomCreate {
 	rc.mutation.SetDescription(s)
@@ -118,38 +91,15 @@ func (rc *RoomCreate) SetNillableDescription(s *string) *RoomCreate {
 	return rc
 }
 
-// AddUserIDs adds the "users" edge to the User entity by IDs.
-func (rc *RoomCreate) AddUserIDs(ids ...int) *RoomCreate {
-	rc.mutation.AddUserIDs(ids...)
+// SetOwnerID sets the "owner" edge to the User entity by ID.
+func (rc *RoomCreate) SetOwnerID(id int) *RoomCreate {
+	rc.mutation.SetOwnerID(id)
 	return rc
 }
 
-// AddUsers adds the "users" edges to the User entity.
-func (rc *RoomCreate) AddUsers(u ...*User) *RoomCreate {
-	ids := make([]int, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
-	}
-	return rc.AddUserIDs(ids...)
-}
-
-// SetChatID sets the "chat" edge to the Chat entity by ID.
-func (rc *RoomCreate) SetChatID(id int) *RoomCreate {
-	rc.mutation.SetChatID(id)
-	return rc
-}
-
-// SetNillableChatID sets the "chat" edge to the Chat entity by ID if the given value is not nil.
-func (rc *RoomCreate) SetNillableChatID(id *int) *RoomCreate {
-	if id != nil {
-		rc = rc.SetChatID(*id)
-	}
-	return rc
-}
-
-// SetChat sets the "chat" edge to the Chat entity.
-func (rc *RoomCreate) SetChat(c *Chat) *RoomCreate {
-	return rc.SetChatID(c.ID)
+// SetOwner sets the "owner" edge to the User entity.
+func (rc *RoomCreate) SetOwner(u *User) *RoomCreate {
+	return rc.SetOwnerID(u.ID)
 }
 
 // Mutation returns the RoomMutation object of the builder.
@@ -207,10 +157,6 @@ func (rc *RoomCreate) defaults() error {
 		v := room.DefaultPrivacy
 		rc.mutation.SetPrivacy(v)
 	}
-	if _, ok := rc.mutation.SetChat(); !ok {
-		v := room.DefaultSetChat
-		rc.mutation.SetSetChat(v)
-	}
 	return nil
 }
 
@@ -222,29 +168,21 @@ func (rc *RoomCreate) check() error {
 	if _, ok := rc.mutation.UpdateTime(); !ok {
 		return &ValidationError{Name: "update_time", err: errors.New(`ent: missing required field "Room.update_time"`)}
 	}
-	if v, ok := rc.mutation.CustomName(); ok {
-		if err := room.CustomNameValidator(v); err != nil {
-			return &ValidationError{Name: "custom_name", err: fmt.Errorf(`ent: validator failed for field "Room.custom_name": %w`, err)}
-		}
-	}
-	if _, ok := rc.mutation.OwnerID(); !ok {
-		return &ValidationError{Name: "owner_id", err: errors.New(`ent: missing required field "Room.owner_id"`)}
-	}
-	if v, ok := rc.mutation.OwnerID(); ok {
-		if err := room.OwnerIDValidator(v); err != nil {
-			return &ValidationError{Name: "owner_id", err: fmt.Errorf(`ent: validator failed for field "Room.owner_id": %w`, err)}
+	if v, ok := rc.mutation.Title(); ok {
+		if err := room.TitleValidator(v); err != nil {
+			return &ValidationError{Name: "title", err: fmt.Errorf(`ent: validator failed for field "Room.title": %w`, err)}
 		}
 	}
 	if _, ok := rc.mutation.Privacy(); !ok {
 		return &ValidationError{Name: "privacy", err: errors.New(`ent: missing required field "Room.privacy"`)}
 	}
-	if _, ok := rc.mutation.SetChat(); !ok {
-		return &ValidationError{Name: "set_chat", err: errors.New(`ent: missing required field "Room.set_chat"`)}
-	}
 	if v, ok := rc.mutation.Description(); ok {
 		if err := room.DescriptionValidator(v); err != nil {
 			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "Room.description": %w`, err)}
 		}
+	}
+	if _, ok := rc.mutation.OwnerID(); !ok {
+		return &ValidationError{Name: "owner", err: errors.New(`ent: missing required edge "Room.owner"`)}
 	}
 	return nil
 }
@@ -272,6 +210,7 @@ func (rc *RoomCreate) createSpec() (*Room, *sqlgraph.CreateSpec) {
 		_node = &Room{config: rc.config}
 		_spec = sqlgraph.NewCreateSpec(room.Table, sqlgraph.NewFieldSpec(room.FieldID, field.TypeInt))
 	)
+	_spec.OnConflict = rc.conflict
 	if value, ok := rc.mutation.CreateTime(); ok {
 		_spec.SetField(room.FieldCreateTime, field.TypeTime, value)
 		_node.CreateTime = value
@@ -280,13 +219,9 @@ func (rc *RoomCreate) createSpec() (*Room, *sqlgraph.CreateSpec) {
 		_spec.SetField(room.FieldUpdateTime, field.TypeTime, value)
 		_node.UpdateTime = value
 	}
-	if value, ok := rc.mutation.CustomName(); ok {
-		_spec.SetField(room.FieldCustomName, field.TypeString, value)
-		_node.CustomName = &value
-	}
-	if value, ok := rc.mutation.OwnerID(); ok {
-		_spec.SetField(room.FieldOwnerID, field.TypeInt, value)
-		_node.OwnerID = value
+	if value, ok := rc.mutation.Title(); ok {
+		_spec.SetField(room.FieldTitle, field.TypeString, value)
+		_node.Title = value
 	}
 	if value, ok := rc.mutation.Privacy(); ok {
 		_spec.SetField(room.FieldPrivacy, field.TypeString, value)
@@ -296,20 +231,16 @@ func (rc *RoomCreate) createSpec() (*Room, *sqlgraph.CreateSpec) {
 		_spec.SetField(room.FieldPasswordHash, field.TypeBytes, value)
 		_node.PasswordHash = &value
 	}
-	if value, ok := rc.mutation.SetChat(); ok {
-		_spec.SetField(room.FieldSetChat, field.TypeBool, value)
-		_node.SetChat = value
-	}
 	if value, ok := rc.mutation.Description(); ok {
 		_spec.SetField(room.FieldDescription, field.TypeString, value)
 		_node.Description = &value
 	}
-	if nodes := rc.mutation.UsersIDs(); len(nodes) > 0 {
+	if nodes := rc.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2O,
 			Inverse: true,
-			Table:   room.UsersTable,
-			Columns: room.UsersPrimaryKey,
+			Table:   room.OwnerTable,
+			Columns: []string{room.OwnerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -321,35 +252,300 @@ func (rc *RoomCreate) createSpec() (*Room, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := rc.mutation.ChatIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   room.ChatTable,
-			Columns: []string{room.ChatColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
-					Column: chat.FieldID,
-				},
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_node.room_chat = &nodes[0]
+		_node.user_room = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Room.Create().
+//		SetCreateTime(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.RoomUpsert) {
+//			SetCreateTime(v+v).
+//		}).
+//		Exec(ctx)
+func (rc *RoomCreate) OnConflict(opts ...sql.ConflictOption) *RoomUpsertOne {
+	rc.conflict = opts
+	return &RoomUpsertOne{
+		create: rc,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Room.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (rc *RoomCreate) OnConflictColumns(columns ...string) *RoomUpsertOne {
+	rc.conflict = append(rc.conflict, sql.ConflictColumns(columns...))
+	return &RoomUpsertOne{
+		create: rc,
+	}
+}
+
+type (
+	// RoomUpsertOne is the builder for "upsert"-ing
+	//  one Room node.
+	RoomUpsertOne struct {
+		create *RoomCreate
+	}
+
+	// RoomUpsert is the "OnConflict" setter.
+	RoomUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetUpdateTime sets the "update_time" field.
+func (u *RoomUpsert) SetUpdateTime(v time.Time) *RoomUpsert {
+	u.Set(room.FieldUpdateTime, v)
+	return u
+}
+
+// UpdateUpdateTime sets the "update_time" field to the value that was provided on create.
+func (u *RoomUpsert) UpdateUpdateTime() *RoomUpsert {
+	u.SetExcluded(room.FieldUpdateTime)
+	return u
+}
+
+// SetTitle sets the "title" field.
+func (u *RoomUpsert) SetTitle(v string) *RoomUpsert {
+	u.Set(room.FieldTitle, v)
+	return u
+}
+
+// UpdateTitle sets the "title" field to the value that was provided on create.
+func (u *RoomUpsert) UpdateTitle() *RoomUpsert {
+	u.SetExcluded(room.FieldTitle)
+	return u
+}
+
+// SetPrivacy sets the "privacy" field.
+func (u *RoomUpsert) SetPrivacy(v string) *RoomUpsert {
+	u.Set(room.FieldPrivacy, v)
+	return u
+}
+
+// UpdatePrivacy sets the "privacy" field to the value that was provided on create.
+func (u *RoomUpsert) UpdatePrivacy() *RoomUpsert {
+	u.SetExcluded(room.FieldPrivacy)
+	return u
+}
+
+// SetPasswordHash sets the "password_hash" field.
+func (u *RoomUpsert) SetPasswordHash(v []byte) *RoomUpsert {
+	u.Set(room.FieldPasswordHash, v)
+	return u
+}
+
+// UpdatePasswordHash sets the "password_hash" field to the value that was provided on create.
+func (u *RoomUpsert) UpdatePasswordHash() *RoomUpsert {
+	u.SetExcluded(room.FieldPasswordHash)
+	return u
+}
+
+// ClearPasswordHash clears the value of the "password_hash" field.
+func (u *RoomUpsert) ClearPasswordHash() *RoomUpsert {
+	u.SetNull(room.FieldPasswordHash)
+	return u
+}
+
+// SetDescription sets the "description" field.
+func (u *RoomUpsert) SetDescription(v string) *RoomUpsert {
+	u.Set(room.FieldDescription, v)
+	return u
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *RoomUpsert) UpdateDescription() *RoomUpsert {
+	u.SetExcluded(room.FieldDescription)
+	return u
+}
+
+// ClearDescription clears the value of the "description" field.
+func (u *RoomUpsert) ClearDescription() *RoomUpsert {
+	u.SetNull(room.FieldDescription)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create.
+// Using this option is equivalent to using:
+//
+//	client.Room.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//		).
+//		Exec(ctx)
+func (u *RoomUpsertOne) UpdateNewValues() *RoomUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.CreateTime(); exists {
+			s.SetIgnore(room.FieldCreateTime)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Room.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *RoomUpsertOne) Ignore() *RoomUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *RoomUpsertOne) DoNothing() *RoomUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the RoomCreate.OnConflict
+// documentation for more info.
+func (u *RoomUpsertOne) Update(set func(*RoomUpsert)) *RoomUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&RoomUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetUpdateTime sets the "update_time" field.
+func (u *RoomUpsertOne) SetUpdateTime(v time.Time) *RoomUpsertOne {
+	return u.Update(func(s *RoomUpsert) {
+		s.SetUpdateTime(v)
+	})
+}
+
+// UpdateUpdateTime sets the "update_time" field to the value that was provided on create.
+func (u *RoomUpsertOne) UpdateUpdateTime() *RoomUpsertOne {
+	return u.Update(func(s *RoomUpsert) {
+		s.UpdateUpdateTime()
+	})
+}
+
+// SetTitle sets the "title" field.
+func (u *RoomUpsertOne) SetTitle(v string) *RoomUpsertOne {
+	return u.Update(func(s *RoomUpsert) {
+		s.SetTitle(v)
+	})
+}
+
+// UpdateTitle sets the "title" field to the value that was provided on create.
+func (u *RoomUpsertOne) UpdateTitle() *RoomUpsertOne {
+	return u.Update(func(s *RoomUpsert) {
+		s.UpdateTitle()
+	})
+}
+
+// SetPrivacy sets the "privacy" field.
+func (u *RoomUpsertOne) SetPrivacy(v string) *RoomUpsertOne {
+	return u.Update(func(s *RoomUpsert) {
+		s.SetPrivacy(v)
+	})
+}
+
+// UpdatePrivacy sets the "privacy" field to the value that was provided on create.
+func (u *RoomUpsertOne) UpdatePrivacy() *RoomUpsertOne {
+	return u.Update(func(s *RoomUpsert) {
+		s.UpdatePrivacy()
+	})
+}
+
+// SetPasswordHash sets the "password_hash" field.
+func (u *RoomUpsertOne) SetPasswordHash(v []byte) *RoomUpsertOne {
+	return u.Update(func(s *RoomUpsert) {
+		s.SetPasswordHash(v)
+	})
+}
+
+// UpdatePasswordHash sets the "password_hash" field to the value that was provided on create.
+func (u *RoomUpsertOne) UpdatePasswordHash() *RoomUpsertOne {
+	return u.Update(func(s *RoomUpsert) {
+		s.UpdatePasswordHash()
+	})
+}
+
+// ClearPasswordHash clears the value of the "password_hash" field.
+func (u *RoomUpsertOne) ClearPasswordHash() *RoomUpsertOne {
+	return u.Update(func(s *RoomUpsert) {
+		s.ClearPasswordHash()
+	})
+}
+
+// SetDescription sets the "description" field.
+func (u *RoomUpsertOne) SetDescription(v string) *RoomUpsertOne {
+	return u.Update(func(s *RoomUpsert) {
+		s.SetDescription(v)
+	})
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *RoomUpsertOne) UpdateDescription() *RoomUpsertOne {
+	return u.Update(func(s *RoomUpsert) {
+		s.UpdateDescription()
+	})
+}
+
+// ClearDescription clears the value of the "description" field.
+func (u *RoomUpsertOne) ClearDescription() *RoomUpsertOne {
+	return u.Update(func(s *RoomUpsert) {
+		s.ClearDescription()
+	})
+}
+
+// Exec executes the query.
+func (u *RoomUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for RoomCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *RoomUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *RoomUpsertOne) ID(ctx context.Context) (id int, err error) {
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *RoomUpsertOne) IDX(ctx context.Context) int {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
 }
 
 // RoomCreateBulk is the builder for creating many Room entities in bulk.
 type RoomCreateBulk struct {
 	config
 	builders []*RoomCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the Room entities in the database.
@@ -376,6 +572,7 @@ func (rcb *RoomCreateBulk) Save(ctx context.Context) ([]*Room, error) {
 					_, err = mutators[i+1].Mutate(root, rcb.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = rcb.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, rcb.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -426,6 +623,198 @@ func (rcb *RoomCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (rcb *RoomCreateBulk) ExecX(ctx context.Context) {
 	if err := rcb.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Room.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.RoomUpsert) {
+//			SetCreateTime(v+v).
+//		}).
+//		Exec(ctx)
+func (rcb *RoomCreateBulk) OnConflict(opts ...sql.ConflictOption) *RoomUpsertBulk {
+	rcb.conflict = opts
+	return &RoomUpsertBulk{
+		create: rcb,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Room.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (rcb *RoomCreateBulk) OnConflictColumns(columns ...string) *RoomUpsertBulk {
+	rcb.conflict = append(rcb.conflict, sql.ConflictColumns(columns...))
+	return &RoomUpsertBulk{
+		create: rcb,
+	}
+}
+
+// RoomUpsertBulk is the builder for "upsert"-ing
+// a bulk of Room nodes.
+type RoomUpsertBulk struct {
+	create *RoomCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.Room.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//		).
+//		Exec(ctx)
+func (u *RoomUpsertBulk) UpdateNewValues() *RoomUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.CreateTime(); exists {
+				s.SetIgnore(room.FieldCreateTime)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Room.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *RoomUpsertBulk) Ignore() *RoomUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *RoomUpsertBulk) DoNothing() *RoomUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the RoomCreateBulk.OnConflict
+// documentation for more info.
+func (u *RoomUpsertBulk) Update(set func(*RoomUpsert)) *RoomUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&RoomUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetUpdateTime sets the "update_time" field.
+func (u *RoomUpsertBulk) SetUpdateTime(v time.Time) *RoomUpsertBulk {
+	return u.Update(func(s *RoomUpsert) {
+		s.SetUpdateTime(v)
+	})
+}
+
+// UpdateUpdateTime sets the "update_time" field to the value that was provided on create.
+func (u *RoomUpsertBulk) UpdateUpdateTime() *RoomUpsertBulk {
+	return u.Update(func(s *RoomUpsert) {
+		s.UpdateUpdateTime()
+	})
+}
+
+// SetTitle sets the "title" field.
+func (u *RoomUpsertBulk) SetTitle(v string) *RoomUpsertBulk {
+	return u.Update(func(s *RoomUpsert) {
+		s.SetTitle(v)
+	})
+}
+
+// UpdateTitle sets the "title" field to the value that was provided on create.
+func (u *RoomUpsertBulk) UpdateTitle() *RoomUpsertBulk {
+	return u.Update(func(s *RoomUpsert) {
+		s.UpdateTitle()
+	})
+}
+
+// SetPrivacy sets the "privacy" field.
+func (u *RoomUpsertBulk) SetPrivacy(v string) *RoomUpsertBulk {
+	return u.Update(func(s *RoomUpsert) {
+		s.SetPrivacy(v)
+	})
+}
+
+// UpdatePrivacy sets the "privacy" field to the value that was provided on create.
+func (u *RoomUpsertBulk) UpdatePrivacy() *RoomUpsertBulk {
+	return u.Update(func(s *RoomUpsert) {
+		s.UpdatePrivacy()
+	})
+}
+
+// SetPasswordHash sets the "password_hash" field.
+func (u *RoomUpsertBulk) SetPasswordHash(v []byte) *RoomUpsertBulk {
+	return u.Update(func(s *RoomUpsert) {
+		s.SetPasswordHash(v)
+	})
+}
+
+// UpdatePasswordHash sets the "password_hash" field to the value that was provided on create.
+func (u *RoomUpsertBulk) UpdatePasswordHash() *RoomUpsertBulk {
+	return u.Update(func(s *RoomUpsert) {
+		s.UpdatePasswordHash()
+	})
+}
+
+// ClearPasswordHash clears the value of the "password_hash" field.
+func (u *RoomUpsertBulk) ClearPasswordHash() *RoomUpsertBulk {
+	return u.Update(func(s *RoomUpsert) {
+		s.ClearPasswordHash()
+	})
+}
+
+// SetDescription sets the "description" field.
+func (u *RoomUpsertBulk) SetDescription(v string) *RoomUpsertBulk {
+	return u.Update(func(s *RoomUpsert) {
+		s.SetDescription(v)
+	})
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *RoomUpsertBulk) UpdateDescription() *RoomUpsertBulk {
+	return u.Update(func(s *RoomUpsert) {
+		s.UpdateDescription()
+	})
+}
+
+// ClearDescription clears the value of the "description" field.
+func (u *RoomUpsertBulk) ClearDescription() *RoomUpsertBulk {
+	return u.Update(func(s *RoomUpsert) {
+		s.ClearDescription()
+	})
+}
+
+// Exec executes the query.
+func (u *RoomUpsertBulk) Exec(ctx context.Context) error {
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the RoomCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for RoomCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *RoomUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

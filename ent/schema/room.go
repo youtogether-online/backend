@@ -3,6 +3,7 @@ package schema
 import (
 	"context"
 	"entgo.io/ent"
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/mixin"
@@ -19,17 +20,15 @@ type Room struct {
 // Fields of the Room.
 func (Room) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("custom_name").Optional().MinLen(3).MaxLen(32).Nillable().
-			StructTag(`json:"customName,omitempty" validate:"omitempty,gte=3,lte=32"`),
 
-		field.Int("owner_id").Unique().Positive().StructTag(`json:"owner_id,omitempty"`),
+		field.String("title").MinLen(3).MaxLen(32).
+			Annotations(entsql.DefaultExpr("'room' || setval(pg_get_serial_sequence('rooms','id'),nextval(pg_get_serial_sequence('rooms','id'))-1)")).
+			StructTag(`json:"title,omitempty" validate:"omitempty,gte=3,lte=32"`),
 
-		field.String("privacy").Default("PUBLIC").
+		field.String("privacy").Default("FRIENDS").
 			StructTag(`json:"privacy,omitempty" validate:"omitempty,enum=PUBLIC*PRIVATE*FRIENDS"`),
 
 		field.Bytes("password_hash").Optional().Sensitive().Nillable(),
-
-		field.Bool("set_chat").Default(false).Immutable(),
 
 		field.String("description").Optional().MaxLen(140).Nillable().
 			StructTag(`json:"description,omitempty" validate:"omitempty,lte=140"`),
@@ -39,8 +38,8 @@ func (Room) Fields() []ent.Field {
 // Edges of the Room.
 func (Room) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("users", User.Type).Ref("rooms"),
-		edge.To("chat", Chat.Type).Unique().Immutable(),
+		edge.From("owner", User.Type).
+			Ref("room").Unique().Immutable().Required(),
 	}
 }
 

@@ -14,7 +14,6 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"github.com/wtkeqrf0/you-together/ent/chat"
 	"github.com/wtkeqrf0/you-together/ent/room"
 	"github.com/wtkeqrf0/you-together/ent/user"
 )
@@ -24,8 +23,6 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
-	// Chat is the client for interacting with the Chat builders.
-	Chat *ChatClient
 	// Room is the client for interacting with the Room builders.
 	Room *RoomClient
 	// User is the client for interacting with the User builders.
@@ -43,7 +40,6 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
-	c.Chat = NewChatClient(c.config)
 	c.Room = NewRoomClient(c.config)
 	c.User = NewUserClient(c.config)
 }
@@ -128,7 +124,6 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	return &Tx{
 		ctx:    ctx,
 		config: cfg,
-		Chat:   NewChatClient(cfg),
 		Room:   NewRoomClient(cfg),
 		User:   NewUserClient(cfg),
 	}, nil
@@ -150,7 +145,6 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	return &Tx{
 		ctx:    ctx,
 		config: cfg,
-		Chat:   NewChatClient(cfg),
 		Room:   NewRoomClient(cfg),
 		User:   NewUserClient(cfg),
 	}, nil
@@ -159,7 +153,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Chat.
+//		Room.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -181,7 +175,6 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
-	c.Chat.Use(hooks...)
 	c.Room.Use(hooks...)
 	c.User.Use(hooks...)
 }
@@ -189,7 +182,6 @@ func (c *Client) Use(hooks ...Hook) {
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
-	c.Chat.Intercept(interceptors...)
 	c.Room.Intercept(interceptors...)
 	c.User.Intercept(interceptors...)
 }
@@ -197,164 +189,12 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
-	case *ChatMutation:
-		return c.Chat.mutate(ctx, m)
 	case *RoomMutation:
 		return c.Room.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
-	}
-}
-
-// ChatClient is a client for the Chat schema.
-type ChatClient struct {
-	config
-}
-
-// NewChatClient returns a client for the Chat from the given config.
-func NewChatClient(c config) *ChatClient {
-	return &ChatClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `chat.Hooks(f(g(h())))`.
-func (c *ChatClient) Use(hooks ...Hook) {
-	c.hooks.Chat = append(c.hooks.Chat, hooks...)
-}
-
-// Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `chat.Intercept(f(g(h())))`.
-func (c *ChatClient) Intercept(interceptors ...Interceptor) {
-	c.inters.Chat = append(c.inters.Chat, interceptors...)
-}
-
-// Create returns a builder for creating a Chat entity.
-func (c *ChatClient) Create() *ChatCreate {
-	mutation := newChatMutation(c.config, OpCreate)
-	return &ChatCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of Chat entities.
-func (c *ChatClient) CreateBulk(builders ...*ChatCreate) *ChatCreateBulk {
-	return &ChatCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for Chat.
-func (c *ChatClient) Update() *ChatUpdate {
-	mutation := newChatMutation(c.config, OpUpdate)
-	return &ChatUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *ChatClient) UpdateOne(ch *Chat) *ChatUpdateOne {
-	mutation := newChatMutation(c.config, OpUpdateOne, withChat(ch))
-	return &ChatUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *ChatClient) UpdateOneID(id int) *ChatUpdateOne {
-	mutation := newChatMutation(c.config, OpUpdateOne, withChatID(id))
-	return &ChatUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for Chat.
-func (c *ChatClient) Delete() *ChatDelete {
-	mutation := newChatMutation(c.config, OpDelete)
-	return &ChatDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a builder for deleting the given entity.
-func (c *ChatClient) DeleteOne(ch *Chat) *ChatDeleteOne {
-	return c.DeleteOneID(ch.ID)
-}
-
-// DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *ChatClient) DeleteOneID(id int) *ChatDeleteOne {
-	builder := c.Delete().Where(chat.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &ChatDeleteOne{builder}
-}
-
-// Query returns a query builder for Chat.
-func (c *ChatClient) Query() *ChatQuery {
-	return &ChatQuery{
-		config: c.config,
-		ctx:    &QueryContext{Type: TypeChat},
-		inters: c.Interceptors(),
-	}
-}
-
-// Get returns a Chat entity by its id.
-func (c *ChatClient) Get(ctx context.Context, id int) (*Chat, error) {
-	return c.Query().Where(chat.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *ChatClient) GetX(ctx context.Context, id int) *Chat {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// QueryRoom queries the room edge of a Chat.
-func (c *ChatClient) QueryRoom(ch *Chat) *RoomQuery {
-	query := (&RoomClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := ch.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(chat.Table, chat.FieldID, id),
-			sqlgraph.To(room.Table, room.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, chat.RoomTable, chat.RoomColumn),
-		)
-		fromV = sqlgraph.Neighbors(ch.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// QueryUser queries the user edge of a Chat.
-func (c *ChatClient) QueryUser(ch *Chat) *UserQuery {
-	query := (&UserClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := ch.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(chat.Table, chat.FieldID, id),
-			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, chat.UserTable, chat.UserColumn),
-		)
-		fromV = sqlgraph.Neighbors(ch.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// Hooks returns the client hooks.
-func (c *ChatClient) Hooks() []Hook {
-	return c.hooks.Chat
-}
-
-// Interceptors returns the client interceptors.
-func (c *ChatClient) Interceptors() []Interceptor {
-	return c.inters.Chat
-}
-
-func (c *ChatClient) mutate(ctx context.Context, m *ChatMutation) (Value, error) {
-	switch m.Op() {
-	case OpCreate:
-		return (&ChatCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdate:
-		return (&ChatUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdateOne:
-		return (&ChatUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpDelete, OpDeleteOne:
-		return (&ChatDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
-	default:
-		return nil, fmt.Errorf("ent: unknown Chat mutation op: %q", m.Op())
 	}
 }
 
@@ -451,31 +291,15 @@ func (c *RoomClient) GetX(ctx context.Context, id int) *Room {
 	return obj
 }
 
-// QueryUsers queries the users edge of a Room.
-func (c *RoomClient) QueryUsers(r *Room) *UserQuery {
+// QueryOwner queries the owner edge of a Room.
+func (c *RoomClient) QueryOwner(r *Room) *UserQuery {
 	query := (&UserClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := r.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(room.Table, room.FieldID, id),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, room.UsersTable, room.UsersPrimaryKey...),
-		)
-		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// QueryChat queries the chat edge of a Room.
-func (c *RoomClient) QueryChat(r *Room) *ChatQuery {
-	query := (&ChatClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := r.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(room.Table, room.FieldID, id),
-			sqlgraph.To(chat.Table, chat.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, room.ChatTable, room.ChatColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, room.OwnerTable, room.OwnerColumn),
 		)
 		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
 		return fromV, nil
@@ -602,15 +426,15 @@ func (c *UserClient) GetX(ctx context.Context, id int) *User {
 	return obj
 }
 
-// QueryRooms queries the rooms edge of a User.
-func (c *UserClient) QueryRooms(u *User) *RoomQuery {
+// QueryRoom queries the room edge of a User.
+func (c *UserClient) QueryRoom(u *User) *RoomQuery {
 	query := (&RoomClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := u.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(room.Table, room.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, user.RoomsTable, user.RoomsPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.O2O, false, user.RoomTable, user.RoomColumn),
 		)
 		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
 		return fromV, nil
@@ -647,9 +471,9 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Chat, Room, User []ent.Hook
+		Room, User []ent.Hook
 	}
 	inters struct {
-		Chat, Room, User []ent.Interceptor
+		Room, User []ent.Interceptor
 	}
 )

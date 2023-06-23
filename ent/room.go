@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
-	"github.com/wtkeqrf0/you-together/ent/chat"
 	"github.com/wtkeqrf0/you-together/ent/room"
+	"github.com/wtkeqrf0/you-together/ent/user"
 )
 
 // Room is the model entity for the Room schema.
@@ -21,55 +21,40 @@ type Room struct {
 	CreateTime time.Time `json:"create_time,omitempty"`
 	// UpdateTime holds the value of the "update_time" field.
 	UpdateTime time.Time `json:"update_time,omitempty"`
-	// CustomName holds the value of the "custom_name" field.
-	CustomName *string `json:"customName,omitempty" validate:"omitempty,gte=3,lte=32"`
-	// OwnerID holds the value of the "owner_id" field.
-	OwnerID int `json:"owner_id,omitempty"`
+	// Title holds the value of the "title" field.
+	Title string `json:"title,omitempty" validate:"omitempty,gte=3,lte=32"`
 	// Privacy holds the value of the "privacy" field.
 	Privacy string `json:"privacy,omitempty" validate:"omitempty,enum=PUBLIC*PRIVATE*FRIENDS"`
 	// PasswordHash holds the value of the "password_hash" field.
 	PasswordHash *[]byte `json:"-" validate:"-"`
-	// SetChat holds the value of the "set_chat" field.
-	SetChat bool `json:"set_chat,omitempty"`
 	// Description holds the value of the "description" field.
 	Description *string `json:"description,omitempty" validate:"omitempty,lte=140"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RoomQuery when eager-loading is set.
 	Edges     RoomEdges `json:"edges"`
-	room_chat *int
+	user_room *int
 }
 
 // RoomEdges holds the relations/edges for other nodes in the graph.
 type RoomEdges struct {
-	// Users holds the value of the users edge.
-	Users []*User `json:"users,omitempty"`
-	// Chat holds the value of the chat edge.
-	Chat *Chat `json:"chat,omitempty"`
+	// Owner holds the value of the owner edge.
+	Owner *User `json:"owner,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [1]bool
 }
 
-// UsersOrErr returns the Users value or an error if the edge
-// was not loaded in eager-loading.
-func (e RoomEdges) UsersOrErr() ([]*User, error) {
-	if e.loadedTypes[0] {
-		return e.Users, nil
-	}
-	return nil, &NotLoadedError{edge: "users"}
-}
-
-// ChatOrErr returns the Chat value or an error if the edge
+// OwnerOrErr returns the Owner value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e RoomEdges) ChatOrErr() (*Chat, error) {
-	if e.loadedTypes[1] {
-		if e.Chat == nil {
+func (e RoomEdges) OwnerOrErr() (*User, error) {
+	if e.loadedTypes[0] {
+		if e.Owner == nil {
 			// Edge was loaded but was not found.
-			return nil, &NotFoundError{label: chat.Label}
+			return nil, &NotFoundError{label: user.Label}
 		}
-		return e.Chat, nil
+		return e.Owner, nil
 	}
-	return nil, &NotLoadedError{edge: "chat"}
+	return nil, &NotLoadedError{edge: "owner"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -79,15 +64,13 @@ func (*Room) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case room.FieldPasswordHash:
 			values[i] = new([]byte)
-		case room.FieldSetChat:
-			values[i] = new(sql.NullBool)
-		case room.FieldID, room.FieldOwnerID:
+		case room.FieldID:
 			values[i] = new(sql.NullInt64)
-		case room.FieldCustomName, room.FieldPrivacy, room.FieldDescription:
+		case room.FieldTitle, room.FieldPrivacy, room.FieldDescription:
 			values[i] = new(sql.NullString)
 		case room.FieldCreateTime, room.FieldUpdateTime:
 			values[i] = new(sql.NullTime)
-		case room.ForeignKeys[0]: // room_chat
+		case room.ForeignKeys[0]: // user_room
 			values[i] = new(sql.NullInt64)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Room", columns[i])
@@ -122,18 +105,11 @@ func (r *Room) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				r.UpdateTime = value.Time
 			}
-		case room.FieldCustomName:
+		case room.FieldTitle:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field custom_name", values[i])
+				return fmt.Errorf("unexpected type %T for field title", values[i])
 			} else if value.Valid {
-				r.CustomName = new(string)
-				*r.CustomName = value.String
-			}
-		case room.FieldOwnerID:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field owner_id", values[i])
-			} else if value.Valid {
-				r.OwnerID = int(value.Int64)
+				r.Title = value.String
 			}
 		case room.FieldPrivacy:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -147,12 +123,6 @@ func (r *Room) assignValues(columns []string, values []any) error {
 			} else if value != nil {
 				r.PasswordHash = value
 			}
-		case room.FieldSetChat:
-			if value, ok := values[i].(*sql.NullBool); !ok {
-				return fmt.Errorf("unexpected type %T for field set_chat", values[i])
-			} else if value.Valid {
-				r.SetChat = value.Bool
-			}
 		case room.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field description", values[i])
@@ -162,24 +132,19 @@ func (r *Room) assignValues(columns []string, values []any) error {
 			}
 		case room.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field room_chat", value)
+				return fmt.Errorf("unexpected type %T for edge-field user_room", value)
 			} else if value.Valid {
-				r.room_chat = new(int)
-				*r.room_chat = int(value.Int64)
+				r.user_room = new(int)
+				*r.user_room = int(value.Int64)
 			}
 		}
 	}
 	return nil
 }
 
-// QueryUsers queries the "users" edge of the Room entity.
-func (r *Room) QueryUsers() *UserQuery {
-	return NewRoomClient(r.config).QueryUsers(r)
-}
-
-// QueryChat queries the "chat" edge of the Room entity.
-func (r *Room) QueryChat() *ChatQuery {
-	return NewRoomClient(r.config).QueryChat(r)
+// QueryOwner queries the "owner" edge of the Room entity.
+func (r *Room) QueryOwner() *UserQuery {
+	return NewRoomClient(r.config).QueryOwner(r)
 }
 
 // Update returns a builder for updating this Room.
@@ -211,21 +176,13 @@ func (r *Room) String() string {
 	builder.WriteString("update_time=")
 	builder.WriteString(r.UpdateTime.Format(time.ANSIC))
 	builder.WriteString(", ")
-	if v := r.CustomName; v != nil {
-		builder.WriteString("custom_name=")
-		builder.WriteString(*v)
-	}
-	builder.WriteString(", ")
-	builder.WriteString("owner_id=")
-	builder.WriteString(fmt.Sprintf("%v", r.OwnerID))
+	builder.WriteString("title=")
+	builder.WriteString(r.Title)
 	builder.WriteString(", ")
 	builder.WriteString("privacy=")
 	builder.WriteString(r.Privacy)
 	builder.WriteString(", ")
 	builder.WriteString("password_hash=<sensitive>")
-	builder.WriteString(", ")
-	builder.WriteString("set_chat=")
-	builder.WriteString(fmt.Sprintf("%v", r.SetChat))
 	builder.WriteString(", ")
 	if v := r.Description; v != nil {
 		builder.WriteString("description=")

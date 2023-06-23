@@ -6,9 +6,6 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
-// Chat is the predicate function for chat builders.
-type Chat func(*sql.Selector)
-
 // Room is the predicate function for room builders.
 type Room func(*sql.Selector)
 
