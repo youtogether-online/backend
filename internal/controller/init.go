@@ -59,7 +59,7 @@ func (h *Handler) InitRoutes(s *Setter) {
 		user.PATCH("/email", s.erh.HandleError(session.HandleBody(h.updateEmail, s.sess.SessionFunc, s.valid)))
 		user.PATCH("/password", s.erh.HandleError(session.HandleBody(h.updatePassword, s.sess.SessionFunc, s.valid)))
 		user.PATCH("/name", s.erh.HandleError(session.HandleBody(h.updateUsername, s.sess.SessionFunc, s.valid)))
-		user.GET("/checkName/:name", s.erh.HandleError(bind.HandleParam(h.checkUsername, "name", "required,gte=5,lte=20,name", s.valid)))
+		user.GET("/check-name/:name", s.erh.HandleError(bind.HandleParam(h.checkUsername, "name", "required,gte=5,lte=20,name", s.valid)))
 	}
 
 	room := rg.Group("/room")
@@ -71,7 +71,7 @@ func (h *Handler) InitRoutes(s *Setter) {
 	if h.mail != nil {
 		email := rg.Group("/email")
 		{
-			email.POST("/sendCode", s.erh.HandleError(bind.HandleBody(h.sendCodeToEmail, s.valid)))
+			email.POST("/send-code", s.erh.HandleError(bind.HandleBody(h.sendCodeToEmail, s.valid)))
 		}
 	}
 }

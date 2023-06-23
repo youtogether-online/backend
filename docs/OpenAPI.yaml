@@ -114,7 +114,7 @@ paths:
         '500':
           $ref: '#/components/responses/DatabaseError'
 
-  /email/sendCode:
+  /email/send-code:
     post:
       tags: [ Email ]
       summary: Send secret authorization code to specified email
@@ -146,7 +146,7 @@ paths:
         '500':
           $ref: '#/components/responses/PostgreSQLError'
 
-  /user/checkName/:name:
+  /user/check-name/:name:
     get:
       tags: [ User ]
       summary: Check name on name already used
