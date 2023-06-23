@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/wtkeqrf0/you-together/internal/controller/dao"
+	"github.com/wtkeqrf0/you-together/pkg/conf"
 	"github.com/wtkeqrf0/you-together/pkg/middleware/bind"
 	"github.com/wtkeqrf0/you-together/pkg/middleware/session"
 )
@@ -22,23 +23,22 @@ type QueryHandler interface {
 }
 
 type Setter struct {
-	r        *gin.Engine
-	valid    *validator.Validate
-	erh      ErrHandler
-	qh       QueryHandler
-	sess     SessionHandler
-	mainPath string
-	mailSet  bool
+	r     *gin.Engine
+	valid *validator.Validate
+	erh   ErrHandler
+	qh    QueryHandler
+	sess  SessionHandler
+	cfg   *conf.Config
 }
 
-func NewSetter(r *gin.Engine, valid *validator.Validate, erh ErrHandler, qh QueryHandler, sess SessionHandler, mainPath string, mailSet bool) *Setter {
-	return &Setter{r: r, valid: valid, erh: erh, qh: qh, sess: sess, mainPath: mainPath, mailSet: mailSet}
+func NewSetter(r *gin.Engine, valid *validator.Validate, erh ErrHandler, qh QueryHandler, sess SessionHandler, cfg *conf.Config) *Setter {
+	return &Setter{r: r, valid: valid, erh: erh, qh: qh, sess: sess, cfg: cfg}
 }
 
 func (h *Handler) InitRoutes(s *Setter) {
 	initMiddlewares(s.r, s.qh)
 
-	rg := s.r.Group(s.mainPath)
+	rg := s.r.Group(s.cfg.Listen.QueryPath)
 
 	auth := rg.Group("/auth")
 	{
@@ -48,7 +48,7 @@ func (h *Handler) InitRoutes(s *Setter) {
 		sess := auth.Group("/session")
 		{
 			sess.GET("", s.erh.HandleError(s.sess.Session(h.getMe)))
-			sess.DELETE("", s.erh.HandleError(s.sess.Session(h.signOut)))
+			sess.DELETE("", s.erh.HandleError(func(c *gin.Context) error { return h.signOut(c, s.cfg.Session.CookieName) }))
 		}
 	}
 
@@ -59,19 +59,19 @@ func (h *Handler) InitRoutes(s *Setter) {
 		user.PATCH("/email", s.erh.HandleError(session.HandleBody(h.updateEmail, s.sess.SessionFunc, s.valid)))
 		user.PATCH("/password", s.erh.HandleError(session.HandleBody(h.updatePassword, s.sess.SessionFunc, s.valid)))
 		user.PATCH("/name", s.erh.HandleError(session.HandleBody(h.updateUsername, s.sess.SessionFunc, s.valid)))
-		user.GET("/check-name/:name", s.erh.HandleError(bind.HandleParam(h.checkUsername, "name", "required,gte=5,lte=20,name", s.valid)))
+		user.GET("/checkName/:name", s.erh.HandleError(bind.HandleParam(h.checkUsername, "name", "required,gte=5,lte=20,name", s.valid)))
 	}
 
 	room := rg.Group("/room")
 	{
-		room.POST("", s.erh.HandleError(session.HandleBody(h.createRoom, s.sess.SessionFunc, s.valid)))
-		room.GET("", s.erh.HandleError(h.joinRoom))
+		room.PUT("", s.erh.HandleError(session.HandleBody(h.createRoom, s.sess.SessionFunc, s.valid)))
+		room.GET("/:name", s.erh.HandleError(h.joinRoom))
 	}
 
-	if s.mailSet {
+	if h.mail != nil {
 		email := rg.Group("/email")
 		{
-			email.POST("/send-code", s.erh.HandleError(bind.HandleBody(h.sendCodeToEmail, s.valid)))
+			email.POST("/sendCode", s.erh.HandleError(bind.HandleBody(h.sendCodeToEmail, s.valid)))
 		}
 	}
 }
