@@ -54,6 +54,8 @@ func (q *RespHandler) HandleQueries() gin.HandlerFunc {
 			method = setColor(method, cyan)
 		case "DELETE":
 			method = setColor(method, red)
+		case "PUT":
+			method = setColor(method, yellow)
 		default:
 			method = setColor(method, white)
 		}
