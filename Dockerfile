@@ -19,8 +19,6 @@ ADD /configs /app/configs
 
 FROM debian:buster-slim
 
-MAINTAINER matvey-sizov@mail.ru
-
 ENV PROD 1
 ENV POSTGRES_DB "you-together"
 ENV POSTGRES_PASSWORD "postgres"
