@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/wtkeqrf0/you-together/ent"
 	"github.com/wtkeqrf0/you-together/ent/user"
+	"github.com/wtkeqrf0/you-together/internal/controller/dto"
 )
 
 // IDExist returns true if username exists. Panics if error occurred
@@ -17,14 +18,14 @@ func (r *UserStorage) UserExistsByEmail(ctx context.Context, email string) (bool
 }
 
 // CreateUserWithPassword without verified email and returns it (only on registration)
-func (r *UserStorage) CreateUserWithPassword(ctx context.Context, email string, password []byte, language *string) (*ent.User, error) {
-	return r.userClient.Create().SetEmail(email).SetNillableLanguage(language).
-		SetPasswordHash(password).Save(ctx)
+func (r *UserStorage) CreateUserWithPassword(ctx context.Context, auth dto.EmailWithPassword) (*ent.User, error) {
+	return r.userClient.Create().SetEmail(auth.Email).SetLanguage(auth.Language).
+		SetPasswordHash([]byte(auth.Password)).Save(ctx)
 }
 
 // CreateUserByEmail without password and returns it (only on registration)
-func (r *UserStorage) CreateUserByEmail(ctx context.Context, email string, language *string) (*ent.User, error) {
-	return r.userClient.Create().SetEmail(email).SetNillableLanguage(language).
+func (r *UserStorage) CreateUserByEmail(ctx context.Context, email string, language string) (*ent.User, error) {
+	return r.userClient.Create().SetEmail(email).SetLanguage(language).
 		SetIsEmailVerified(true).Save(ctx)
 }
 

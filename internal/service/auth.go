@@ -4,14 +4,15 @@ import (
 	"context"
 	"github.com/wtkeqrf0/you-together/ent"
 	"github.com/wtkeqrf0/you-together/internal/controller/dao"
+	"github.com/wtkeqrf0/you-together/internal/controller/dto"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthPostgres interface {
 	IDExist(ctx context.Context, id int) (bool, error)
 	UserExistsByEmail(ctx context.Context, email string) (bool, error)
-	CreateUserWithPassword(ctx context.Context, email string, password []byte, language *string) (*ent.User, error)
-	CreateUserByEmail(ctx context.Context, email string, language *string) (*ent.User, error)
+	CreateUserWithPassword(ctx context.Context, auth dto.EmailWithPassword) (*ent.User, error)
+	CreateUserByEmail(ctx context.Context, email string, language string) (*ent.User, error)
 	AuthUserByEmail(ctx context.Context, email string) (*ent.User, error)
 	SetEmailVerified(ctx context.Context, email string) error
 	AddSession(ctx context.Context, id int, sessions ...string) error
@@ -37,12 +38,12 @@ func (a *AuthService) UserExistsByEmail(email string) (bool, error) {
 }
 
 // CreateUserWithPassword without verified email and returns it (only on registration)
-func (a *AuthService) CreateUserWithPassword(email string, password []byte, language *string) (*ent.User, error) {
-	return a.postgres.CreateUserWithPassword(context.Background(), email, password, language)
+func (a *AuthService) CreateUserWithPassword(auth dto.EmailWithPassword) (*ent.User, error) {
+	return a.postgres.CreateUserWithPassword(context.Background(), auth)
 }
 
 // CreateUserByEmail without password and returns it (only on registration)
-func (a *AuthService) CreateUserByEmail(email string, language *string) (*ent.User, error) {
+func (a *AuthService) CreateUserByEmail(email string, language string) (*ent.User, error) {
 	return a.postgres.CreateUserByEmail(context.Background(), email, language)
 }
 
@@ -101,4 +102,13 @@ func (a *AuthService) SetCodes(key string, value ...any) error {
 
 func (a *AuthService) CompareHashAndPassword(old, new []byte) error {
 	return bcrypt.CompareHashAndPassword(old, new)
+}
+
+func (a *AuthService) FormatLanguage(header string) string {
+	switch header[:1] {
+	case "ru":
+		return "RU"
+	default:
+		return "EN"
+	}
 }

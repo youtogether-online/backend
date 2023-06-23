@@ -21,7 +21,7 @@ type UserService interface {
 }
 
 type RoomService interface {
-	Create(rm dto.Room, creatorId int) (*ent.Room, error)
+	UpsertRoom(rm dto.Room, creatorId int) error
 }
 
 type AuthService interface {
@@ -30,10 +30,11 @@ type AuthService interface {
 	DelKeys(keys ...string)
 	CompareHashAndPassword(old, new []byte) error
 
-	CreateUserWithPassword(email string, password []byte, language *string) (*ent.User, error)
-	CreateUserByEmail(email string, language *string) (*ent.User, error)
+	CreateUserWithPassword(auth dto.EmailWithPassword) (*ent.User, error)
+	CreateUserByEmail(email string, language string) (*ent.User, error)
 	AuthUserByEmail(email string) (*ent.User, error)
 	SetEmailVerified(email string) error
+	FormatLanguage(header string) string
 }
 
 type MailSender interface {
@@ -42,6 +43,7 @@ type MailSender interface {
 
 type Session interface {
 	SetNewCookie(id int, c *gin.Context) error
+	ValidateSession(sessionId string) (info *dao.Session, ok bool, err error)
 	GenerateSecretCode() string
 }
 
