@@ -114,7 +114,7 @@ paths:
         '500':
           $ref: '#/components/responses/DatabaseError'
 
-  /email/sendCode:
+  /email/send-code:
     post:
       tags: [ Email ]
       summary: Send secret authorization code to specified email
@@ -146,7 +146,7 @@ paths:
         '500':
           $ref: '#/components/responses/PostgreSQLError'
 
-  /user/checkName/:name:
+  /user/check-name/:name:
     get:
       tags: [ User ]
       summary: Check name on name already used
@@ -315,28 +315,28 @@ components:
 
     Theme:
       type: string
-      default: SYSTEM
+      default: system
       enum:
-        - DARK
-        - LIGHT
-        - SYSTEM
-      example: SYSTEM
+        - dark
+        - light
+        - system
+      example: system
 
     Language:
       type: string
-      default: EN
+      default: en
       enum:
-        - EN
-        - RU
-      example: RU
+        - en
+        - ru
+      example: ru
 
     Role:
       enum:
-        - USER
-        - ADMIN
+        - user
+        - admin
       type: string
-      default: USER
-      example: USER
+      default: user
+      example: user
 
     FirstName:
       type: string
@@ -380,18 +380,19 @@ components:
 
     Privacy:
       type: string
-      default: FRIENDS
+      default: friends
       enum:
-        - PUBLIC
-        - PRIVATE
-        - FRIENDS
-      example: PUBLIC
+        - public
+        - private
+        - friends
+      example: public
 
     Sessions:
       type: array
       readOnly: true
       items:
         type: string
+        uniqueItems: true
         format: uuid
         example: [
           "16688d51-0752-4e29-864c-e9decdb4edbb",
@@ -488,6 +489,7 @@ components:
       properties:
         fields:
           type: object
+          uniqueItems: true
           additionalProperties:
             type: string
           example:
