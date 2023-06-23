@@ -315,7 +315,6 @@ components:
 
     Theme:
       type: string
-      default: system
       enum:
         - dark
         - light
@@ -324,7 +323,6 @@ components:
 
     Language:
       type: string
-      default: en
       enum:
         - en
         - ru
@@ -335,7 +333,6 @@ components:
         - user
         - admin
       type: string
-      default: user
       example: user
 
     FirstName:
@@ -380,7 +377,6 @@ components:
 
     Privacy:
       type: string
-      default: friends
       enum:
         - public
         - private
