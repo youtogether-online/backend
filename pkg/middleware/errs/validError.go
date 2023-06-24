@@ -46,7 +46,7 @@ func newValidError(errs validator.ValidationErrors) *AbstractError {
 	}
 }
 
-func createValidErrEnt(v *ent.ValidationError) *AbstractError {
+func newValidErrorEnt(v *ent.ValidationError) *AbstractError {
 	return &AbstractError{
 		Status: http.StatusUnprocessableEntity,
 		Fields: map[string]string{
