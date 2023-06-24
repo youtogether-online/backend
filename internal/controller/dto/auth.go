@@ -13,7 +13,6 @@ type Email struct {
 type EmailWithPassword struct {
 	Email    string `json:"email,omitempty" header:"-" validate:"required,email"`
 	Password string `json:"password,omitempty" header:"-" validate:"required,gte=4,lte=20,password"`
-	Language string `json:"-" header:"Accept-Language"`
 }
 
 type EmailWithCode struct {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/wtkeqrf0/you-together/ent"
 	"github.com/wtkeqrf0/you-together/internal/controller/dao"
-	"github.com/wtkeqrf0/you-together/internal/controller/dto"
 	"golang.org/x/crypto/bcrypt"
 	"strings"
 )
@@ -12,7 +11,6 @@ import (
 type AuthPostgres interface {
 	IDExist(ctx context.Context, id int) (bool, error)
 	UserExistsByEmail(ctx context.Context, email string) (bool, error)
-	CreateUserWithPassword(ctx context.Context, auth dto.EmailWithPassword) (*ent.User, error)
 	CreateUserByEmail(ctx context.Context, email string, language string) (*ent.User, error)
 	AuthUserByEmail(ctx context.Context, email string) (*ent.User, error)
 	SetEmailVerified(ctx context.Context, email string) error
@@ -36,11 +34,6 @@ func (a *AuthService) IDExist(id int) (bool, error) {
 // UserExistsByEmail returns true if user Exists. Panic if error occurred
 func (a *AuthService) UserExistsByEmail(email string) (bool, error) {
 	return a.postgres.UserExistsByEmail(context.Background(), email)
-}
-
-// CreateUserWithPassword without verified email and returns it (only on registration)
-func (a *AuthService) CreateUserWithPassword(auth dto.EmailWithPassword) (*ent.User, error) {
-	return a.postgres.CreateUserWithPassword(context.Background(), auth)
 }
 
 // CreateUserByEmail without password and returns it (only on registration)

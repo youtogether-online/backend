@@ -30,7 +30,6 @@ type AuthService interface {
 	DelKeys(keys ...string)
 	CompareHashAndPassword(old, new []byte) error
 
-	CreateUserWithPassword(auth dto.EmailWithPassword) (*ent.User, error)
 	CreateUserByEmail(email string, language string) (*ent.User, error)
 	AuthUserByEmail(email string) (*ent.User, error)
 	SetEmailVerified(email string) error

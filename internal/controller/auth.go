@@ -9,16 +9,10 @@ import (
 )
 
 func (h *Handler) signInByPassword(c *gin.Context, auth dto.EmailWithPassword) error {
-	auth.Language = h.auth.FormatLanguage(auth.Language)
-
 	customer, err := h.auth.AuthUserByEmail(auth.Email)
 
 	if err != nil {
-		customer, err = h.auth.CreateUserWithPassword(auth)
-
-		if err != nil {
-			return err
-		}
+		return err
 	} else if customer.PasswordHash == nil {
 		return errs.PasswordNotFound
 	}
@@ -55,7 +49,7 @@ func (h *Handler) signInByEmail(c *gin.Context, auth dto.EmailWithCode) error {
 	auth.Language = h.auth.FormatLanguage(auth.Language)
 
 	if oki, err := h.auth.EqualsPopCode(auth.Email, auth.Code); err != nil {
-		return errs.ServerError.AddErr(err)
+		return err
 	} else if !oki {
 		return errs.MailCodeError.AddErr(err)
 	}

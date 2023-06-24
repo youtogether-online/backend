@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/wtkeqrf0/you-together/ent"
 	"github.com/wtkeqrf0/you-together/ent/user"
-	"github.com/wtkeqrf0/you-together/internal/controller/dto"
 )
 
 // IDExist returns true if username exists. Panics if error occurred
@@ -15,12 +14,6 @@ func (r *UserStorage) IDExist(ctx context.Context, id int) (bool, error) {
 // UserExistsByEmail returns true if user Exists. Panic if error occurred
 func (r *UserStorage) UserExistsByEmail(ctx context.Context, email string) (bool, error) {
 	return r.userClient.Query().Where(user.Email(email)).Exist(ctx)
-}
-
-// CreateUserWithPassword without verified email and returns it (only on registration)
-func (r *UserStorage) CreateUserWithPassword(ctx context.Context, auth dto.EmailWithPassword) (*ent.User, error) {
-	return r.userClient.Create().SetEmail(auth.Email).SetLanguage(auth.Language).
-		SetPasswordHash([]byte(auth.Password)).Save(ctx)
 }
 
 // CreateUserByEmail without password and returns it (only on registration)
