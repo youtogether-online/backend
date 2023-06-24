@@ -6,6 +6,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/wtkeqrf0/you-together/ent"
 	"github.com/wtkeqrf0/you-together/pkg/log"
+	"net/http"
 )
 
 type MyError interface {
@@ -36,7 +37,6 @@ type AbstractError struct {
 	Code        ErrCode           `json:"code,omitempty"`
 	Description string            `json:"description,omitempty"`
 	Fields      map[string]string `json:"fields,omitempty"`
-	Err         error             `json:"-"`
 }
 
 type ErrHandler struct {
@@ -54,44 +54,47 @@ func (e *ErrHandler) HandleError(handler func(*gin.Context) error) gin.HandlerFu
 			return
 		}
 
-		my := ServerError.GetInfo()
+		entry := e.log.WithErr(err)
+		my := &AbstractError{
+			Status:      http.StatusInternalServerError,
+			Code:        serverError,
+			Description: "Server exception was occurred",
+		}
 
 		switch err.(type) {
 		case MyError:
 			my = err.(MyError).GetInfo()
+			entry.Err(my.Description)
 
 		case validator.ValidationErrors:
 			my = newValidError(err.(validator.ValidationErrors))
+			entry.Err(my.Fields)
 
 		case *ent.ValidationError:
-			my = createValidErrEnt(err.(*ent.ValidationError))
+			my = newValidErrorEnt(err.(*ent.ValidationError))
+			entry.Err(my.Fields)
 
 		case *ent.NotFoundError:
-			my = EntNotFoundError.AddError(err.(*ent.NotFoundError)).GetInfo()
+			my = EntNotFoundError.GetInfo()
+			entry.Err(my.Description)
 
 		case *ent.ConstraintError:
-			my = EntConstraintError.AddError(err).GetInfo()
+			my = EntConstraintError.GetInfo()
+			entry.Err(my.Description)
 
 		case redis.Error:
 			redisErr := err.(redis.Error)
 
 			if redisErr == redis.Nil {
-				my = RedisNilError.AddError(err).GetInfo()
+				my = RedisNilError.GetInfo()
 
 			} else if redisErr == redis.TxFailedErr {
-				my = RedisTxError.AddError(err).GetInfo()
+				my = RedisTxError.GetInfo()
 
 			} else {
-				my = RedisError.AddError(err).GetInfo()
+				my = RedisError.GetInfo()
 			}
-		}
-
-		entry := e.log.WithErr(err)
-
-		if my.Fields == nil {
 			entry.Err(my.Description)
-		} else {
-			entry.Err(my.Fields)
 		}
 
 		c.JSON(my.Status, my)

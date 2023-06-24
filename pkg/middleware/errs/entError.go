@@ -1,7 +1,6 @@
 package errs
 
 import (
-	"fmt"
 	"net/http"
 )
 
@@ -14,34 +13,22 @@ var (
 type entError struct {
 	status      int
 	code        ErrCode
-	Description string
-	err         error
+	description string
 }
 
-func newEntError(status int, code ErrCode, description string) entError {
-	return entError{status: status, code: code, Description: description}
-}
-
-func (e entError) AddError(err error) entError {
-	e.err = err
-	return e
-}
-
-func (e entError) SetDB(dbName string) entError {
-	e.Description = fmt.Sprintf(e.Description, dbName)
-	return e
+func newEntError(status int, code ErrCode, description string) *entError {
+	return &entError{status: status, code: code, description: description}
 }
 
 // Error implements the Error type
 func (e entError) Error() string {
-	return e.Description
+	return e.description
 }
 
 func (e entError) GetInfo() *AbstractError {
 	return &AbstractError{
 		Status:      e.status,
 		Code:        e.code,
-		Description: e.Description,
-		Err:         e.err,
+		Description: e.description,
 	}
 }
