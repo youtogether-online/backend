@@ -45,11 +45,13 @@ func HandleBody[T any](handler func(*gin.Context, T) error, v *validator.Validat
 	}
 }
 
-func HandleParam(handler func(*gin.Context, string) error, name string, tag string, v *validator.Validate) func(*gin.Context) error {
+func HandleParam[T any](handler func(*gin.Context, T) error, v *validator.Validate) func(*gin.Context) error {
 	return func(c *gin.Context) error {
-		t := c.Param(name)
 
-		if err := v.Var(t, tag); err != nil {
+		var t T
+		if err := c.ShouldBindUri(&t); err != nil {
+			return err
+		} else if err = v.Struct(&t); err != nil {
 			return err
 		}
 
@@ -64,20 +66,6 @@ func HandleBodyWithHeader[T any](handler func(*gin.Context, T) error, v *validat
 		if err := c.ShouldBindJSON(&t); err != nil {
 			return err
 		} else if err = c.ShouldBindHeader(&t); err != nil {
-			return err
-		} else if err = v.Struct(&t); err != nil {
-			return err
-		}
-
-		return handler(c, t)
-	}
-}
-
-func HandleQuery[T any](handler func(*gin.Context, T) error, v *validator.Validate) func(*gin.Context) error {
-	return func(c *gin.Context) error {
-
-		var t T
-		if err := c.ShouldBindQuery(&t); err != nil {
 			return err
 		} else if err = v.Struct(&t); err != nil {
 			return err

@@ -38,7 +38,7 @@ func (h *Handler) createRoom(c *gin.Context, r dto.Room, info *dao.Session) erro
 	return nil
 }
 
-func (h *Handler) joinRoom(c *gin.Context) error {
+func (h *Handler) joinRoom(c *gin.Context, name dto.NameParam) error {
 
 	log.Infof("websocket connection: %v", c.IsWebsocket())
 
