@@ -479,8 +479,6 @@ components:
     ValidationError:
       type: object
       readOnly: true
-      required:
-        - code
       properties:
         fields:
           type: object
