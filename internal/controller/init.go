@@ -54,18 +54,18 @@ func (h *Handler) InitRoutes(s *Setter) {
 
 	user := rg.Group("/user")
 	{
-		user.GET("/:name", s.erh.HandleError(bind.HandleParam(h.getUserByUsername, "name", "required,gte=5,lte=20,name", s.valid)))
+		user.GET("/:name", s.erh.HandleError(bind.HandleParam(h.getUserByUsername, s.valid)))
 		user.PATCH("", s.erh.HandleError(session.HandleBody(h.updateUser, s.sess.SessionFunc, s.valid)))
 		user.PATCH("/email", s.erh.HandleError(session.HandleBody(h.updateEmail, s.sess.SessionFunc, s.valid)))
 		user.PATCH("/password", s.erh.HandleError(session.HandleBody(h.updatePassword, s.sess.SessionFunc, s.valid)))
 		user.PATCH("/name", s.erh.HandleError(session.HandleBody(h.updateUsername, s.sess.SessionFunc, s.valid)))
-		user.GET("/check-name/:name", s.erh.HandleError(bind.HandleParam(h.checkUsername, "name", "required,gte=5,lte=20,name", s.valid)))
+		user.GET("/check-name/:name", s.erh.HandleError(bind.HandleParam(h.checkUsername, s.valid)))
 	}
 
 	room := rg.Group("/room")
 	{
 		room.PUT("", s.erh.HandleError(session.HandleBody(h.createRoom, s.sess.SessionFunc, s.valid)))
-		room.GET("/:name", s.erh.HandleError(h.joinRoom))
+		room.GET("/:name", s.erh.HandleError(bind.HandleParam(h.joinRoom, s.valid)))
 	}
 
 	if h.mail != nil {

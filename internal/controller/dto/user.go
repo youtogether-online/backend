@@ -21,3 +21,7 @@ type UpdatePassword struct {
 type UpdateName struct {
 	NewName string `json:"newName,omitempty" validate:"required,gte=5,lte=20,name"`
 }
+
+type NameParam struct {
+	Name string `uri:"name" validate:"required,gte=5,lte=20,name"`
+}

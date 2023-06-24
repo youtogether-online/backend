@@ -20,9 +20,9 @@ func (h *Handler) getMe(c *gin.Context, info *dao.Session) error {
 	return nil
 }
 
-func (h *Handler) getUserByUsername(c *gin.Context, name string) error {
+func (h *Handler) getUserByUsername(c *gin.Context, name dto.NameParam) error {
 
-	user, err := h.user.FindUserByUsername(name)
+	user, err := h.user.FindUserByUsername(name.Name)
 	if err != nil {
 		return err
 	}
@@ -93,8 +93,8 @@ func (h *Handler) updateUsername(c *gin.Context, upd dto.UpdateName, info *dao.S
 	return nil
 }
 
-func (h *Handler) checkUsername(c *gin.Context, name string) error {
-	if ok, err := h.user.UsernameExist(name); err != nil {
+func (h *Handler) checkUsername(c *gin.Context, name dto.NameParam) error {
+	if ok, err := h.user.UsernameExist(name.Name); err != nil {
 		return err
 	} else if ok {
 		c.Status(http.StatusForbidden)
