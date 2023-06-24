@@ -73,11 +73,7 @@ paths:
         - in: header
           name: Accept-Language
           schema:
-            type: string
-            enum:
-              - EN
-              - RU
-            example: RU
+            $ref: '#/components/schemas/Language'
       responses:
         '201':
           $ref: "#/components/responses/AuthSuccess"
@@ -92,18 +88,9 @@ paths:
     post:
       tags: [ Auth ]
       summary: Authorization via email with password
-      description: Authorize user with email and password. If user with specified email does not exist, create new user. Can be used for sign-in and sign-up.
+      description: Authorize user with email and password. Can be used only for sign-in with registered password.
       requestBody:
         $ref: "#/components/requestBodies/AuthPasswordPost"
-      parameters:
-        - in: header
-          name: Accept-Language
-          schema:
-            type: string
-            enum:
-              - EN
-              - RU
-            example: RU
       responses:
         '201':
           $ref: '#/components/responses/AuthSuccess'
@@ -258,7 +245,7 @@ paths:
         '200':
           description: Room opened
         '400':
-          $ref: '#/components/responses/UserNamePatchFailed'
+          $ref: '#/components/responses/WebsocketConnectionFailed'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '422':
@@ -277,7 +264,7 @@ paths:
         '200':
           description: Joined to room
         '400':
-          $ref: '#/components/responses/UserNamePatchFailed'
+          $ref: '#/components/responses/WebsocketConnectionFailed'
           # create 403 http status code
         '422':
           $ref: "#/components/responses/InvalidValidation"
@@ -660,6 +647,7 @@ components:
                     example: code_invalid_or_expired
                     enum:
                       - code_invalid_or_expired
+                      -
               - $ref: "#/components/schemas/Error"
 
     AuthByPasswordFailed:
@@ -677,6 +665,7 @@ components:
                     enum:
                       - invalid_password
                       - password_not_set
+                      - not_found
               - $ref: "#/components/schemas/Error"
 
     CheckNameFailed:
@@ -759,6 +748,22 @@ components:
                     example: already_exist
                     enum:
                       - already_exist
+              - $ref: "#/components/schemas/Error"
+
+    WebsocketConnectionFailed:
+      description: The connection is not a websocket
+      content:
+        application/json:
+          schema:
+            allOf:
+              - required:
+                  - code
+                properties:
+                  code:
+                    type: string
+                    example: websocket_excepted
+                    enum:
+                      - websocket_excepted
               - $ref: "#/components/schemas/Error"
 
     PostgreSQLError:
