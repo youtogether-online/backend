@@ -17,7 +17,7 @@ func Open(username, password, host string, port int) *smtp.Client {
 
 	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", host, port), 10*time.Second)
 	if err != nil {
-		log.WithErr(err).Warn("can't connect to specified email HOST:PORT")
+		log.WithErr(err).Warn("can't find specified email by HOST:PORT. Maybe HOST and PORT aren't correct?")
 		return nil
 	}
 
@@ -74,7 +74,7 @@ func Open(username, password, host string, port int) *smtp.Client {
 		if err = c.Close(); err != nil {
 			log.WithErr(err).Warn("can't close email connection")
 		}
-		log.WithErr(err).Warn("can't authorize specified USER email")
+		log.WithErr(err).Warn("can't authorize specified USER email. Maybe USERNAME and PASSWORD aren't correct?")
 		return nil
 	}
 
