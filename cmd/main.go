@@ -36,7 +36,7 @@ func main() {
 	h := initHandler(pClient, rClient, mailClient, cfg)
 	r := gin.New()
 
-	h.InitRoutes(createSetter(r, pClient, rClient, cfg))
+	h.InitRoutes(createSetter(r, pClient, rClient, cfg, mailClient != nil))
 
 	run(cfg.Listen.Port, r, pClient, rClient, mailClient)
 }
@@ -121,7 +121,7 @@ func initHandler(pClient *ent.Client, rClient *redis.Client, mailClient *smtp.Cl
 	)
 }
 
-func createSetter(r *gin.Engine, pClient *ent.Client, rClient *redis.Client, cfg *conf.Config) *controller.Setter {
+func createSetter(r *gin.Engine, pClient *ent.Client, rClient *redis.Client, cfg *conf.Config, mailSet bool) *controller.Setter {
 	pUser := postgres.NewUserStorage(pClient.User)
 	rConn := redisRepo.NewRClient(rClient)
 
@@ -133,6 +133,7 @@ func createSetter(r *gin.Engine, pClient *ent.Client, rClient *redis.Client, cfg
 		errs.NewErrHandler(),
 		query.NewQueryHandler(),
 		session.NewAuth(auth, cfg),
+		mailSet,
 		cfg,
 	)
 }
