@@ -28,8 +28,8 @@ type Config struct {
 	DB struct {
 		Postgres struct {
 			Username string `yaml:"username" env:"POSTGRES_USERNAME" env-default:"postgres"`
-			DBName   string `yaml:"db_name" env:"POSTGRES_DB" env-default:"you-together"`
-			Password string `yaml:"password" env:"POSTGRES_PASSWORD" env-default:"postgres"`
+			DBName   string `yaml:"db_name" env:"POSTGRES_DB" env-default:"youtogether"`
+			Password string `yaml:"password" env:"POSTGRES_PASSWORD" env-default:"youtogether"`
 			// if prod=1, host will always be "postgres" (docker constant)
 			Host string `yaml:"host" env:"POSTGRES_HOST" env-default:"localhost"`
 			Port int    `yaml:"port" env:"POSTGRES_PORT" env-default:"5432"`
@@ -44,7 +44,7 @@ type Config struct {
 	} `yaml:"db"`
 
 	Email struct {
-		From     string `yaml:"from" env:"EMAIL_FROM" env-default:"you-together@gmail.com"`
+		From     string `yaml:"from" env:"EMAIL_FROM" env-default:"youtogether"`
 		User     string `yaml:"user" env:"EMAIL_USER"`
 		Password string `yaml:"password" env:"EMAIL_PASSWORD"`
 		Host     string `yaml:"host" env:"EMAIL_STMP_HOST"`
