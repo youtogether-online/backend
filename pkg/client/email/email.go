@@ -22,7 +22,9 @@ func Open(username, password, host string, port int) *smtp.Client {
 	}
 
 	SSL := port == 465
-	cfg := &tls.Config{ServerName: host}
+	cfg := &tls.Config{
+		InsecureSkipVerify: true,
+	}
 
 	if SSL {
 		conn = tls.Client(conn, cfg)
