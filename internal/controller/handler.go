@@ -5,6 +5,7 @@ import (
 	"github.com/wtkeqrf0/you-together/ent"
 	"github.com/wtkeqrf0/you-together/internal/controller/dao"
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
+	"github.com/wtkeqrf0/you-together/pkg/conf"
 	"net/http"
 )
 
@@ -57,8 +58,9 @@ type Handler struct {
 	mail MailSender
 	sess Session
 	ws   WebSocket
+	cfg  *conf.Config
 }
 
-func NewHandler(user UserService, room RoomService, auth AuthService, mail MailSender, sess Session, ws WebSocket) *Handler {
-	return &Handler{user: user, room: room, auth: auth, mail: mail, sess: sess, ws: ws}
+func NewHandler(user UserService, room RoomService, auth AuthService, mail MailSender, sess Session, ws WebSocket, cfg *conf.Config) *Handler {
+	return &Handler{user: user, room: room, auth: auth, mail: mail, sess: sess, ws: ws, cfg: cfg}
 }

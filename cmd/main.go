@@ -33,10 +33,10 @@ func main() {
 
 	pClient, rClient, mailClient := getClients(cfg)
 
-	h := initHandler(pClient, rClient, mailClient, cfg)
+	h, sess := initHandler(pClient, rClient, mailClient, cfg)
 	r := gin.New()
 
-	h.InitRoutes(createSetter(r, pClient, rClient, cfg, mailClient != nil))
+	h.InitRoutes(createSetter(r, sess, mailClient != nil))
 
 	run(cfg.Listen.Port, r, pClient, rClient, mailClient)
 }
@@ -100,7 +100,7 @@ func getClients(cfg *conf.Config) (*ent.Client, *redis.Client, *smtp.Client) {
 	return pClient, rClient, mailClient
 }
 
-func initHandler(pClient *ent.Client, rClient *redis.Client, mailClient *smtp.Client, cfg *conf.Config) *controller.Handler {
+func initHandler(pClient *ent.Client, rClient *redis.Client, mailClient *smtp.Client, cfg *conf.Config) (*controller.Handler, *session.Auth) {
 	pUser := postgres.NewUserStorage(pClient.User)
 	pRoom := postgres.NewRoomStorage(pClient.Room)
 	rConn := redisRepo.NewRClient(rClient)
@@ -111,29 +111,26 @@ func initHandler(pClient *ent.Client, rClient *redis.Client, mailClient *smtp.Cl
 	room := service.NewRoomService(pRoom)
 	auth := service.NewAuthService(pUser, rConn)
 
+	sess := session.NewAuth(auth, cfg)
+
 	return controller.NewHandler(
 		user,
 		room,
 		auth,
 		mailSender,
-		session.NewAuth(auth, cfg),
+		sess,
 		webSocket,
-	)
+		cfg,
+	), sess
 }
 
-func createSetter(r *gin.Engine, pClient *ent.Client, rClient *redis.Client, cfg *conf.Config, mailSet bool) *controller.Setter {
-	pUser := postgres.NewUserStorage(pClient.User)
-	rConn := redisRepo.NewRClient(rClient)
-
-	auth := service.NewAuthService(pUser, rConn)
-
+func createSetter(r *gin.Engine, sess *session.Auth, mailSet bool) *controller.Setter {
 	return controller.NewSetter(
 		r,
 		bind.NewValidator(),
 		errs.NewErrHandler(),
 		query.NewQueryHandler(),
-		session.NewAuth(auth, cfg),
+		sess,
 		mailSet,
-		cfg,
 	)
 }

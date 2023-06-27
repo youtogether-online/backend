@@ -4,7 +4,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/wtkeqrf0/you-together/internal/controller/dao"
-	"github.com/wtkeqrf0/you-together/pkg/conf"
 	"github.com/wtkeqrf0/you-together/pkg/middleware/bind"
 	"github.com/wtkeqrf0/you-together/pkg/middleware/session"
 )
@@ -29,17 +28,16 @@ type Setter struct {
 	qh      QueryHandler
 	sess    SessionHandler
 	mailSet bool
-	cfg     *conf.Config
 }
 
-func NewSetter(r *gin.Engine, valid *validator.Validate, erh ErrHandler, qh QueryHandler, sess SessionHandler, mailSet bool, cfg *conf.Config) *Setter {
-	return &Setter{r: r, valid: valid, erh: erh, qh: qh, sess: sess, mailSet: mailSet, cfg: cfg}
+func NewSetter(r *gin.Engine, valid *validator.Validate, erh ErrHandler, qh QueryHandler, sess SessionHandler, mailSet bool) *Setter {
+	return &Setter{r: r, valid: valid, erh: erh, qh: qh, sess: sess, mailSet: mailSet}
 }
 
 func (h *Handler) InitRoutes(s *Setter) {
 	initMiddlewares(s.r, s.qh)
 
-	rg := s.r.Group(s.cfg.Listen.QueryPath)
+	rg := s.r.Group(h.cfg.Listen.QueryPath)
 
 	auth := rg.Group("/auth")
 	{
@@ -49,7 +47,7 @@ func (h *Handler) InitRoutes(s *Setter) {
 		sess := auth.Group("/session")
 		{
 			sess.GET("", s.erh.HandleError(s.sess.Session(h.getMe)))
-			sess.DELETE("", s.erh.HandleError(func(c *gin.Context) error { return h.signOut(c, s.cfg.Session.CookieName) }))
+			sess.DELETE("", s.erh.HandleError(h.signOut))
 		}
 	}
 
