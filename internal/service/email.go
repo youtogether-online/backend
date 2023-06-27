@@ -29,13 +29,15 @@ func (m *EmailSender) SendEmail(subj, body, from string, to ...string) error {
 
 	go func() {
 		defer w.Close()
-		w.Write(
-			[]byte("To: " + strings.Join(to, ",") + "\r\n" +
+		_, _ = w.Write(
+			[]byte("From: " + from + "\r\n" +
+				"To: " + strings.Join(to, ",") + "\r\n" +
 				"Subject: " + subj + "\r\n" +
 				"Content-Type: text/plain; charset=\"UTF-8\"\r\n" +
 				"Content-Transfer-Encoding: base64\r\n" +
-				"\r\n" + base64.StdEncoding.EncodeToString([]byte(body))),
+				base64.StdEncoding.EncodeToString([]byte(body))),
 		)
 	}()
+
 	return err
 }

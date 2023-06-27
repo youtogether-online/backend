@@ -37,7 +37,7 @@ func (h *Handler) sendCodeToEmail(c *gin.Context, to dto.Email) error {
 		return err
 	}
 
-	if err := h.mail.SendEmail("Verify email for you-together account", code, "", to.Email); err != nil {
+	if err := h.mail.SendEmail("Verify email for you-together account", code, h.cfg.Email.From, to.Email); err != nil {
 		return errs.EmailError.AddErr(err)
 	}
 
@@ -78,8 +78,8 @@ func (h *Handler) signInByEmail(c *gin.Context, auth dto.EmailWithCode) error {
 	return nil
 }
 
-func (h *Handler) signOut(c *gin.Context, cookieName string) error {
-	session, _ := c.Cookie(cookieName)
+func (h *Handler) signOut(c *gin.Context) error {
+	session, _ := c.Cookie(h.cfg.Session.CookieName)
 	info, _, err := h.sess.ValidateSession(session)
 	if err != nil {
 		return errs.UnAuthorized.AddErr(err)
