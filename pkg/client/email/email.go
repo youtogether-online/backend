@@ -80,6 +80,15 @@ func Open(username, password, host string, port int) *smtp.Client {
 		return nil
 	}
 
+	go func() {
+		for {
+			if err = c.Noop(); err != nil {
+				log.WithErr(err).Err("email connection lost")
+			}
+			time.Sleep(time.Second * 2)
+		}
+	}()
+
 	return c
 }
 
