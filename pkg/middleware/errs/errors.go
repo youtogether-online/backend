@@ -59,6 +59,7 @@ func (e *ErrHandler) HandleError(handler func(*gin.Context) error) gin.HandlerFu
 			Status:      http.StatusInternalServerError,
 			Code:        serverError,
 			Description: "Server exception was occurred",
+			Err:         err,
 		}
 
 		switch err.(type) {
@@ -80,7 +81,6 @@ func (e *ErrHandler) HandleError(handler func(*gin.Context) error) gin.HandlerFu
 		case redis.Error:
 			redisErr := err.(redis.Error)
 			switch err.(redis.Error) {
-
 			case redis.Nil:
 				my = RedisNilError.GetInfo(redisErr)
 

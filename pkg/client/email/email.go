@@ -15,7 +15,7 @@ import (
 // Open smtp connection, start TLS and authorize the user
 func Open(username, password, host string, port int) *smtp.Client {
 
-	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", host, port), 10*time.Second)
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", host, port), 15*time.Second)
 	if err != nil {
 		log.WithErr(err).Warn("can't find specified email by HOST:PORT. Maybe HOST and PORT aren't correct?")
 		return nil
@@ -86,7 +86,7 @@ func Open(username, password, host string, port int) *smtp.Client {
 				log.WithErr(err).Err("email connection lost")
 				break
 			}
-			time.Sleep(time.Second * 10)
+			time.Sleep(time.Minute * 2)
 		}
 	}()
 

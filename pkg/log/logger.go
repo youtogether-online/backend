@@ -56,6 +56,11 @@ func getReportCaller() *runtime.Frame {
 }
 
 func (l *Logger) WithErr(err error) *Entry {
+	if err == nil {
+		return &Entry{
+			l: l,
+		}
+	}
 	return &Entry{
 		l:   l,
 		err: err,
