@@ -37,6 +37,7 @@ type AbstractError struct {
 	Code        ErrCode           `json:"code,omitempty"`
 	Description string            `json:"description,omitempty"`
 	Fields      map[string]string `json:"fields,omitempty"`
+	Err         error             `json:"-"`
 }
 
 type ErrHandler struct {
@@ -54,7 +55,6 @@ func (e *ErrHandler) HandleError(handler func(*gin.Context) error) gin.HandlerFu
 			return
 		}
 
-		entry := e.log.WithErr(err)
 		my := &AbstractError{
 			Status:      http.StatusInternalServerError,
 			Code:        serverError,
@@ -63,39 +63,40 @@ func (e *ErrHandler) HandleError(handler func(*gin.Context) error) gin.HandlerFu
 
 		switch err.(type) {
 		case StandardError:
-			stErr := err.(StandardError)
-			entry.Err(stErr.description)
-			my = stErr.GetInfo()
+			my = err.(StandardError).GetInfo()
 
 		case validator.ValidationErrors:
 			my = newValidError(err.(validator.ValidationErrors))
-			entry.Err(my.Fields)
 
 		case *ent.ValidationError:
 			my = newValidErrorEnt(err.(*ent.ValidationError))
-			entry.Err(my.Fields)
 
 		case *ent.NotFoundError:
-			my = EntNotFoundError.GetInfo()
-			entry.Err(my.Description)
+			my = EntNotFoundError.GetInfo(err.(*ent.NotFoundError))
 
 		case *ent.ConstraintError:
-			my = EntConstraintError.GetInfo()
-			entry.Err(my.Description)
+			my = EntConstraintError.GetInfo(err.(*ent.ConstraintError))
 
 		case redis.Error:
 			redisErr := err.(redis.Error)
+			switch err.(redis.Error) {
 
-			if redisErr == redis.Nil {
-				my = RedisNilError.GetInfo()
+			case redis.Nil:
+				my = RedisNilError.GetInfo(redisErr)
 
-			} else if redisErr == redis.TxFailedErr {
-				my = RedisTxError.GetInfo()
+			case redis.TxFailedErr:
+				my = RedisTxError.GetInfo(redisErr)
 
-			} else {
-				my = RedisError.GetInfo()
+			default:
+				my = RedisError.GetInfo(redisErr)
 			}
-			entry.Err(my.Description)
+		}
+
+		l := e.log.WithErr(my.Err)
+		if my.Fields == nil {
+			l.Err(my.Description)
+		} else {
+			l.Err(my.Fields)
 		}
 
 		c.JSON(my.Status, my)

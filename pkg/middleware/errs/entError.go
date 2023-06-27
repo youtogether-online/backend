@@ -25,10 +25,11 @@ func (e entError) Error() string {
 	return e.description
 }
 
-func (e entError) GetInfo() *AbstractError {
+func (e entError) GetInfo(err error) *AbstractError {
 	return &AbstractError{
 		Status:      e.status,
 		Code:        e.code,
 		Description: e.description,
+		Err:         err,
 	}
 }

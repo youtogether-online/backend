@@ -25,11 +25,12 @@ func (r redisError) Error() string {
 	return r.description
 }
 
-func (r redisError) GetInfo() *AbstractError {
+func (r redisError) GetInfo(err error) *AbstractError {
 
 	return &AbstractError{
 		Status:      r.status,
 		Code:        r.code,
 		Description: r.description,
+		Err:         err,
 	}
 }

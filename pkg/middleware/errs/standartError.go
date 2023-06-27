@@ -54,5 +54,6 @@ func (e StandardError) GetInfo() *AbstractError {
 		Status:      e.status,
 		Code:        e.code,
 		Description: e.description,
+		Err:         e.err,
 	}
 }

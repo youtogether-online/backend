@@ -43,6 +43,7 @@ func newValidError(errs validator.ValidationErrors) *AbstractError {
 	return &AbstractError{
 		Status: http.StatusUnprocessableEntity,
 		Fields: fields,
+		Err:    errs,
 	}
 }
 
@@ -52,5 +53,6 @@ func newValidErrorEnt(v *ent.ValidationError) *AbstractError {
 		Fields: map[string]string{
 			v.Name: fmt.Sprintf("%s is incorrect", v.Name),
 		},
+		Err: v,
 	}
 }
