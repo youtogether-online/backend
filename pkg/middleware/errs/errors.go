@@ -64,8 +64,7 @@ func (e *ErrHandler) HandleError(handler func(*gin.Context) error) gin.HandlerFu
 		switch err.(type) {
 		case StandardError:
 			stErr := err.(StandardError)
-			entry.SetErr(stErr.err).Err(my.Description)
-
+			entry.Err(stErr.description)
 			my = stErr.GetInfo()
 
 		case validator.ValidationErrors:

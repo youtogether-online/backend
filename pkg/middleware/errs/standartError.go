@@ -32,7 +32,7 @@ var (
 
 // Error implements the Error type
 func (e StandardError) Error() string {
-	return e.description
+	return e.err.Error()
 }
 
 // newStandardError creates a new StandardError and returns it

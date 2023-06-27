@@ -43,11 +43,6 @@ func (e *Entry) printStr() {
 	fmt.Println(str)
 }
 
-func (e *Entry) SetErr(err error) *Entry {
-	e.err = err
-	return e
-}
-
 func (e *Entry) Debug(args ...any) {
 	if e.l.level >= DebugLevel {
 		e.status = debug
