@@ -84,8 +84,9 @@ func Open(username, password, host string, port int) *smtp.Client {
 		for {
 			if err = c.Noop(); err != nil {
 				log.WithErr(err).Err("email connection lost")
+				break
 			}
-			time.Sleep(time.Second * 2)
+			time.Sleep(time.Second * 10)
 		}
 	}()
 
