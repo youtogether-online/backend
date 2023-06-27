@@ -16,7 +16,7 @@ services:
     platform: linux/amd64
     image: postgres:15-alpine3.17
     environment:
-      POSTGRES_DB: "you-together"
+      POSTGRES_DB: "youtogether"
       POSTGRES_PASSWORD: "postgres"
     ports:
       - "5432:5432"
@@ -29,6 +29,8 @@ services:
   redis:
     platform: linux/amd64
     image: redis:7.0.9-alpine3.17
+    command: >
+      --requirepass youtogether
     ports:
       - "6379:6379"
     healthcheck:

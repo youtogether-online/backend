@@ -36,7 +36,8 @@ type Config struct {
 		} `yaml:"postgres"`
 
 		Redis struct {
-			DbId int `yaml:"db_id" env:"REDIS_DB" env-default:"0"`
+			DbId     int    `yaml:"db_id" env:"REDIS_DB" env-default:"0"`
+			Password string `yaml:"password" env:"REDIS_PASSWORD" env-default:"youtogether"`
 			// if prod=1, host will always be "redis" (docker constant)
 			Host string `yaml:"host" env:"REDIS_HOST" env-default:"localhost"`
 			Port int    `yaml:"port" env:"REDIS_PORT" env-default:"6379"`

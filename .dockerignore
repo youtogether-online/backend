@@ -1,13 +1,10 @@
-# swagger files
-docs/swagger.json
-docs/swagger.yaml
-
-# git
-.github
-.gitignore
-
-# docs
+# API documentation
+docs
 .env.sample
 LICENSE
 README.md
 CHANGELOG.md
+
+# git
+.github
+.gitignore

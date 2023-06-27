@@ -9,10 +9,11 @@ import (
 )
 
 // Open redis connection and check it
-func Open(host string, port, db int) *redis.Client {
+func Open(host, password string, port, db int) *redis.Client {
 	client := redis.NewClient(&redis.Options{
-		Addr: net.JoinHostPort(host, strconv.Itoa(port)),
-		DB:   db,
+		Addr:     net.JoinHostPort(host, strconv.Itoa(port)),
+		Password: password,
+		DB:       db,
 	})
 
 	if err := client.Ping(context.Background()).Err(); err != nil {

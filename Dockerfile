@@ -20,8 +20,6 @@ ADD /configs /app/configs
 FROM debian:buster-slim
 
 ENV PROD 1
-ENV POSTGRES_DB "you-together"
-ENV POSTGRES_PASSWORD "postgres"
 
 WORKDIR /app
 COPY --from=builder /app/main /app/main
