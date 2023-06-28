@@ -92,6 +92,14 @@ func Dial(username, password, host string, port int) *smtp.Client {
 		return nil
 	}
 
+	go func() {
+		time.Sleep(time.Minute * 5)
+		if err = c.Noop(); err != nil {
+			log.WithErr(err).Err("CLIENT CONNECTION LOST")
+			return
+		}
+	}()
+
 	return c
 }
 
@@ -99,12 +107,15 @@ func (m *MailSender) Send(subj, body string, to ...string) error {
 	if err := m.c.Mail(m.cfg.Email.User); err != nil {
 		if err == io.EOF {
 			if c := Dial(m.cfg.Email.User, m.cfg.Email.Password, m.cfg.Email.Host, m.cfg.Email.Port); c != nil {
+				fmt.Println("RESET CLIENT")
 				m.c = c
 				return m.Send(subj, body, to...)
 			}
 		}
 		return err
 	}
+
+	fmt.Println("HERE")
 
 	for _, addr := range to {
 		if err := m.c.Rcpt(addr); err != nil {
@@ -124,6 +135,7 @@ func (m *MailSender) Send(subj, body string, to ...string) error {
 		"Content-Transfer-Encoding: base64\r\n" +
 		base64.StdEncoding.EncodeToString([]byte(body))),
 	)
+	fmt.Println("WROTE")
 	if err != nil {
 		_ = w.Close()
 		return err
