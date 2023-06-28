@@ -22,16 +22,15 @@ type QueryHandler interface {
 }
 
 type Setter struct {
-	r       *gin.Engine
-	valid   *validator.Validate
-	erh     ErrHandler
-	qh      QueryHandler
-	sess    SessionHandler
-	mailSet bool
+	r     *gin.Engine
+	valid *validator.Validate
+	erh   ErrHandler
+	qh    QueryHandler
+	sess  SessionHandler
 }
 
-func NewSetter(r *gin.Engine, valid *validator.Validate, erh ErrHandler, qh QueryHandler, sess SessionHandler, mailSet bool) *Setter {
-	return &Setter{r: r, valid: valid, erh: erh, qh: qh, sess: sess, mailSet: mailSet}
+func NewSetter(r *gin.Engine, valid *validator.Validate, erh ErrHandler, qh QueryHandler, sess SessionHandler) *Setter {
+	return &Setter{r: r, valid: valid, erh: erh, qh: qh, sess: sess}
 }
 
 func (h *Handler) InitRoutes(s *Setter) {
@@ -67,7 +66,7 @@ func (h *Handler) InitRoutes(s *Setter) {
 		room.GET("/:name", s.erh.HandleError(bind.HandleParam(h.joinRoom, s.valid)))
 	}
 
-	if s.mailSet {
+	if h.mail != nil {
 		email := rg.Group("/email")
 		{
 			email.POST("/send-code", s.erh.HandleError(bind.HandleBody(h.sendCodeToEmail, s.valid)))

@@ -36,7 +36,7 @@ func main() {
 	h, sess := initHandler(pClient, rClient, mailClient, cfg)
 	r := gin.New()
 
-	h.InitRoutes(createSetter(r, sess, mailClient != nil))
+	h.InitRoutes(createSetter(r, sess))
 
 	run(cfg.Listen.Port, r, pClient, rClient, mailClient)
 }
@@ -95,7 +95,7 @@ func getClients(cfg *conf.Config) (*ent.Client, *redis.Client, *smtp.Client) {
 
 	rClient := redisInit.Open(cfg.DB.Redis.Host, cfg.DB.Redis.Password, cfg.DB.Redis.Port, cfg.DB.Redis.DbId)
 
-	mailClient := email.Open(cfg.Email.User, cfg.Email.Password, cfg.Email.Host, cfg.Email.Port)
+	mailClient := email.Dial(cfg.Email.User, cfg.Email.Password, cfg.Email.Host, cfg.Email.Port)
 
 	return pClient, rClient, mailClient
 }
@@ -104,7 +104,7 @@ func initHandler(pClient *ent.Client, rClient *redis.Client, mailClient *smtp.Cl
 	pUser := postgres.NewUserStorage(pClient.User)
 	pRoom := postgres.NewRoomStorage(pClient.Room)
 	rConn := redisRepo.NewRClient(rClient)
-	mailSender := service.NewEmailSender(mailClient)
+	mailSender := email.NewEmailSender(mailClient, cfg)
 	webSocket := ws.NewManager(context.Background(), rConn)
 
 	user := service.NewUserService(pUser, rConn)
@@ -124,13 +124,12 @@ func initHandler(pClient *ent.Client, rClient *redis.Client, mailClient *smtp.Cl
 	), sess
 }
 
-func createSetter(r *gin.Engine, sess *session.Auth, mailSet bool) *controller.Setter {
+func createSetter(r *gin.Engine, sess *session.Auth) *controller.Setter {
 	return controller.NewSetter(
 		r,
 		bind.NewValidator(),
 		errs.NewErrHandler(),
 		query.NewQueryHandler(),
 		sess,
-		mailSet,
 	)
 }
