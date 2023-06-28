@@ -38,7 +38,7 @@ type AuthService interface {
 }
 
 type MailSender interface {
-	SendEmail(subj, body, from string, to ...string) error
+	Send(subj, body string, to ...string) error
 }
 
 type Session interface {
