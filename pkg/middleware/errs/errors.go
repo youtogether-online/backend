@@ -55,12 +55,7 @@ func (e *ErrHandler) HandleError(handler func(*gin.Context) error) gin.HandlerFu
 			return
 		}
 
-		my := &AbstractError{
-			Status:      http.StatusInternalServerError,
-			Code:        serverError,
-			Description: "Server exception was occurred",
-			Err:         err,
-		}
+		var my *AbstractError
 
 		switch err.(type) {
 		case StandardError:
@@ -89,6 +84,13 @@ func (e *ErrHandler) HandleError(handler func(*gin.Context) error) gin.HandlerFu
 
 			default:
 				my = RedisError.GetInfo(redisErr)
+			}
+		default:
+			my = &AbstractError{
+				Status:      http.StatusInternalServerError,
+				Code:        serverError,
+				Description: "Server exception was occurred",
+				Err:         err,
 			}
 		}
 
