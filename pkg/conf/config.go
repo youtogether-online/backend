@@ -45,7 +45,6 @@ type Config struct {
 	} `yaml:"db"`
 
 	Email struct {
-		From     string `yaml:"from" env:"EMAIL_FROM" env-default:"youtogether"`
 		User     string `yaml:"user" env:"EMAIL_USER"`
 		Password string `yaml:"password" env:"EMAIL_PASSWORD"`
 		Host     string `yaml:"host" env:"EMAIL_STMP_HOST"`
