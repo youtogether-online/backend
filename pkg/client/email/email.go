@@ -1,21 +1,33 @@
 package email
 
 import (
-	"bytes"
 	"crypto/tls"
-	"errors"
+	"encoding/base64"
 	"fmt"
+	"github.com/wtkeqrf0/you-together/pkg/conf"
 	"github.com/wtkeqrf0/you-together/pkg/log"
+	"io"
 	"net"
 	"net/smtp"
 	"strings"
 	"time"
 )
 
-// Open smtp connection, start TLS and authorize the user
-func Open(username, password, host string, port int) *smtp.Client {
+type MailSender struct {
+	c   *smtp.Client
+	cfg *conf.Config
+}
 
-	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", host, port), 15*time.Second)
+func NewEmailSender(c *smtp.Client, cfg *conf.Config) *MailSender {
+	if c == nil {
+		return nil
+	}
+	return &MailSender{c: c, cfg: cfg}
+}
+
+func Dial(username, password, host string, port int) *smtp.Client {
+
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", host, port), 10*time.Second)
 	if err != nil {
 		log.WithErr(err).Warn("can't find specified email by HOST:PORT. Maybe HOST and PORT aren't correct?")
 		return nil
@@ -80,55 +92,41 @@ func Open(username, password, host string, port int) *smtp.Client {
 		return nil
 	}
 
-	go func() {
-		for {
-			if err = c.Noop(); err != nil {
-				log.WithErr(err).Err("EMAIL CONNECTION LOST")
-				break
-			}
-			time.Sleep(time.Hour)
-		}
-	}()
-
 	return c
 }
 
-type loginAuth struct {
-	username string
-	password string
-	host     string
-}
-
-func (a *loginAuth) Start(server *smtp.ServerInfo) (string, []byte, error) {
-	if !server.TLS {
-		advertised := false
-		for _, mechanism := range server.Auth {
-			if mechanism == "LOGIN" {
-				advertised = true
-				break
+func (m *MailSender) Send(subj, body string, to ...string) error {
+	if err := m.c.Mail(m.cfg.Email.User); err != nil {
+		if err == io.EOF {
+			if c := Dial(m.cfg.Email.User, m.cfg.Email.Password, m.cfg.Email.Host, m.cfg.Email.Port); c != nil {
+				m.c = c
+				return m.Send(subj, body, to...)
 			}
 		}
-		if !advertised {
-			return "", nil, errors.New("unencrypted connection")
+		return err
+	}
+
+	for _, addr := range to {
+		if err := m.c.Rcpt(addr); err != nil {
+			return err
 		}
 	}
-	if server.Name != a.host {
-		return "", nil, errors.New("wrong host name")
-	}
-	return "LOGIN", nil, nil
-}
 
-func (a *loginAuth) Next(fromServer []byte, more bool) ([]byte, error) {
-	if !more {
-		return nil, nil
+	w, err := m.c.Data()
+	if err != nil {
+		return err
 	}
 
-	switch {
-	case bytes.Equal(fromServer, []byte("Username:")):
-		return []byte(a.username), nil
-	case bytes.Equal(fromServer, []byte("Password:")):
-		return []byte(a.password), nil
-	default:
-		return nil, fmt.Errorf("unexpected server challenge: %s", fromServer)
+	_, err = w.Write([]byte("From: " + m.cfg.Email.User + "\r\n" +
+		"To: " + strings.Join(to, ",") + "\r\n" +
+		"Subject: " + subj + "\r\n" +
+		"Content-Type: text/plain; charset=\"UTF-8\"\r\n" +
+		"Content-Transfer-Encoding: base64\r\n" +
+		base64.StdEncoding.EncodeToString([]byte(body))),
+	)
+	if err != nil {
+		_ = w.Close()
+		return err
 	}
+	return w.Close()
 }
