@@ -38,7 +38,7 @@ type AuthService interface {
 }
 
 type MailSender interface {
-	Send(subj, body string, to ...string) error
+	DialAndSend(subj, body string, to ...string) error
 }
 
 type Session interface {

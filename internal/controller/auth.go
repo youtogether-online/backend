@@ -37,7 +37,7 @@ func (h *Handler) sendCodeToEmail(c *gin.Context, to dto.Email) error {
 		return err
 	}
 
-	if err := h.mail.Send("Verify email for you-together account", code, to.Email); err != nil {
+	if err := h.mail.DialAndSend("Verify email for you-together account", code, to.Email); err != nil {
 		return errs.EmailError.AddErr(err)
 	}
 
