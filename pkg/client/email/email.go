@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/wtkeqrf0/you-together/pkg/log"
-	"io"
 	"net"
 	"net/smtp"
 	"strings"
@@ -13,7 +12,6 @@ import (
 )
 
 type MailClient struct {
-	c        *smtp.Client
 	host     string
 	port     int
 	username string
@@ -22,21 +20,20 @@ type MailClient struct {
 
 func NewMailClient(host string, port int, username string, password string) *MailClient {
 	m := &MailClient{host: host, port: port, username: username, password: password}
-	if err := m.dial(); err != nil {
+	client, err := m.dial()
+	if err != nil {
 		log.WithErr(err).Warn("can't open email connection")
-		return nil
+	} else if err = client.Quit(); err != nil {
+		log.WithErr(err).Warn("can't close email connection")
 	}
 	return m
 }
 
-func (m *MailClient) dial() error {
-	if err := m.Close(); err != nil {
-		return fmt.Errorf("can't close email connection: %v", err)
-	}
+func (m *MailClient) dial() (*smtp.Client, error) {
 
 	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", m.host, m.port), 10*time.Second)
 	if err != nil {
-		return fmt.Errorf("can't find specified email by HOST:PORT. Maybe HOST and PORT aren't correct?: %v", err)
+		return nil, fmt.Errorf("can't find specified email by HOST:PORT. Maybe HOST and PORT aren't correct?: %v", err)
 	}
 
 	SSL := m.port == 465
@@ -50,20 +47,20 @@ func (m *MailClient) dial() error {
 
 	c, err := smtp.NewClient(conn, m.host)
 	if err != nil {
-		return fmt.Errorf("can't create client from email connection: %v", err)
+		return nil, err
 	}
 
 	if err = c.Hello("localhost"); err != nil {
-		return fmt.Errorf("can't HELLO to specified email: %v", err)
+		return nil, err
 	}
 
 	if !SSL {
 		if ok, _ := c.Extension("STARTTLS"); ok {
 			if err = c.StartTLS(cfg); err != nil {
 				if err = c.Close(); err != nil {
-					return fmt.Errorf("can't HELLO to specified email: %v", err)
+					return nil, err
 				}
-				return fmt.Errorf("can't start email TLS connection: %v", err)
+				return nil, fmt.Errorf("can't start email TLS connection: %v", err)
 			}
 		}
 	}
@@ -85,71 +82,53 @@ func (m *MailClient) dial() error {
 
 	if err = c.Auth(auth); err != nil {
 		if err = c.Close(); err != nil {
-			return fmt.Errorf("can't close email connection: %v", err)
+			return nil, err
 		}
-		return fmt.Errorf("can't authorize specified USER email. Maybe USERNAME and PASSWORD aren't correct?: %v", err)
+		return nil, fmt.Errorf("can't authorize specified USER email. Maybe USERNAME and PASSWORD aren't correct?: %v", err)
 	}
 
-	go checkConnection(c)
-
-	m.c = c
-
-	return nil
+	return c, nil
 }
 
 func (m *MailClient) Send(subj, body string, to ...string) error {
-	if err := m.c.Mail(m.username); err != nil {
-		if err == io.EOF {
-			if err = m.dial(); err != nil {
-				return err
-			}
-			return m.Send(subj, body, to...)
-		}
+	c, err := m.dial()
+	if err != nil {
+		return err
+	}
+
+	if err = c.Mail(m.username); err != nil {
 		return err
 	}
 
 	fmt.Println("HERE")
 
 	for _, addr := range to {
-		if err := m.c.Rcpt(addr); err != nil {
+		if err = c.Rcpt(addr); err != nil {
 			return err
 		}
 	}
 
-	w, err := m.c.Data()
+	w, err := c.Data()
 	if err != nil {
 		return err
 	}
 
-	_, err = w.Write([]byte("From: " + m.username + "\r\n" +
+	_, werr := w.Write([]byte("From: " + m.username + "\r\n" +
 		"To: " + strings.Join(to, ",") + "\r\n" +
 		"Subject: " + subj + "\r\n" +
 		"Content-Type: text/plain; charset=\"UTF-8\"\r\n" +
 		"Content-Transfer-Encoding: base64\r\n" +
 		base64.StdEncoding.EncodeToString([]byte(body))),
 	)
-	fmt.Println("WROTE")
-	if err != nil {
-		_ = w.Close()
+	if err = w.Close(); err != nil {
 		return err
 	}
-	return w.Close()
-}
 
-func (m *MailClient) Close() error {
-	if m.c != nil {
-		return m.c.Quit()
-	}
-	return nil
-}
+	fmt.Println("WROTE")
 
-func checkConnection(c *smtp.Client) {
-	time.Sleep(time.Second * 10)
-	for {
-		if err := c.Noop(); err != nil {
-			log.WithErr(err).Err("CLIENT CONNECTION LOST")
-			break
-		}
-		time.Sleep(time.Minute * 5)
+	if werr != nil {
+		return err
 	}
+
+	return c.Quit()
 }

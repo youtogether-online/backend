@@ -37,11 +37,11 @@ func main() {
 
 	h.InitRoutes(createSetter(r, sess))
 
-	run(cfg.Listen.Port, r, pClient, rClient, mailClient)
+	run(cfg.Listen.Port, r, pClient, rClient)
 }
 
 // run the Server with graceful shutdown
-func run(port int, r *gin.Engine, pClient *ent.Client, rClient *redis.Client, mailClient *email.MailClient) {
+func run(port int, r *gin.Engine, pClient *ent.Client, rClient *redis.Client) {
 	srv := &http.Server{
 		Addr:           fmt.Sprintf(":%d", port),
 		Handler:        r,
@@ -77,12 +77,6 @@ func run(port int, r *gin.Engine, pClient *ent.Client, rClient *redis.Client, ma
 
 	if err := pClient.Close(); err != nil {
 		log.WithErr(err).Fatal("PostgreSQL Connection Shutdown Failed")
-	}
-
-	if mailClient != nil {
-		if err := mailClient.Close(); err != nil {
-			log.WithErr(err).Fatal("Email Connection Shutdown Failed")
-		}
 	}
 
 	log.LastInfo("Server Exited Properly")
