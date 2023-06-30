@@ -21,7 +21,6 @@ import (
 	"github.com/wtkeqrf0/you-together/pkg/middleware/session"
 	"github.com/wtkeqrf0/you-together/pkg/ws"
 	"net/http"
-	"net/smtp"
 	"os"
 	"os/signal"
 	"syscall"
@@ -42,7 +41,7 @@ func main() {
 }
 
 // run the Server with graceful shutdown
-func run(port int, r *gin.Engine, pClient *ent.Client, rClient *redis.Client, mailClient *smtp.Client) {
+func run(port int, r *gin.Engine, pClient *ent.Client, rClient *redis.Client, mailClient *email.MailClient) {
 	srv := &http.Server{
 		Addr:           fmt.Sprintf(":%d", port),
 		Handler:        r,
@@ -81,7 +80,7 @@ func run(port int, r *gin.Engine, pClient *ent.Client, rClient *redis.Client, ma
 	}
 
 	if mailClient != nil {
-		if err := mailClient.Quit(); err != nil {
+		if err := mailClient.Close(); err != nil {
 			log.WithErr(err).Fatal("Email Connection Shutdown Failed")
 		}
 	}
@@ -89,22 +88,21 @@ func run(port int, r *gin.Engine, pClient *ent.Client, rClient *redis.Client, ma
 	log.LastInfo("Server Exited Properly")
 }
 
-func getClients(cfg *conf.Config) (*ent.Client, *redis.Client, *smtp.Client) {
+func getClients(cfg *conf.Config) (*ent.Client, *redis.Client, *email.MailClient) {
 	pClient := postgresql.Open(cfg.DB.Postgres.Username, cfg.DB.Postgres.Password,
 		cfg.DB.Postgres.Host, cfg.DB.Postgres.Port, cfg.DB.Postgres.DBName)
 
 	rClient := redisInit.Open(cfg.DB.Redis.Host, cfg.DB.Redis.Password, cfg.DB.Redis.Port, cfg.DB.Redis.DbId)
 
-	mailClient := email.Dial(cfg.Email.User, cfg.Email.Password, cfg.Email.Host, cfg.Email.Port)
+	mailClient := email.NewMailClient(cfg.Email.Host, cfg.Email.Port, cfg.Email.User, cfg.Email.Password)
 
 	return pClient, rClient, mailClient
 }
 
-func initHandler(pClient *ent.Client, rClient *redis.Client, mailClient *smtp.Client, cfg *conf.Config) (*controller.Handler, *session.Auth) {
+func initHandler(pClient *ent.Client, rClient *redis.Client, mailClient *email.MailClient, cfg *conf.Config) (*controller.Handler, *session.Auth) {
 	pUser := postgres.NewUserStorage(pClient.User)
 	pRoom := postgres.NewRoomStorage(pClient.Room)
 	rConn := redisRepo.NewRClient(rClient)
-	mailSender := email.NewEmailSender(mailClient, cfg)
 	webSocket := ws.NewManager(context.Background(), rConn)
 
 	user := service.NewUserService(pUser, rConn)
@@ -117,7 +115,7 @@ func initHandler(pClient *ent.Client, rClient *redis.Client, mailClient *smtp.Cl
 		user,
 		room,
 		auth,
-		mailSender,
+		mailClient,
 		sess,
 		webSocket,
 		cfg,

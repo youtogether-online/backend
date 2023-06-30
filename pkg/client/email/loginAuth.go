@@ -12,6 +12,10 @@ type loginAuth struct {
 	host     string
 }
 
+func newLoginAuth(username string, password string, host string) *loginAuth {
+	return &loginAuth{username: username, password: password, host: host}
+}
+
 func (a *loginAuth) Start(server *smtp.ServerInfo) (string, []byte, error) {
 	if !server.TLS {
 		advertised := false
