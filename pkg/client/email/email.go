@@ -144,11 +144,12 @@ func (m *MailClient) Close() error {
 }
 
 func checkConnection(c *smtp.Client) {
+	time.Sleep(time.Second * 10)
 	for {
-		time.Sleep(time.Minute * 5)
 		if err := c.Noop(); err != nil {
 			log.WithErr(err).Err("CLIENT CONNECTION LOST")
 			break
 		}
+		time.Sleep(time.Minute * 5)
 	}
 }
