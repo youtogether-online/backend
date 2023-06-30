@@ -48,19 +48,19 @@ func (m *MailClient) dial() error {
 		conn = tls.Client(conn, cfg)
 	}
 
-	m.c, err = smtp.NewClient(conn, m.host)
+	c, err := smtp.NewClient(conn, m.host)
 	if err != nil {
 		return fmt.Errorf("can't create client from email connection: %v", err)
 	}
 
-	if err = m.c.Hello("localhost"); err != nil {
+	if err = c.Hello("localhost"); err != nil {
 		return fmt.Errorf("can't HELLO to specified email: %v", err)
 	}
 
 	if !SSL {
-		if ok, _ := m.c.Extension("STARTTLS"); ok {
-			if err = m.c.StartTLS(cfg); err != nil {
-				if err = m.c.Close(); err != nil {
+		if ok, _ := c.Extension("STARTTLS"); ok {
+			if err = c.StartTLS(cfg); err != nil {
+				if err = c.Close(); err != nil {
 					return fmt.Errorf("can't HELLO to specified email: %v", err)
 				}
 				return fmt.Errorf("can't start email TLS connection: %v", err)
@@ -71,7 +71,7 @@ func (m *MailClient) dial() error {
 	var auth smtp.Auth
 
 	if m.username != "" {
-		if ok, auths := m.c.Extension("AUTH"); ok {
+		if ok, auths := c.Extension("AUTH"); ok {
 			if strings.Contains(auths, "CRAM-MD5") {
 				auth = smtp.CRAMMD5Auth(m.username, m.password)
 			} else if strings.Contains(auths, "LOGIN") &&
@@ -83,20 +83,16 @@ func (m *MailClient) dial() error {
 		}
 	}
 
-	if err = m.c.Auth(auth); err != nil {
-		if err = m.c.Close(); err != nil {
+	if err = c.Auth(auth); err != nil {
+		if err = c.Close(); err != nil {
 			return fmt.Errorf("can't close email connection: %v", err)
 		}
 		return fmt.Errorf("can't authorize specified USER email. Maybe USERNAME and PASSWORD aren't correct?: %v", err)
 	}
 
-	go func() {
-		time.Sleep(time.Minute * 5)
-		if err = m.c.Noop(); err != nil {
-			log.WithErr(err).Err("CLIENT CONNECTION LOST")
-			return
-		}
-	}()
+	go checkConnection(c)
+
+	m.c = c
 
 	return nil
 }
@@ -145,4 +141,14 @@ func (m *MailClient) Close() error {
 		return m.c.Quit()
 	}
 	return nil
+}
+
+func checkConnection(c *smtp.Client) {
+	for {
+		time.Sleep(time.Minute * 5)
+		if err := c.Noop(); err != nil {
+			log.WithErr(err).Err("CLIENT CONNECTION LOST")
+			break
+		}
+	}
 }
