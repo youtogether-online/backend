@@ -211,6 +211,27 @@ paths:
         '500':
           $ref: '#/components/responses/PostgreSQLError'
 
+  /user/image:
+    patch:
+      tags: [ User ]
+      summary: Update user's main image
+      description: Updates user's main image
+      security:
+        - cookieAuth: [ ]
+      requestBody:
+        $ref: "#/components/requestBodies/UserImagePatch"
+      responses:
+        '200':
+          description: Image updated
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '413':
+          $ref: '#/components/responses/ImageTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedImageType'
+        '500':
+          $ref: '#/components/responses/PostgreSQLError'
+
   /user/name:
     patch:
       tags: [ User ]
@@ -271,6 +292,19 @@ paths:
         '500':
           $ref: '#/components/responses/PostgreSQLError'
 
+  /file/*filepath:
+    get:
+      tags: [ Room ]
+      summary: Get server file
+      description: Open any server file by its name and extension
+      parameters:
+        - $ref: '#/components/parameters/FileName'
+      responses:
+        '200':
+          $ref: '#/components/responses/FileGetSuccess'
+        '404':
+          description: File not found
+
 components:
   schemas:
 
@@ -321,6 +355,12 @@ components:
         - admin
       type: string
       example: user
+
+    ImageName:
+      type: string
+      minLength: 20
+      example: qwertyuioppoiuytrewq.png
+      pattern: ^([a-z]+?)(\.[^.]*)$
 
     FirstName:
       type: string
@@ -381,6 +421,11 @@ components:
           "16688d51-0752-4e29-864c-e9decdb4edbb",
           "dcbb2492-6dfa-4b29-9c06-06ba4ad0a686"
         ]
+
+    Image:
+      type: string
+      format: binary
+      example: binary data
 
     User:
       type: object
@@ -522,7 +567,7 @@ components:
     UserPatch:
       required: true
       content:
-        application/json:
+        multipart/form-data:
           schema:
             type: object
             properties:
@@ -567,6 +612,18 @@ components:
               password:
                 $ref: "#/components/schemas/Password"
 
+    UserImagePatch:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required:
+              - image
+            properties:
+              file:
+                $ref: '#/components/schemas/Image'
+
     UserNamePatch:
       required: true
       content:
@@ -596,6 +653,13 @@ components:
       schema:
         $ref: "#/components/schemas/Name"
 
+    FileName:
+      in: path
+      description: File name and his extension
+      name: filepath
+      schema:
+        $ref: '#/components/schemas/ImageName'
+
   responses:
     SessionGetSuccess:
       description: User's info by session
@@ -619,6 +683,13 @@ components:
             type: string
             example: session_id=f82f97fd-9930-4133-a6a7-1bccb3b933b4; Path=/api; Domain=localhost; SameSite=None; Secure; HttpOnly;
 
+    FileGetSuccess:
+      description: File was successfully got
+      content:
+        multipart/form-data:
+          schema:
+            $ref: "#/components/schemas/Image"
+
     Unauthorized:
       description: User must be authorized
       content:
@@ -632,6 +703,20 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ValidationError'
+
+    UnsupportedImageType:
+      description: Image should have .png, .jpg or .jpeg extension
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    ImageTooLarge:
+      description: Image must be smaller than 3000 by 3000 pixels
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
 
     AuthByEmailFailed:
       description: Invalid email code
