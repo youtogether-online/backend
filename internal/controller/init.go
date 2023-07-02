@@ -1,11 +1,13 @@
 package controller
 
 import (
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/wtkeqrf0/you-together/internal/controller/dao"
 	"github.com/wtkeqrf0/you-together/pkg/middleware/bind"
 	"github.com/wtkeqrf0/you-together/pkg/middleware/session"
+	"net/http"
 )
 
 type ErrHandler interface {
@@ -75,5 +77,13 @@ func (h *Handler) InitRoutes(s *Setter) {
 }
 
 func initMiddlewares(r *gin.Engine, qh QueryHandler) {
-	r.Use(qh.HandleQueries(), gin.Recovery())
+	config := cors.Config{
+		AllowOrigins:     []string{"https://youtogether.frkam.dev", "https://youtogether-online.github.io", "http://localhost:3000", "http://localhost:80", "http://localhost"},
+		AllowMethods:     []string{http.MethodGet, http.MethodOptions, http.MethodPatch, http.MethodDelete, http.MethodPost},
+		AllowHeaders:     []string{"Content-Code", "Content-Length", "Cache-Control", "User-Agent", "Accept-Language", "Accept", "DomainName", "Accept-Encoding", "Connection", "Set-Cookie", "Cookie", "Date", "Postman-Token", "Host"},
+		AllowCredentials: true,
+		AllowWebSockets:  true,
+	}
+
+	r.Use(qh.HandleQueries(), cors.New(config), gin.Recovery())
 }
