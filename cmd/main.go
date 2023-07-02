@@ -33,7 +33,9 @@ func main() {
 	pClient, rClient, mailClient := getClients(cfg)
 
 	h, sess := initHandler(pClient, rClient, mailClient, cfg)
+
 	r := gin.New()
+	r.MaxMultipartMemory = 5 << 20 // 1 MB
 
 	h.InitRoutes(createSetter(r, sess))
 
