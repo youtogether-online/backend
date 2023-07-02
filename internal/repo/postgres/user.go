@@ -67,6 +67,13 @@ func (r *UserStorage) UpdateEmail(ctx context.Context, email string, id int) err
 	return err
 }
 
+func (r *UserStorage) UpdateImage(ctx context.Context, imageName string, id int) error {
+	res, err := r.userClient.UpdateOneID(id).
+		SetImage(imageName).Save(ctx)
+	log.Debug(res)
+	return err
+}
+
 func (r *UserStorage) UpdatePassword(ctx context.Context, newPassword []byte, id int) error {
 	res, err := r.userClient.UpdateOneID(id).SetPasswordHash(newPassword).
 		SetIsEmailVerified(true).Save(ctx)

@@ -1,11 +1,13 @@
 package dto
 
+import "mime/multipart"
+
 type UpdateUser struct {
-	Biography *string `json:"biography,omitempty" sql:"biography" validate:"omitempty,lte=512"`
-	Language  *string `json:"language,omitempty" sql:"language" validate:"omitempty,enum=EN*RU"`
-	Theme     *string `json:"theme,omitempty" sql:"theme" validate:"omitempty,enum=system*light*dark"`
-	FirstName *string `json:"firstName,omitempty" sql:"first_name" validate:"omitempty,gte=3,lte=32"`
-	LastName  *string `json:"lastName,omitempty" sql:"last_name" validate:"omitempty,gte=3,lte=32"`
+	Biography *string `json:"biography,omitempty" validate:"omitempty,lte=512"`
+	Language  *string `json:"language,omitempty" validate:"omitempty,enum=EN*RU"`
+	Theme     *string `json:"theme,omitempty" validate:"omitempty,enum=system*light*dark"`
+	FirstName *string `json:"firstName,omitempty" validate:"omitempty,gte=3,lte=32"`
+	LastName  *string `json:"lastName,omitempty" validate:"omitempty,gte=3,lte=32"`
 }
 
 type UpdateEmail struct {
@@ -20,6 +22,10 @@ type UpdatePassword struct {
 
 type UpdateName struct {
 	NewName string `json:"newName,omitempty" validate:"required,gte=5,lte=20,name"`
+}
+
+type UpdateImage struct {
+	Image *multipart.FileHeader `form:"file,omitempty"`
 }
 
 type NameParam struct {

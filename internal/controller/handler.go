@@ -6,6 +6,7 @@ import (
 	"github.com/wtkeqrf0/you-together/internal/controller/dao"
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
 	"github.com/wtkeqrf0/you-together/pkg/conf"
+	"mime/multipart"
 	"net/http"
 )
 
@@ -17,6 +18,7 @@ type UserService interface {
 	UpdateUser(customer dto.UpdateUser, id int) error
 	UpdatePassword(newPassword []byte, id int) error
 	UpdateEmail(email string, id int) error
+	UpdateImage(imageName string, id int) error
 	UpdateUsername(username string, id int) error
 	UsernameExist(username string) (bool, error)
 }
@@ -45,6 +47,7 @@ type Session interface {
 	SetNewCookie(id int, c *gin.Context) error
 	ValidateSession(sessionId string) (info *dao.Session, ok bool, err error)
 	GenerateSecretCode() string
+	GenerateFileName(c *gin.Context, file *multipart.FileHeader) (string, error)
 }
 
 type WebSocket interface {

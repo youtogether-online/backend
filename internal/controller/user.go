@@ -6,6 +6,7 @@ import (
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
 	"github.com/wtkeqrf0/you-together/pkg/middleware/errs"
 	"golang.org/x/crypto/bcrypt"
+	"image"
 	"net/http"
 )
 
@@ -34,6 +35,39 @@ func (h *Handler) getUserByUsername(c *gin.Context, name dto.NameParam) error {
 func (h *Handler) updateUser(c *gin.Context, upd dto.UpdateUser, info *dao.Session) error {
 
 	if err := h.user.UpdateUser(upd, info.ID); err != nil {
+		return err
+	}
+
+	c.Status(http.StatusOK)
+	return nil
+}
+
+func (h *Handler) updateImage(c *gin.Context, upd dto.UpdateImage, info *dao.Session) error {
+	if upd.Image == nil {
+		return errs.UnsupportedImageType
+	}
+
+	img, err := upd.Image.Open()
+	if err != nil {
+		return err
+	}
+
+	var imgConfig image.Config
+	imgConfig, _, err = image.DecodeConfig(img)
+	if err != nil {
+		return errs.UnsupportedImageType.AddErr(err)
+	}
+
+	if imgConfig.Width > 3000 || imgConfig.Height > 3000 {
+		return errs.ImageTooLarge
+	}
+
+	imageName, err := h.sess.GenerateFileName(c, upd.Image)
+	if err != nil {
+		return err
+	}
+
+	if err = h.user.UpdateImage(imageName, info.ID); err != nil {
 		return err
 	}
 
