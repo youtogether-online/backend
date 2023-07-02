@@ -4,6 +4,7 @@ import (
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/joho/godotenv"
 	"github.com/wtkeqrf0/you-together/pkg/log"
+	"os"
 	"sync"
 	"time"
 )
@@ -44,6 +45,10 @@ type Config struct {
 		} `yaml:"redis"`
 	} `yaml:"db"`
 
+	Files struct {
+		Path string `yaml:"path" env:"FILES_PATH" env-default:"files/"`
+	} `yaml:"files"`
+
 	Email struct {
 		User     string `yaml:"user" env:"EMAIL_USER"`
 		Password string `yaml:"password" env:"EMAIL_PASSWORD"`
@@ -74,6 +79,11 @@ func GetConfig() *Config {
 			inst.DB.Redis.Host = "redis"
 		} else {
 			log.SetLevel(log.DebugLevel)
+		}
+
+		err := os.Mkdir(inst.Files.Path, os.ModePerm)
+		if err != nil && !os.IsExist(err) {
+			log.WithErr(err).Fatal("can't create directory for files")
 		}
 	})
 
