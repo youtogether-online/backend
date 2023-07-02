@@ -3,3 +3,6 @@
 
 # configs of the server
 .env
+
+# public files storage
+.files
