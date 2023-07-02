@@ -22,6 +22,12 @@ var (
 	WebsocketNotFound = newStandardError(http.StatusBadRequest, websocketExcepted, "Web socket connection excepted")
 )
 
+// File errors
+var (
+	UnsupportedImageType = newStandardError(http.StatusUnsupportedMediaType, "", "Image should have .png, .jpg or .jpeg extension")
+	ImageTooLarge        = newStandardError(http.StatusRequestEntityTooLarge, "", "Image must be smaller than 3000 by 3000 pixels")
+)
+
 // UnAuthorized errors
 var UnAuthorized = newStandardError(http.StatusUnauthorized, "", "You are not logged in")
 
