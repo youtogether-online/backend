@@ -8,7 +8,10 @@ import (
 	"github.com/wtkeqrf0/you-together/internal/controller/dao"
 	"github.com/wtkeqrf0/you-together/pkg/conf"
 	"math/rand"
+	"mime/multipart"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -105,4 +108,20 @@ func (a *Auth) GenerateSecretCode() string {
 		b[i] = rand.Int31n(26) + 65
 	}
 	return string(b)
+}
+
+// GenerateFileName for file creation
+func (a *Auth) GenerateFileName(c *gin.Context, file *multipart.FileHeader) (string, error) {
+	b := make([]rune, rand.Int31n(30)+20)
+	for i := range b {
+		b[i] = rand.Int31n(26) + 97
+	}
+	generated := string(b) + filepath.Ext(file.Filename)
+	if err := c.SaveUploadedFile(file, a.cfg.Files.Path+generated); err != nil {
+		if os.IsExist(err) {
+			return a.GenerateFileName(c, file)
+		}
+		return "", err
+	}
+	return generated, nil
 }
