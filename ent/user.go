@@ -36,6 +36,8 @@ type User struct {
 	Role string `json:"role,omitempty" validate:"omitempty,enum=user*admin"`
 	// FriendsIds holds the value of the "friends_ids" field.
 	FriendsIds []string `json:"friendsIds,omitempty"`
+	// Image holds the value of the "image" field.
+	Image string `json:"image,omitempty"`
 	// Language holds the value of the "language" field.
 	Language string `json:"language,omitempty" validate:"omitempty,enum=en*ru"`
 	// Theme holds the value of the "theme" field.
@@ -84,7 +86,7 @@ func (*User) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case user.FieldID:
 			values[i] = new(sql.NullInt64)
-		case user.FieldName, user.FieldEmail, user.FieldBiography, user.FieldRole, user.FieldLanguage, user.FieldTheme, user.FieldFirstName, user.FieldLastName:
+		case user.FieldName, user.FieldEmail, user.FieldBiography, user.FieldRole, user.FieldImage, user.FieldLanguage, user.FieldTheme, user.FieldFirstName, user.FieldLastName:
 			values[i] = new(sql.NullString)
 		case user.FieldCreateTime, user.FieldUpdateTime:
 			values[i] = new(sql.NullTime)
@@ -165,6 +167,12 @@ func (u *User) assignValues(columns []string, values []any) error {
 				if err := json.Unmarshal(*value, &u.FriendsIds); err != nil {
 					return fmt.Errorf("unmarshal field friends_ids: %w", err)
 				}
+			}
+		case user.FieldImage:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field image", values[i])
+			} else if value.Valid {
+				u.Image = value.String
 			}
 		case user.FieldLanguage:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -260,6 +268,9 @@ func (u *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("friends_ids=")
 	builder.WriteString(fmt.Sprintf("%v", u.FriendsIds))
+	builder.WriteString(", ")
+	builder.WriteString("image=")
+	builder.WriteString(u.Image)
 	builder.WriteString(", ")
 	builder.WriteString("language=")
 	builder.WriteString(u.Language)

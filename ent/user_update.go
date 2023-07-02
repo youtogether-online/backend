@@ -126,6 +126,26 @@ func (uu *UserUpdate) ClearFriendsIds() *UserUpdate {
 	return uu
 }
 
+// SetImage sets the "image" field.
+func (uu *UserUpdate) SetImage(s string) *UserUpdate {
+	uu.mutation.SetImage(s)
+	return uu
+}
+
+// SetNillableImage sets the "image" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableImage(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetImage(*s)
+	}
+	return uu
+}
+
+// ClearImage clears the value of the "image" field.
+func (uu *UserUpdate) ClearImage() *UserUpdate {
+	uu.mutation.ClearImage()
+	return uu
+}
+
 // SetLanguage sets the "language" field.
 func (uu *UserUpdate) SetLanguage(s string) *UserUpdate {
 	uu.mutation.SetLanguage(s)
@@ -296,9 +316,19 @@ func (uu *UserUpdate) check() error {
 			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "User.email": %w`, err)}
 		}
 	}
+	if v, ok := uu.mutation.PasswordHash(); ok {
+		if err := user.PasswordHashValidator(v); err != nil {
+			return &ValidationError{Name: "password_hash", err: fmt.Errorf(`ent: validator failed for field "User.password_hash": %w`, err)}
+		}
+	}
 	if v, ok := uu.mutation.Biography(); ok {
 		if err := user.BiographyValidator(v); err != nil {
 			return &ValidationError{Name: "biography", err: fmt.Errorf(`ent: validator failed for field "User.biography": %w`, err)}
+		}
+	}
+	if v, ok := uu.mutation.Image(); ok {
+		if err := user.ImageValidator(v); err != nil {
+			return &ValidationError{Name: "image", err: fmt.Errorf(`ent: validator failed for field "User.image": %w`, err)}
 		}
 	}
 	if v, ok := uu.mutation.FirstName(); ok {
@@ -363,6 +393,12 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if uu.mutation.FriendsIdsCleared() {
 		_spec.ClearField(user.FieldFriendsIds, field.TypeJSON)
+	}
+	if value, ok := uu.mutation.Image(); ok {
+		_spec.SetField(user.FieldImage, field.TypeString, value)
+	}
+	if uu.mutation.ImageCleared() {
+		_spec.ClearField(user.FieldImage, field.TypeString)
 	}
 	if value, ok := uu.mutation.Language(); ok {
 		_spec.SetField(user.FieldLanguage, field.TypeString, value)
@@ -541,6 +577,26 @@ func (uuo *UserUpdateOne) AppendFriendsIds(s []string) *UserUpdateOne {
 // ClearFriendsIds clears the value of the "friends_ids" field.
 func (uuo *UserUpdateOne) ClearFriendsIds() *UserUpdateOne {
 	uuo.mutation.ClearFriendsIds()
+	return uuo
+}
+
+// SetImage sets the "image" field.
+func (uuo *UserUpdateOne) SetImage(s string) *UserUpdateOne {
+	uuo.mutation.SetImage(s)
+	return uuo
+}
+
+// SetNillableImage sets the "image" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableImage(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetImage(*s)
+	}
+	return uuo
+}
+
+// ClearImage clears the value of the "image" field.
+func (uuo *UserUpdateOne) ClearImage() *UserUpdateOne {
+	uuo.mutation.ClearImage()
 	return uuo
 }
 
@@ -727,9 +783,19 @@ func (uuo *UserUpdateOne) check() error {
 			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "User.email": %w`, err)}
 		}
 	}
+	if v, ok := uuo.mutation.PasswordHash(); ok {
+		if err := user.PasswordHashValidator(v); err != nil {
+			return &ValidationError{Name: "password_hash", err: fmt.Errorf(`ent: validator failed for field "User.password_hash": %w`, err)}
+		}
+	}
 	if v, ok := uuo.mutation.Biography(); ok {
 		if err := user.BiographyValidator(v); err != nil {
 			return &ValidationError{Name: "biography", err: fmt.Errorf(`ent: validator failed for field "User.biography": %w`, err)}
+		}
+	}
+	if v, ok := uuo.mutation.Image(); ok {
+		if err := user.ImageValidator(v); err != nil {
+			return &ValidationError{Name: "image", err: fmt.Errorf(`ent: validator failed for field "User.image": %w`, err)}
 		}
 	}
 	if v, ok := uuo.mutation.FirstName(); ok {
@@ -811,6 +877,12 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if uuo.mutation.FriendsIdsCleared() {
 		_spec.ClearField(user.FieldFriendsIds, field.TypeJSON)
+	}
+	if value, ok := uuo.mutation.Image(); ok {
+		_spec.SetField(user.FieldImage, field.TypeString, value)
+	}
+	if uuo.mutation.ImageCleared() {
+		_spec.ClearField(user.FieldImage, field.TypeString)
 	}
 	if value, ok := uuo.mutation.Language(); ok {
 		_spec.SetField(user.FieldLanguage, field.TypeString, value)

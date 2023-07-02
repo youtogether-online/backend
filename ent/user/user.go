@@ -31,6 +31,8 @@ const (
 	FieldRole = "role"
 	// FieldFriendsIds holds the string denoting the friends_ids field in the database.
 	FieldFriendsIds = "friends_ids"
+	// FieldImage holds the string denoting the image field in the database.
+	FieldImage = "image"
 	// FieldLanguage holds the string denoting the language field in the database.
 	FieldLanguage = "language"
 	// FieldTheme holds the string denoting the theme field in the database.
@@ -66,6 +68,7 @@ var Columns = []string{
 	FieldBiography,
 	FieldRole,
 	FieldFriendsIds,
+	FieldImage,
 	FieldLanguage,
 	FieldTheme,
 	FieldFirstName,
@@ -102,10 +105,14 @@ var (
 	EmailValidator func(string) error
 	// DefaultIsEmailVerified holds the default value on creation for the "is_email_verified" field.
 	DefaultIsEmailVerified bool
+	// PasswordHashValidator is a validator for the "password_hash" field. It is called by the builders before save.
+	PasswordHashValidator func([]byte) error
 	// BiographyValidator is a validator for the "biography" field. It is called by the builders before save.
 	BiographyValidator func(string) error
 	// DefaultRole holds the default value on creation for the "role" field.
 	DefaultRole string
+	// ImageValidator is a validator for the "image" field. It is called by the builders before save.
+	ImageValidator func(string) error
 	// DefaultLanguage holds the default value on creation for the "language" field.
 	DefaultLanguage string
 	// DefaultTheme holds the default value on creation for the "theme" field.

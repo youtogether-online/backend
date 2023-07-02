@@ -117,6 +117,20 @@ func (uc *UserCreate) SetFriendsIds(s []string) *UserCreate {
 	return uc
 }
 
+// SetImage sets the "image" field.
+func (uc *UserCreate) SetImage(s string) *UserCreate {
+	uc.mutation.SetImage(s)
+	return uc
+}
+
+// SetNillableImage sets the "image" field if the given value is not nil.
+func (uc *UserCreate) SetNillableImage(s *string) *UserCreate {
+	if s != nil {
+		uc.SetImage(*s)
+	}
+	return uc
+}
+
 // SetLanguage sets the "language" field.
 func (uc *UserCreate) SetLanguage(s string) *UserCreate {
 	uc.mutation.SetLanguage(s)
@@ -292,6 +306,11 @@ func (uc *UserCreate) check() error {
 	if _, ok := uc.mutation.IsEmailVerified(); !ok {
 		return &ValidationError{Name: "is_email_verified", err: errors.New(`ent: missing required field "User.is_email_verified"`)}
 	}
+	if v, ok := uc.mutation.PasswordHash(); ok {
+		if err := user.PasswordHashValidator(v); err != nil {
+			return &ValidationError{Name: "password_hash", err: fmt.Errorf(`ent: validator failed for field "User.password_hash": %w`, err)}
+		}
+	}
 	if v, ok := uc.mutation.Biography(); ok {
 		if err := user.BiographyValidator(v); err != nil {
 			return &ValidationError{Name: "biography", err: fmt.Errorf(`ent: validator failed for field "User.biography": %w`, err)}
@@ -299,6 +318,11 @@ func (uc *UserCreate) check() error {
 	}
 	if _, ok := uc.mutation.Role(); !ok {
 		return &ValidationError{Name: "role", err: errors.New(`ent: missing required field "User.role"`)}
+	}
+	if v, ok := uc.mutation.Image(); ok {
+		if err := user.ImageValidator(v); err != nil {
+			return &ValidationError{Name: "image", err: fmt.Errorf(`ent: validator failed for field "User.image": %w`, err)}
+		}
 	}
 	if _, ok := uc.mutation.Language(); !ok {
 		return &ValidationError{Name: "language", err: errors.New(`ent: missing required field "User.language"`)}
@@ -378,6 +402,10 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := uc.mutation.FriendsIds(); ok {
 		_spec.SetField(user.FieldFriendsIds, field.TypeJSON, value)
 		_node.FriendsIds = value
+	}
+	if value, ok := uc.mutation.Image(); ok {
+		_spec.SetField(user.FieldImage, field.TypeString, value)
+		_node.Image = value
 	}
 	if value, ok := uc.mutation.Language(); ok {
 		_spec.SetField(user.FieldLanguage, field.TypeString, value)
@@ -581,6 +609,24 @@ func (u *UserUpsert) UpdateFriendsIds() *UserUpsert {
 // ClearFriendsIds clears the value of the "friends_ids" field.
 func (u *UserUpsert) ClearFriendsIds() *UserUpsert {
 	u.SetNull(user.FieldFriendsIds)
+	return u
+}
+
+// SetImage sets the "image" field.
+func (u *UserUpsert) SetImage(v string) *UserUpsert {
+	u.Set(user.FieldImage, v)
+	return u
+}
+
+// UpdateImage sets the "image" field to the value that was provided on create.
+func (u *UserUpsert) UpdateImage() *UserUpsert {
+	u.SetExcluded(user.FieldImage)
+	return u
+}
+
+// ClearImage clears the value of the "image" field.
+func (u *UserUpsert) ClearImage() *UserUpsert {
+	u.SetNull(user.FieldImage)
 	return u
 }
 
@@ -837,6 +883,27 @@ func (u *UserUpsertOne) UpdateFriendsIds() *UserUpsertOne {
 func (u *UserUpsertOne) ClearFriendsIds() *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
 		s.ClearFriendsIds()
+	})
+}
+
+// SetImage sets the "image" field.
+func (u *UserUpsertOne) SetImage(v string) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetImage(v)
+	})
+}
+
+// UpdateImage sets the "image" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateImage() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateImage()
+	})
+}
+
+// ClearImage clears the value of the "image" field.
+func (u *UserUpsertOne) ClearImage() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearImage()
 	})
 }
 
@@ -1268,6 +1335,27 @@ func (u *UserUpsertBulk) UpdateFriendsIds() *UserUpsertBulk {
 func (u *UserUpsertBulk) ClearFriendsIds() *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
 		s.ClearFriendsIds()
+	})
+}
+
+// SetImage sets the "image" field.
+func (u *UserUpsertBulk) SetImage(v string) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetImage(v)
+	})
+}
+
+// UpdateImage sets the "image" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateImage() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateImage()
+	})
+}
+
+// ClearImage clears the value of the "image" field.
+func (u *UserUpsertBulk) ClearImage() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearImage()
 	})
 }
 

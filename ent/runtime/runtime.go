@@ -77,33 +77,84 @@ func init() {
 	// userDescName is the schema descriptor for name field.
 	userDescName := userFields[0].Descriptor()
 	// user.NameValidator is a validator for the "name" field. It is called by the builders before save.
-	user.NameValidator = userDescName.Validators[0].(func(string) error)
+	user.NameValidator = func() func(string) error {
+		validators := userDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+			validators[2].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	// userDescEmail is the schema descriptor for email field.
 	userDescEmail := userFields[1].Descriptor()
 	// user.EmailValidator is a validator for the "email" field. It is called by the builders before save.
-	user.EmailValidator = userDescEmail.Validators[0].(func(string) error)
+	user.EmailValidator = func() func(string) error {
+		validators := userDescEmail.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(email string) error {
+			for _, fn := range fns {
+				if err := fn(email); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	// userDescIsEmailVerified is the schema descriptor for is_email_verified field.
 	userDescIsEmailVerified := userFields[2].Descriptor()
 	// user.DefaultIsEmailVerified holds the default value on creation for the is_email_verified field.
 	user.DefaultIsEmailVerified = userDescIsEmailVerified.Default.(bool)
+	// userDescPasswordHash is the schema descriptor for password_hash field.
+	userDescPasswordHash := userFields[3].Descriptor()
+	// user.PasswordHashValidator is a validator for the "password_hash" field. It is called by the builders before save.
+	user.PasswordHashValidator = userDescPasswordHash.Validators[0].(func([]byte) error)
 	// userDescBiography is the schema descriptor for biography field.
 	userDescBiography := userFields[4].Descriptor()
 	// user.BiographyValidator is a validator for the "biography" field. It is called by the builders before save.
-	user.BiographyValidator = userDescBiography.Validators[0].(func(string) error)
+	user.BiographyValidator = func() func(string) error {
+		validators := userDescBiography.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(biography string) error {
+			for _, fn := range fns {
+				if err := fn(biography); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	// userDescRole is the schema descriptor for role field.
 	userDescRole := userFields[5].Descriptor()
 	// user.DefaultRole holds the default value on creation for the role field.
 	user.DefaultRole = userDescRole.Default.(string)
+	// userDescImage is the schema descriptor for image field.
+	userDescImage := userFields[7].Descriptor()
+	// user.ImageValidator is a validator for the "image" field. It is called by the builders before save.
+	user.ImageValidator = userDescImage.Validators[0].(func(string) error)
 	// userDescLanguage is the schema descriptor for language field.
-	userDescLanguage := userFields[7].Descriptor()
+	userDescLanguage := userFields[8].Descriptor()
 	// user.DefaultLanguage holds the default value on creation for the language field.
 	user.DefaultLanguage = userDescLanguage.Default.(string)
 	// userDescTheme is the schema descriptor for theme field.
-	userDescTheme := userFields[8].Descriptor()
+	userDescTheme := userFields[9].Descriptor()
 	// user.DefaultTheme holds the default value on creation for the theme field.
 	user.DefaultTheme = userDescTheme.Default.(string)
 	// userDescFirstName is the schema descriptor for first_name field.
-	userDescFirstName := userFields[9].Descriptor()
+	userDescFirstName := userFields[10].Descriptor()
 	// user.FirstNameValidator is a validator for the "first_name" field. It is called by the builders before save.
 	user.FirstNameValidator = func() func(string) error {
 		validators := userDescFirstName.Validators
@@ -121,7 +172,7 @@ func init() {
 		}
 	}()
 	// userDescLastName is the schema descriptor for last_name field.
-	userDescLastName := userFields[10].Descriptor()
+	userDescLastName := userFields[11].Descriptor()
 	// user.LastNameValidator is a validator for the "last_name" field. It is called by the builders before save.
 	user.LastNameValidator = func() func(string) error {
 		validators := userDescLastName.Validators

@@ -22,19 +22,19 @@ type User struct {
 // Fields of the User.
 func (User) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("name").Unique().Match(bind.NameRegexp).Annotations(
+		field.String("name").Unique().MinLen(4).MaxLen(20).Match(bind.NameRegexp).Annotations(
 			entsql.DefaultExpr("'user' || setval(pg_get_serial_sequence('users','id'),nextval(pg_get_serial_sequence('users','id'))-1)")).
 			StructTag(`json:"name,omitempty" validate:"omitempty,gte=5,lte=20,name"`),
 
-		field.String("email").Unique().Match(bind.EmailRegexp).
+		field.String("email").Unique().NotEmpty().Match(bind.EmailRegexp).
 			StructTag(`json:"email,omitempty" validate:"required,email"`),
 
 		field.Bool("is_email_verified").Default(false).
 			StructTag(`json:"isEmailVerified,omitempty"`),
 
-		field.Bytes("password_hash").Optional().Sensitive().Nillable(),
+		field.Bytes("password_hash").Optional().Sensitive().Nillable().NotEmpty(),
 
-		field.Text("biography").Optional().MaxLen(512).Nillable().
+		field.Text("biography").Optional().MaxLen(512).Nillable().NotEmpty().
 			StructTag(`json:"biography,omitempty" validate:"omitempty,lte=512"`),
 
 		field.String("role").Default("user").
@@ -42,6 +42,9 @@ func (User) Fields() []ent.Field {
 
 		field.Strings("friends_ids").Optional().
 			StructTag(`json:"friendsIds,omitempty"`),
+
+		field.String("image").Optional().MinLen(20).
+			StructTag(`json:"image,omitempty"`),
 
 		field.String("language").Default("en").
 			StructTag(`json:"language,omitempty" validate:"omitempty,enum=en*ru"`),

@@ -7,17 +7,18 @@ import (
 )
 
 type Me struct {
-	Name            string    `json:"name,omitempty" sql:"name"`
-	Email           string    `json:"email,omitempty" sql:"email"`
-	IsEmailVerified bool      `json:"isEmailVerified" sql:"is_email_verified"`
-	Biography       *string   `json:"biography,omitempty" sql:"biography"`
-	Role            string    `json:"role,omitempty" sql:"role"`
-	FriendsIds      []string  `json:"friendsIds,omitempty" sql:"friends_ids"`
-	Language        string    `json:"language,omitempty" sql:"language"`
-	Theme           string    `json:"theme,omitempty" sql:"theme"`
-	FirstName       *string   `json:"firstName,omitempty" sql:"first_name"`
-	LastName        *string   `json:"lastName,omitempty" sql:"last_name"`
-	CreateTime      time.Time `json:"createTime,omitempty" sql:"create_time"`
+	Name            string    `json:"name,omitempty"`
+	Email           string    `json:"email,omitempty"`
+	IsEmailVerified bool      `json:"isEmailVerified"`
+	Biography       *string   `json:"biography,omitempty"`
+	Role            string    `json:"role,omitempty"`
+	FriendsIds      []string  `json:"friendsIds,omitempty"`
+	Language        string    `json:"language,omitempty"`
+	Theme           string    `json:"theme,omitempty"`
+	FirstName       *string   `json:"firstName,omitempty"`
+	LastName        *string   `json:"lastName,omitempty"`
+	Image           string    `json:"image,omitempty"`
+	CreateTime      time.Time `json:"createTime,omitempty"`
 }
 
 func TransformToMe(user *ent.User) *Me {
@@ -32,18 +33,20 @@ func TransformToMe(user *ent.User) *Me {
 		FriendsIds:      user.FriendsIds,
 		FirstName:       user.FirstName,
 		LastName:        user.LastName,
+		Image:           user.Image,
 		CreateTime:      user.CreateTime,
 	}
 }
 
 type User struct {
-	Name       string    `json:"name,omitempty" sql:"name"`
-	Biography  *string   `json:"biography,omitempty" sql:"biography"`
-	Role       string    `json:"role,omitempty" sql:"role"`
-	FriendsIds []string  `json:"friendsIds,omitempty" sql:"friends_ids"`
-	FirstName  *string   `json:"firstName,omitempty" sql:"first_name"`
-	LastName   *string   `json:"lastName,omitempty" sql:"last_name"`
-	CreateTime time.Time `json:"createTime,omitempty" sql:"create_time"`
+	Name       string    `json:"name,omitempty"`
+	Biography  *string   `json:"biography,omitempty"`
+	Role       string    `json:"role,omitempty"`
+	FriendsIds []string  `json:"friendsIds,omitempty"`
+	FirstName  *string   `json:"firstName,omitempty"`
+	LastName   *string   `json:"lastName,omitempty"`
+	Image      string    `json:"image,omitempty"`
+	CreateTime time.Time `json:"createTime,omitempty"`
 }
 
 func TransformToUser(user *ent.User) *User {
@@ -54,6 +57,7 @@ func TransformToUser(user *ent.User) *User {
 		FriendsIds: user.FriendsIds,
 		FirstName:  user.FirstName,
 		LastName:   user.LastName,
+		Image:      user.Image,
 		CreateTime: user.CreateTime,
 	}
 }
