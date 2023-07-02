@@ -37,7 +37,7 @@ func (User) Fields() []ent.Field {
 		field.Text("biography").Optional().MaxLen(512).Nillable().
 			StructTag(`json:"biography,omitempty" validate:"omitempty,lte=512"`),
 
-		field.String("role").Default("USER").
+		field.String("role").Default("user").
 			StructTag(`json:"role,omitempty" validate:"omitempty,enum=user*admin"`),
 
 		field.Strings("friends_ids").Optional().

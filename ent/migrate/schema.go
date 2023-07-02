@@ -43,7 +43,7 @@ var (
 		{Name: "is_email_verified", Type: field.TypeBool, Default: false},
 		{Name: "password_hash", Type: field.TypeBytes, Nullable: true},
 		{Name: "biography", Type: field.TypeString, Nullable: true, Size: 512},
-		{Name: "role", Type: field.TypeString, Default: "USER"},
+		{Name: "role", Type: field.TypeString, Default: "user"},
 		{Name: "friends_ids", Type: field.TypeJSON, Nullable: true},
 		{Name: "language", Type: field.TypeString, Default: "en"},
 		{Name: "theme", Type: field.TypeString, Default: "system"},
