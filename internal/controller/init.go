@@ -66,7 +66,7 @@ func (h *Handler) InitRoutes(s *Setter) {
 	room := rg.Group("/room")
 	{
 		room.PUT("", s.erh.HandleError(session.HandleJSONBody(h.createRoom, s.sess.SessionFunc, s.valid)))
-		room.GET("/:name", s.erh.HandleError(bind.HandleParam(h.joinRoom, s.valid)))
+		room.GET("/:id", s.erh.HandleError(bind.HandleParam(h.joinRoom, s.valid)))
 	}
 
 	rg.Static("/file", "./"+h.cfg.Files.Path)
@@ -82,7 +82,7 @@ func (h *Handler) InitRoutes(s *Setter) {
 func initMiddlewares(r *gin.Engine, qh QueryHandler) {
 	config := cors.Config{
 		AllowOrigins:     []string{"https://youtogether.frkam.dev", "https://youtogether-online.github.io", "http://localhost:3000", "http://localhost:80", "http://localhost"},
-		AllowMethods:     []string{http.MethodGet, http.MethodOptions, http.MethodPatch, http.MethodDelete, http.MethodPost},
+		AllowMethods:     []string{http.MethodGet, http.MethodOptions, http.MethodPatch, http.MethodDelete, http.MethodPost, http.MethodHead},
 		AllowHeaders:     []string{"Content-Code", "Content-Length", "Cache-Control", "User-Agent", "Accept-Language", "Accept", "DomainName", "Accept-Encoding", "Connection", "Set-Cookie", "Cookie", "Date", "Postman-Token", "Host"},
 		AllowCredentials: true,
 		AllowWebSockets:  true,
