@@ -90,3 +90,7 @@ func (r *UserStorage) UpdateUsername(ctx context.Context, username string, id in
 func (r *UserStorage) UsernameExist(ctx context.Context, username string) (bool, error) {
 	return r.userClient.Query().Where(user.Name(username)).Exist(ctx)
 }
+
+func (r *UserStorage) GetRoomByOwner(ctx context.Context, userId int) (*ent.Room, error) {
+	return r.userClient.Query().Where(user.ID(userId)).QueryRoom().Only(ctx)
+}

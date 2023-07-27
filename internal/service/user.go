@@ -13,6 +13,8 @@ type UserPostgres interface {
 	FindMe(ctx context.Context, id int) (*dao.Me, error)
 	FindUserByUsername(ctx context.Context, username string) (*dao.User, error)
 	FindUserByID(ctx context.Context, id int) (*ent.User, error)
+	GetRoomByOwner(ctx context.Context, userId int) (*ent.Room, error)
+
 	UpdateUser(ctx context.Context, customer dto.UpdateUser, id int) error
 	UpdatePassword(ctx context.Context, newPassword []byte, id int) error
 	UpdateEmail(ctx context.Context, email string, id int) error
@@ -46,6 +48,10 @@ func (u *UserService) FindMe(id int) (*dao.Me, error) {
 		user.Email = user.Email[:1] + "**" + user.Email[strings.Index(user.Email, "@")-1:]
 	}
 	return user, err
+}
+
+func (u *UserService) GetRoomByOwner(userId int) (*ent.Room, error) {
+	return u.postgres.GetRoomByOwner(context.Background(), userId)
 }
 
 func (u *UserService) UpdateUser(customer dto.UpdateUser, id int) error {

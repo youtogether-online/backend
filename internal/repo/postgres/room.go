@@ -14,7 +14,7 @@ func NewRoomStorage(roomClient *ent.RoomClient) *RoomStorage {
 	return &RoomStorage{roomClient: roomClient}
 }
 
-func (r *RoomStorage) UpsertRoom(ctx context.Context, rm dto.Room, creatorId int) error {
+func (r *RoomStorage) UpsertRoom(ctx context.Context, rm dto.Room, creatorId int) (int, error) {
 	cl := r.roomClient.Create().
 		SetOwnerID(creatorId).
 		SetNillablePrivacy(rm.Privacy).
@@ -25,5 +25,9 @@ func (r *RoomStorage) UpsertRoom(ctx context.Context, rm dto.Room, creatorId int
 		cl.SetPasswordHash([]byte(*rm.Password))
 	}
 
-	return cl.OnConflict().UpdateNewValues().Exec(ctx)
+	return cl.OnConflict().UpdateNewValues().ID(ctx)
+}
+
+func (r *RoomStorage) GetRoomById(ctx context.Context, roomId int) (*ent.Room, error) {
+	return r.roomClient.Get(ctx, roomId)
 }
