@@ -99,7 +99,7 @@ func initHandler(pClient *ent.Client, rClient *redis.Client, mailClient *email.M
 	pUser := postgres.NewUserStorage(pClient.User)
 	pRoom := postgres.NewRoomStorage(pClient.Room)
 	rConn := redisRepo.NewRClient(rClient)
-	webSocket := ws.NewManager(context.Background(), rConn)
+	webSocket := ws.NewManager(cfg)
 
 	user := service.NewUserService(pUser, rConn)
 	room := service.NewRoomService(pRoom)
