@@ -21,6 +21,11 @@ type Config struct {
 		Duration   time.Duration `yaml:"duration" env:"COOKIE_DURATION" env-default:"720h"`
 	} `yaml:"session"`
 
+	WS struct {
+		PongWait     time.Duration `yaml:"pong_wait" env:"WS_PONG_WAIT" env-default:"10s"`
+		PingInterval time.Duration // always equal to (pong_wait * 9) / 10
+	} `yaml:"ws"`
+
 	Listen struct {
 		QueryPath string `yaml:"query_path" env:"QUERY_PATH" env-default:"/api"`
 		Port      int    `yaml:"port" env:"PORT" env-default:"3000"`
@@ -73,6 +78,8 @@ func GetConfig() *Config {
 			help, _ := cleanenv.GetDescription(inst, nil)
 			log.Fatal(help)
 		}
+
+		inst.WS.PingInterval = (inst.WS.PongWait * 9) / 10
 
 		if inst.Prod == 1 {
 			inst.DB.Postgres.Host = "postgres"
