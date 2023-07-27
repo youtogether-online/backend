@@ -7,13 +7,13 @@ import (
 	"github.com/wtkeqrf0/you-together/internal/controller/dto"
 	"github.com/wtkeqrf0/you-together/pkg/conf"
 	"mime/multipart"
-	"net/http"
 )
 
 type UserService interface {
 	FindUserByUsername(username string) (*dao.User, error)
 	FindUserByID(id int) (*ent.User, error)
 	FindMe(id int) (*dao.Me, error)
+	GetRoomByOwner(userId int) (*ent.Room, error)
 
 	UpdateUser(customer dto.UpdateUser, id int) error
 	UpdatePassword(newPassword []byte, id int) error
@@ -24,7 +24,8 @@ type UserService interface {
 }
 
 type RoomService interface {
-	UpsertRoom(rm dto.Room, creatorId int) error
+	UpsertRoom(rm dto.Room, creatorId int) (int, error)
+	GetRoomById(roomId int) (*ent.Room, error)
 }
 
 type AuthService interface {
@@ -51,7 +52,7 @@ type Session interface {
 }
 
 type WebSocket interface {
-	Connect(w http.ResponseWriter, r *http.Request) error
+	Connect(c *gin.Context, roomId int) error
 }
 
 type Handler struct {
