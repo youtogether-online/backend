@@ -2,14 +2,13 @@ package ws
 
 import (
 	"encoding/json"
-	"net/http"
+	"fmt"
 	"time"
 )
 
 const (
-	eventMessage    string = "send message"
+	eventMessage    string = "send_message"
 	eventNewMessage string = "new_message"
-	eventChangeRoom string = "change_room"
 )
 
 type Event struct {
@@ -23,49 +22,38 @@ type NewMessageEvent struct {
 }
 
 type SendMessageEvent struct {
-	Msg  string `json:"message,omitempty"`
+	Msg  string `json:"msg,omitempty"`
 	From string `json:"from,omitempty"`
-}
-
-type ChangeRoomEvent struct {
-	Name string `json:"name,omitempty"`
 }
 
 type EventHandler func(event Event, c *client) error
 
-func sendMessage(event Event, c *client) error {
+func (m *Manager) sendMessageHandler(event Event, c *client) error {
 	var chatEvent SendMessageEvent
 	if err := json.Unmarshal(event.Payload, &chatEvent); err != nil {
-		return err
+		return fmt.Errorf("bad payload in request: %v", err)
 	}
 
-	broadMessage := NewMessageEvent{
-		SendMessageEvent: chatEvent,
-		Sent:             time.Now(),
-	}
+	var broadMessage NewMessageEvent
+
+	broadMessage.Sent = time.Now()
+	broadMessage.Msg = chatEvent.Msg
+	broadMessage.From = chatEvent.From
+
 	data, err := json.Marshal(broadMessage)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal broadcast message: %v", err)
 	}
 
-	outGoingEvent := Event{
-		Payload: data,
+	outgoingEvent := Event{
 		Type:    eventNewMessage,
+		Payload: data,
 	}
 
-	for cl := range c.m.clients {
-		if cl.chatRoom == c.chatRoom {
-			cl.egress <- outGoingEvent
+	for cl := range m.clients {
+		if cl.roomId == c.roomId {
+			cl.event <- outgoingEvent
 		}
 	}
 	return nil
-}
-
-func checkOrigin(r *http.Request) bool {
-	switch r.Header.Get("Origin") {
-	case "http://localhost:3000":
-		return true
-	default:
-		return false
-	}
 }
