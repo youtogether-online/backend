@@ -56,7 +56,7 @@ type User struct {
 // UserEdges holds the relations/edges for other nodes in the graph.
 type UserEdges struct {
 	// Room holds the value of the room edge.
-	Room *Room `json:"room,omitempty"`
+	Room *Room `json:"room,omitempty" room_id`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [1]bool

@@ -39,7 +39,7 @@ func (Room) Fields() []ent.Field {
 func (Room) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("owner", User.Type).
-			Ref("room").Unique().Immutable().Required(),
+			Ref("room").Unique().Immutable().Required().StructTag(`json:"owner_id"`),
 	}
 }
 

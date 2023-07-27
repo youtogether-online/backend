@@ -65,7 +65,7 @@ func (User) Fields() []ent.Field {
 // Edges of the User.
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("room", Room.Type).Unique(),
+		edge.To("room", Room.Type).Unique().StructTag(`room_id`),
 	}
 }
 
