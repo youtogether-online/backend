@@ -1,0 +1,23 @@
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - gocritic
+    - misspell
+    - unconvert
+  exclusions:
+    generated: lax
+    paths:
+      - ent
+      - docs
+
+formatters:
+  enable:
+    - gofmt
+  exclusions:
+    paths:
+      - ent
+      - docs
