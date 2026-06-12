@@ -76,19 +76,6 @@ func (a *Auth) generateSession(id int, ip, userAgent string) (string, error) {
 	})
 }
 
-func (a *Auth) getSession(c *gin.Context) *dao.Session {
-	get, ok := c.Get("user_info")
-	if !ok {
-		return nil
-	}
-
-	res, ok := get.(*dao.Session)
-	if !ok {
-		return nil
-	}
-	return res
-}
-
 func (a *Auth) SetNewCookie(id int, c *gin.Context) error {
 	session, err := a.generateSession(id, c.ClientIP(), c.Request.UserAgent())
 	if err != nil {

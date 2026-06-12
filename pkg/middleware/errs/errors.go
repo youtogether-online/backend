@@ -57,33 +57,32 @@ func (e *ErrHandler) HandleError(handler func(*gin.Context) error) gin.HandlerFu
 
 		var my *AbstractError
 
-		switch err.(type) {
+		switch err := err.(type) {
 		case StandardError:
-			my = err.(StandardError).GetInfo()
+			my = err.GetInfo()
 
 		case validator.ValidationErrors:
-			my = newValidError(err.(validator.ValidationErrors))
+			my = newValidError(err)
 
 		case *ent.ValidationError:
-			my = newValidErrorEnt(err.(*ent.ValidationError))
+			my = newValidErrorEnt(err)
 
 		case *ent.NotFoundError:
-			my = EntNotFoundError.GetInfo(err.(*ent.NotFoundError))
+			my = EntNotFoundError.GetInfo(err)
 
 		case *ent.ConstraintError:
-			my = EntConstraintError.GetInfo(err.(*ent.ConstraintError))
+			my = EntConstraintError.GetInfo(err)
 
 		case redis.Error:
-			redisErr := err.(redis.Error)
-			switch err.(redis.Error) {
+			switch err {
 			case redis.Nil:
-				my = RedisNilError.GetInfo(redisErr)
+				my = RedisNilError.GetInfo(err)
 
 			case redis.TxFailedErr:
-				my = RedisTxError.GetInfo(redisErr)
+				my = RedisTxError.GetInfo(err)
 
 			default:
-				my = RedisError.GetInfo(redisErr)
+				my = RedisError.GetInfo(err)
 			}
 		default:
 			my = &AbstractError{
